@@ -1,0 +1,12 @@
+
+
+**Admin Login Details**
+Email   : admin@mail.com
+Password: 123456
+
+
+**SMTP CREDENTIALS **
+SMTP_HOST=smtp.gmail.com
+SMTP_USER=nirajkarna66@gmail.com
+SMTP_PASS=eptg ikjc lbbd yosq
+SMTP_PORT=465 

@@ -1,0 +1,33 @@
+<?php
+require_once __DIR__ . '/../inc/functions.php';
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+    exit;
+}
+
+$action = $_POST['action'] ?? '';
+if ($action === 'add') {
+    $productId = (int)($_POST['product_id'] ?? 0);
+    $quantity = max(1, (int)($_POST['quantity'] ?? 1));
+    if ($productId) {
+        $stmt = $pdo->prepare('SELECT p_id, p_name, p_featured_photo FROM tbl_product WHERE p_id = ? LIMIT 1');
+        $stmt->execute([$productId]);
+        $product = $stmt->fetch();
+        if ($product) {
+            if (!isset($_SESSION['cart'])) {
+                $_SESSION['cart'] = [];
+            }
+            if (isset($_SESSION['cart'][$productId])) {
+                $_SESSION['cart'][$productId]['quantity'] += $quantity;
+            } else {
+                $_SESSION['cart'][$productId] = ['product_id' => $product['p_id'], 'product_name' => $product['p_name'], 'photo' => $product['p_featured_photo'], 'quantity' => $quantity, 'notes' => ''];
+            }
+            echo json_encode(['success' => true, 'message' => 'Added to booking.', 'count' => count($_SESSION['cart'])]);
+            exit;
+        }
+    }
+}
+
+echo json_encode(['success' => false, 'message' => 'Unable to add service']);
