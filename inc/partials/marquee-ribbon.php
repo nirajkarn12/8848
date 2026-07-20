@@ -14,10 +14,10 @@ if (empty($marqueeNotices)) {
 
 $marqueeLoop = array_merge($marqueeNotices, $marqueeNotices);
 ?>
-<div class="site-ribbon-marquee site-ribbon-marquee--hero" role="region" aria-label="Site notices">
+<div class="site-ribbon-marquee site-ribbon-marquee--hero" role="region" aria-label="<?php echo t('site_notices'); ?>">
   <div class="site-ribbon-marquee-label" aria-hidden="true">
     <i class="fa fa-bullhorn"></i>
-    <span>Notice</span>
+    <span><?php echo t('notice'); ?></span>
   </div>
   <div class="site-ribbon-marquee-viewport">
     <div class="site-ribbon-marquee-track">

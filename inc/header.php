@@ -3,13 +3,18 @@ require_once __DIR__ . '/functions.php';
 require_once __DIR__ . '/breadcrumbs.php';
 ?>
 <!DOCTYPE html>
-<html lang="en" class="h-100">
+<?php
+$currentHtmlLang = getCurrentLang();
+$ogLocaleMap = ['en' => 'en_US', 'ne' => 'ne_NP', 'hi' => 'hi_IN'];
+$ogLocale = $ogLocaleMap[$currentHtmlLang] ?? 'en_US';
+?>
+<html lang="<?php echo e($currentHtmlLang); ?>" class="h-100">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <?php
     $siteName = e(getSiteSetting('site_name', SITE_NAME));
-    $defaultDescription = e(getSiteSetting('meta_description', 'Professional home and office cleaning agency. Book trusted cleaners online.'));
+    $defaultDescription = e(getSiteSetting('meta_description', loadLang('meta_home_description')));
     $defaultKeywords = e(getSiteSetting('meta_keywords', 'cleaning service, home cleaning, office cleaning, deep clean, Kathmandu'));
     $defaultAuthor = e(getSiteSetting('site_author', $siteName));
     $pageTitleTag = e($pageTitle ?? $siteName);
@@ -57,7 +62,7 @@ require_once __DIR__ . '/breadcrumbs.php';
     <meta name="msvalidate.01" content="<?php echo $bingVerification; ?>">
     <?php endif; ?>
     <link rel="canonical" href="<?php echo $canonicalUrl; ?>">
-    <meta property="og:locale" content="en_US">
+    <meta property="og:locale" content="<?php echo e($ogLocale); ?>">
     <meta property="og:site_name" content="<?php echo $siteName; ?>">
     <meta property="og:type" content="<?php echo $ogType; ?>">
     <meta property="og:title" content="<?php echo $pageTitleTag; ?>">
@@ -81,15 +86,12 @@ require_once __DIR__ . '/breadcrumbs.php';
     <meta name="format-detection" content="telephone=no">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#062a62">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css">
-    <link rel="stylesheet" href="<?php echo ASSET_URL; ?>css/style.css?v=20260717m">
+    <link rel="stylesheet" href="<?php echo ASSET_URL; ?>css/style.css?v=20260720i">
     <style>
     /* Dropdown menu stays open when interacting inside */
     .mega-menu {
@@ -240,10 +242,58 @@ require_once __DIR__ . '/breadcrumbs.php';
     }
 </style>
 </head>
-<body>
+<body<?php echo !empty($showWaterSplash) ? ' class="has-water-splash"' : ''; ?>>
+<?php if (!empty($showWaterSplash)) { ?>
+<div class="foam-intro" id="foamIntro" aria-hidden="true">
+    <div class="foam-intro-bg"></div>
+    <div class="foam-burst" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="foam-hand-wrap">
+        <svg class="foam-hand" viewBox="0 0 240 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cleaning glove">
+            <defs>
+                <linearGradient id="gloveGrad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#fff7e0"/>
+                    <stop offset="55%" stop-color="#ffd54a"/>
+                    <stop offset="100%" stop-color="#f0b429"/>
+                </linearGradient>
+                <linearGradient id="foamGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#ffffff"/>
+                    <stop offset="100%" stop-color="#d9ecff"/>
+                </linearGradient>
+            </defs>
+            <!-- foam cloud behind glove -->
+            <g class="foam-cloud">
+                <ellipse cx="118" cy="78" rx="54" ry="34" fill="url(#foamGrad)" opacity=".95"/>
+                <ellipse cx="86" cy="92" rx="30" ry="22" fill="#fff" opacity=".92"/>
+                <ellipse cx="152" cy="90" rx="28" ry="20" fill="#fff" opacity=".9"/>
+                <circle cx="104" cy="60" r="16" fill="#fff"/>
+                <circle cx="136" cy="58" r="14" fill="#eef7ff"/>
+                <circle cx="160" cy="72" r="12" fill="#fff"/>
+            </g>
+            <!-- yellow cleaning glove -->
+            <g class="glove-shape">
+                <path fill="url(#gloveGrad)" d="M98 188c-10 0-18-8-18-18V118c0-7 5-12 12-12s12 5 12 12v28h6V78c0-8 5-14 13-14s13 6 13 14v52h6V68c0-8 5-14 13-14s13 6 13 14v66h6V84c0-8 6-14 14-14s14 6 14 14v86c0 24-18 42-42 42H98z"/>
+                <path fill="rgba(255,255,255,.35)" d="M112 96c0-5 3-8 7-8s7 3 7 8v46h-6V108c0-3-2-5-4-5s-4 2-4 5v34h-6V96z"/>
+                <ellipse cx="146" cy="188" rx="34" ry="10" fill="rgba(0,0,0,.12)"/>
+            </g>
+            <!-- foam burst blobs on glove -->
+            <g class="foam-on-glove">
+                <circle cx="128" cy="108" r="10" fill="#fff"/>
+                <circle cx="146" cy="118" r="8" fill="#eef7ff"/>
+                <circle cx="118" cy="124" r="7" fill="#fff"/>
+                <circle cx="156" cy="102" r="6" fill="#fff"/>
+            </g>
+        </svg>
+        <div class="foam-intro-brand"><?php echo $siteName; ?></div>
+    </div>
+</div>
+<?php } else { ?>
 <div class="page-loader" id="pageLoader">
     <div class="spinner"></div>
 </div>
+<?php } ?>
 <div class="topbar">
     <div class="container d-flex justify-content-between align-items-center small">
         <div class="d-flex flex-wrap gap-3">
@@ -262,10 +312,10 @@ require_once __DIR__ . '/breadcrumbs.php';
 <header class="site-header">
     <nav class="navbar navbar-expand-lg navbar-light container py-3">
         <a class="navbar-brand" href="<?php echo BASE_URL; ?>">
-            <img src="<?php echo getProductImage(getSiteSetting('logo', 'logo.jpg')); ?>" alt="Brand logo">
+            <img src="<?php echo getProductImage(getSiteSetting('logo', 'logo.jpg')); ?>" alt="<?php echo t('brand_logo'); ?>">
             <span><?php echo $siteName; ?></span>
         </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="<?php echo t('toggle_navigation'); ?>">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="mainNav">
@@ -301,7 +351,7 @@ require_once __DIR__ . '/breadcrumbs.php';
             <div class="header-controls d-flex align-items-center gap-2 flex-nowrap ms-auto">
             <form class="header-search-language mb-2 position-relative search-shell" role="search" action="<?php echo BASE_URL; ?>search.php" method="get">
                 <div class="search-form input-group">
-                    <input class="form-control header-search-input" id="headerSearchInput" type="search" name="q" placeholder="<?php echo t('search_products'); ?>" aria-label="Search" autocomplete="off">
+                    <input class="form-control header-search-input" id="headerSearchInput" type="search" name="q" placeholder="<?php echo t('search_products'); ?>" aria-label="<?php echo t('search'); ?>" autocomplete="off">
                     <button class="btn btn-dark header-search-btn" type="submit"><i class="fa fa-search"></i></button>
                 </div>
                 <div id="searchResults" class="position-absolute top-100 start-0 w-100 bg-white rounded-4 shadow mt-2 p-2" style="z-index:1000; display:none;"></div>
@@ -323,7 +373,7 @@ require_once __DIR__ . '/breadcrumbs.php';
                     <ul class="dropdown-menu">
                         <?php foreach ($langFlags as $code => $data) { ?>
                             <li>
-                                <a class="dropdown-item d-flex align-items-center gap-2<?php echo $currentLang === $code ? ' active' : ''; ?>" href="<?php echo BASE_URL; ?>?lang=<?php echo $code; ?>">
+                                <a class="dropdown-item d-flex align-items-center gap-2<?php echo $currentLang === $code ? ' active' : ''; ?>" href="<?php echo e(langSwitchUrl($code)); ?>">
                                     <img src="<?php echo $data['src']; ?>" alt="<?php echo e($data['label']); ?>" class="lang-flag">
                                     <span><?php echo e($data['label']); ?></span>
                                 </a>

@@ -7,12 +7,10 @@ $breadcrumbs = [
     ['label' => t('about'), 'url' => '']
 ];
 echo renderBreadcrumbs($breadcrumbs);
-$page = $pdo->query('SELECT * FROM tbl_page LIMIT 1')->fetch();
+
+$aboutPage = $pdo->query('SELECT about_title, about_content, about_banner FROM tbl_page LIMIT 1')->fetch(PDO::FETCH_ASSOC) ?: [];
+$aboutCompact = false;
+include __DIR__ . '/inc/partials/about-section.php';
+
+include __DIR__ . '/inc/footer.php';
 ?>
-<div class="card card-hover p-4">
-  <div class="section-kicker mb-2"><?php echo t('our_story'); ?></div>
-  <h2 class="fw-bold mb-3"><?php echo t('about_koshi_supplier'); ?></h2>
-  <p class="text-muted mb-4"><?php echo t('crafted_with_care'); ?></p>
-  <div class="text-muted rich-content"><?php echo renderRichHtml($page['about_content'] ?? ''); ?></div>
-</div>
-<?php include __DIR__ . '/inc/footer.php'; ?>

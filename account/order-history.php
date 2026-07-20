@@ -54,13 +54,13 @@ echo renderBreadcrumbs($breadcrumbs);
         <div class="border rounded-4 p-3 mb-3 shadow-sm">
           <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 mb-2">
             <div>
-              <div class="fw-semibold">Order #<?php echo e($payment['payment_id']); ?></div>
-              <div class="small text-muted">Placed on <?php echo e($payment['payment_date']); ?> &middot; <?php echo count($items); ?> item<?php echo count($items) === 1 ? '' : 's'; ?></div>
+              <div class="fw-semibold"><?php echo tf('order_number', $payment['payment_id']); ?></div>
+              <div class="small text-muted"><?php echo tf('placed_on_items', $payment['payment_date'], (string)count($items)); ?></div>
             </div>
             <div class="d-flex flex-wrap gap-2 align-items-center">
               <span class="badge bg-<?php echo strtolower($payment['payment_status']) === 'completed' ? 'success' : 'warning'; ?>"><?php echo e($payment['payment_status']); ?></span>
               <span class="badge bg-<?php echo strtolower($payment['shipping_status']) === 'completed' ? 'info' : 'secondary'; ?>"><?php echo e($payment['shipping_status']); ?></span>
-              <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#<?php echo $collapseId; ?>" aria-expanded="false" aria-controls="<?php echo $collapseId; ?>">Details</button>
+              <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#<?php echo $collapseId; ?>" aria-expanded="false" aria-controls="<?php echo $collapseId; ?>"><?php echo t('details'); ?></button>
             </div>
           </div>
 
@@ -76,8 +76,8 @@ echo renderBreadcrumbs($breadcrumbs);
                         </a>
                         <div>
                           <div class="fw-semibold"><?php echo e($item['product_name']); ?></div>
-                          <div class="small text-muted">Qty: <?php echo (int)$item['quantity']; ?></div>
-                          <div class="small text-muted">Unit: Rs. <?php echo number_format((float)$item['unit_price'], 2); ?></div>
+                          <div class="small text-muted"><?php echo t('qty_label'); ?>: <?php echo (int)$item['quantity']; ?></div>
+                          <div class="small text-muted"><?php echo t('unit_label'); ?>: Rs. <?php echo number_format((float)$item['unit_price'], 2); ?></div>
                         </div>
                       </div>
                     </div>

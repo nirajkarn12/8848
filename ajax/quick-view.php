@@ -1,11 +1,11 @@
 <?php
 require_once __DIR__ . '/../inc/functions.php';
 $productId = (int)($_GET['id'] ?? 0);
-if (!$productId) { echo '<div class="alert alert-danger">Invalid product.</div>'; exit; }
+if (!$productId) { echo '<div class="alert alert-danger">' . t('invalid_product') . '</div>'; exit; }
 $stmt = $pdo->prepare('SELECT * FROM tbl_product WHERE p_id = ? LIMIT 1');
 $stmt->execute([$productId]);
 $product = $stmt->fetch();
-if (!$product) { echo '<div class="alert alert-danger">Product not found.</div>'; exit; }
+if (!$product) { echo '<div class="alert alert-danger">' . t('product_not_found') . '</div>'; exit; }
 $category = getCategoryName($product['ecat_id']);
 $imageUrl = getProductImage($product['p_featured_photo'] ?? '');
 ?>

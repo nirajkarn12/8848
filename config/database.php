@@ -15,7 +15,7 @@ define('BASE_URL', rtrim($baseUrl, '/') . '/');
 define('ASSET_URL', BASE_URL . 'assets/');
 define('UPLOAD_URL', ASSET_URL . 'uploads/');
 
-define('SITE_NAME', 'Koshi Cleaning');
+define('SITE_NAME', '8848 Cleaning Service');
 
 try {
     $pdo = new PDO("mysql:host={$dbhost};dbname={$dbname};charset=utf8mb4", $dbuser, $dbpass, [

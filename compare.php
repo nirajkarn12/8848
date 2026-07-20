@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/inc/functions.php';
-$pageTitle = 'Compare';
+$pageTitle = loadLang('compare');
 
 if (isset($_GET['action']) && $_GET['action'] === 'add') {
     $productId = (int)($_GET['id'] ?? 0);
@@ -11,7 +11,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'add') {
         if (!in_array($productId, $_SESSION['compare'], true) && count($_SESSION['compare']) < 4) {
             $_SESSION['compare'][] = $productId;
         }
-        setFlash('success', 'Added to compare.');
+        setFlash('success', loadLang('added_to_compare'));
     }
     header('Location: compare.php');
     exit;
@@ -21,7 +21,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'remove') {
     $productId = (int)($_GET['id'] ?? 0);
     if ($productId && isset($_SESSION['compare'])) {
         $_SESSION['compare'] = array_values(array_filter($_SESSION['compare'], fn($id) => (int)$id !== $productId));
-        setFlash('success', 'Removed from compare.');
+        setFlash('success', loadLang('removed_from_compare'));
     }
     header('Location: compare.php');
     exit;
@@ -29,8 +29,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'remove') {
 
 include __DIR__ . '/inc/header.php';
 $breadcrumbs = [
-    ['label' => 'Home', 'url' => BASE_URL],
-    ['label' => 'Compare', 'url' => '']
+    ['label' => t('home'), 'url' => BASE_URL],
+    ['label' => t('compare'), 'url' => '']
 ];
 echo renderBreadcrumbs($breadcrumbs);
 $products = [];
@@ -48,11 +48,11 @@ if (!empty($_SESSION['compare'])) {
         <img src="<?php echo getProductImage($product['p_featured_photo']); ?>" alt="" class="img-fluid rounded-3 mb-3" style="height:220px; object-fit:cover; width:100%;">
         <h5 class="fw-bold"><?php echo e($product['p_name']); ?></h5>
         <p class="text-muted small"><?php echo e(excerpt($product['p_short_description'], 120)); ?></p>
-        <p class="mb-2"><strong>Availability:</strong> <?php echo (int)$product['p_qty'] > 0 ? 'In stock' : 'Out of stock'; ?></p>
-        <p class="mb-2"><strong>Features:</strong> <?php echo e(excerpt($product['p_feature'], 140)); ?></p>
-        <a href="compare.php?action=remove&id=<?php echo (int)$product['p_id']; ?>" class="btn btn-outline-danger btn-sm">Remove</a>
+        <p class="mb-2"><strong><?php echo t('availability'); ?>:</strong> <?php echo (int)$product['p_qty'] > 0 ? t('in_stock') : t('out_of_stock'); ?></p>
+        <p class="mb-2"><strong><?php echo t('features'); ?>:</strong> <?php echo e(excerpt($product['p_feature'], 140)); ?></p>
+        <a href="compare.php?action=remove&id=<?php echo (int)$product['p_id']; ?>" class="btn btn-outline-danger btn-sm"><?php echo t('remove'); ?></a>
       </div>
     </div>
-  <?php } } else { ?><div class="col-12"><div class="alert alert-light rounded-4">No products selected for compare.</div></div><?php } ?>
+  <?php } } else { ?><div class="col-12"><div class="alert alert-light rounded-4"><?php echo t('compare_empty'); ?></div></div><?php } ?>
 </div>
 <?php include __DIR__ . '/inc/footer.php'; ?>

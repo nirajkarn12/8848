@@ -24,7 +24,7 @@ function paymentHasColumn(PDO $pdo, string $column): bool
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verifyCsrf($_POST['csrf_token'] ?? '')) {
-        setFlash('danger', 'Invalid request.');
+        setFlash('danger', loadLang('invalid_request'));
         header('Location: checkout.php');
         exit;
     }
@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $accessNotes = trim($_POST['access_notes'] ?? '');
 
     if ($customerName === '' || $phone === '' || $email === '' || $serviceAddress === '') {
-        setFlash('danger', 'Please complete the required booking fields.');
+        setFlash('danger', loadLang('booking_fields_required'));
         header('Location: checkout.php');
         exit;
     }
@@ -134,12 +134,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $pdo->commit();
         unset($_SESSION['cart'], $_SESSION['booking_pref']);
-        setFlash('success', 'Your cleaning booking request has been submitted. We will confirm shortly.');
+        setFlash('success', loadLang('booking_submitted'));
         header('Location: account/order-history.php');
         exit;
     } catch (Throwable $e) {
         $pdo->rollBack();
-        setFlash('danger', 'Could not save your booking right now.');
+        setFlash('danger', loadLang('booking_save_failed'));
         header('Location: checkout.php');
         exit;
     }
@@ -161,17 +161,17 @@ $pref = $_SESSION['booking_pref'] ?? [];
       <form method="post" class="row g-3">
         <input type="hidden" name="csrf_token" value="<?php echo e(csrfToken()); ?>">
         <div class="col-md-6"><label class="form-label"><?php echo t('customer_name'); ?></label><input class="form-control" name="customer_name" value="<?php echo e($pref['customer_name'] ?? ''); ?>" required></div>
-        <div class="col-md-6"><label class="form-label">Company (optional)</label><input class="form-control" name="company"></div>
-        <div class="col-md-6"><label class="form-label">Phone</label><input class="form-control" name="phone" value="<?php echo e($pref['phone'] ?? ''); ?>" required></div>
+        <div class="col-md-6"><label class="form-label"><?php echo t('company_optional'); ?></label><input class="form-control" name="company"></div>
+        <div class="col-md-6"><label class="form-label"><?php echo t('phone'); ?></label><input class="form-control" name="phone" value="<?php echo e($pref['phone'] ?? ''); ?>" required></div>
         <div class="col-md-6"><label class="form-label"><?php echo t('email_address'); ?></label><input class="form-control" type="email" name="email" value="<?php echo e($pref['email'] ?? ''); ?>" required></div>
-        <div class="col-md-4"><label class="form-label">Province</label><input class="form-control" name="province"></div>
-        <div class="col-md-4"><label class="form-label">District</label><input class="form-control" name="district"></div>
-        <div class="col-md-4"><label class="form-label">Municipality</label><input class="form-control" name="municipality"></div>
-        <div class="col-12"><label class="form-label"><?php echo t('service_address'); ?></label><textarea class="form-control" name="service_address" rows="3" required placeholder="Full address where cleaning should happen"><?php echo e($pref['service_address'] ?? ''); ?></textarea></div>
+        <div class="col-md-4"><label class="form-label"><?php echo t('province'); ?></label><input class="form-control" name="province"></div>
+        <div class="col-md-4"><label class="form-label"><?php echo t('district'); ?></label><input class="form-control" name="district"></div>
+        <div class="col-md-4"><label class="form-label"><?php echo t('municipality'); ?></label><input class="form-control" name="municipality"></div>
+        <div class="col-12"><label class="form-label"><?php echo t('service_address'); ?></label><textarea class="form-control" name="service_address" rows="3" required placeholder="<?php echo t('service_address_placeholder'); ?>"><?php echo e($pref['service_address'] ?? ''); ?></textarea></div>
         <div class="col-md-6"><label class="form-label"><?php echo t('preferred_date'); ?></label><input class="form-control" type="date" name="preferred_date" min="<?php echo date('Y-m-d'); ?>" value="<?php echo e($pref['preferred_date'] ?? ''); ?>"></div>
         <div class="col-md-6"><label class="form-label"><?php echo t('preferred_time'); ?></label><input class="form-control" type="time" name="preferred_time" value="<?php echo e($pref['preferred_time'] ?? ''); ?>"></div>
-        <div class="col-12"><label class="form-label"><?php echo t('notes'); ?></label><textarea class="form-control" name="remarks" rows="2" placeholder="Rooms, pets, parking…"></textarea></div>
-        <div class="col-12"><label class="form-label"><?php echo t('access_notes'); ?></label><textarea class="form-control" name="access_notes" rows="2" placeholder="Gate code, landmark, contact on site…"></textarea></div>
+        <div class="col-12"><label class="form-label"><?php echo t('notes'); ?></label><textarea class="form-control" name="remarks" rows="2" placeholder="<?php echo t('notes_placeholder'); ?>"></textarea></div>
+        <div class="col-12"><label class="form-label"><?php echo t('access_notes'); ?></label><textarea class="form-control" name="access_notes" rows="2" placeholder="<?php echo t('access_notes_placeholder'); ?>"></textarea></div>
         <div class="col-12"><button class="btn btn-dark"><?php echo t('submit_booking'); ?></button></div>
       </form>
     </div>

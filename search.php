@@ -1,12 +1,12 @@
 <?php
 require_once __DIR__ . '/inc/functions.php';
-$pageTitle = 'Search';
+$pageTitle = loadLang('search');
 $keyword = trim($_GET['q'] ?? '');
 $sort = $_GET['sort'] ?? 'newest';
 include __DIR__ . '/inc/header.php';
 $breadcrumbs = [
-    ['label' => 'Home', 'url' => BASE_URL],
-    ['label' => 'Search', 'url' => '']
+    ['label' => t('home'), 'url' => BASE_URL],
+    ['label' => t('search'), 'url' => '']
 ];
 echo renderBreadcrumbs($breadcrumbs);
 
@@ -31,21 +31,21 @@ $products = $stmt->fetchAll();
 <div class="card card-hover p-4 mb-4">
   <form method="get" class="row g-3 align-items-end">
     <div class="col-md-6">
-      <label class="form-label">Search term</label>
-      <input class="form-control" name="q" value="<?php echo e($keyword); ?>" placeholder="Type a product name">
+      <label class="form-label"><?php echo t('search_term'); ?></label>
+      <input class="form-control" name="q" value="<?php echo e($keyword); ?>" placeholder="<?php echo t('type_service_name'); ?>">
     </div>
     <div class="col-md-4">
-      <label class="form-label">Sort</label>
+      <label class="form-label"><?php echo t('sort'); ?></label>
       <select class="form-select" name="sort">
         <?php echo sortOptions($sort); ?>
       </select>
     </div>
     <div class="col-md-2">
-      <button class="btn btn-dark w-100">Search</button>
+      <button class="btn btn-dark w-100"><?php echo t('search'); ?></button>
     </div>
   </form>
 </div>
 <div class="row g-4">
-  <?php if ($products) { foreach ($products as $product) { include __DIR__ . '/pages/product-card.php'; } } else { ?><div class="col-12"><div class="alert alert-light rounded-4">No results found.</div></div><?php } ?>
+  <?php if ($products) { foreach ($products as $product) { include __DIR__ . '/pages/product-card.php'; } else { ?><div class="col-12"><div class="alert alert-light rounded-4"><?php echo t('no_results_found'); ?></div></div><?php } ?>
 </div>
 <?php include __DIR__ . '/inc/footer.php'; ?>

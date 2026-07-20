@@ -58,7 +58,7 @@ if ($postId) {
       <?php } ?>
       <h2 class="fw-bold mb-3"><?php echo e($post['post_title']); ?></h2>
       <div class="share-buttons d-flex flex-wrap align-items-center gap-2 mb-4">
-        <span class="text-muted small fw-semibold">Share:</span>
+        <span class="text-muted small fw-semibold"><?php echo t('share'); ?>:</span>
         <a href="<?php echo $facebookShare; ?>" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary btn-sm">
           <i class="fab fa-facebook-f"></i> Facebook
         </a>
@@ -72,7 +72,7 @@ if ($postId) {
           <i class="fab fa-whatsapp"></i> WhatsApp
         </a>
         <a href="#" onclick="navigator.share ? navigator.share({ title: '<?php echo addslashes($post['post_title']); ?>', text: '<?php echo addslashes($post['post_title']); ?>', url: '<?php echo addslashes($currentUrl); ?>' }).catch(()=>{}) : window.location.href = '<?php echo $mailtoShare; ?>'; return false;" class="btn btn-outline-secondary btn-sm">
-          <i class="fa fa-share-alt"></i> More
+          <i class="fa fa-share-alt"></i> <?php echo t('more'); ?>
         </a>
       </div>
       <div class="text-muted rich-content"><?php echo renderRichHtml($post['post_content']); ?></div>
@@ -97,10 +97,10 @@ if ($postId) {
               <p class="text-muted small"><?php echo excerpt(strip_tags($post['post_content']), 140); ?></p>
               <div class="d-flex flex-wrap gap-2 align-items-center">
                 <a href="blog.php?id=<?php echo (int)$post['post_id']; ?>" class="btn btn-dark btn-sm"><?php echo t('read_more'); ?></a>
-                <a href="<?php echo $facebookShare; ?>" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary btn-icon" title="Share on Facebook">
+                <a href="<?php echo $facebookShare; ?>" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary btn-icon" title="<?php echo t('share_on_facebook'); ?>">
                   <i class="fab fa-facebook-f"></i>
                 </a>
-                <a href="#" onclick="<?php echo $instagramShareJs; ?>" class="btn btn-outline-secondary btn-icon" title="Share to Instagram">
+                <a href="#" onclick="<?php echo $instagramShareJs; ?>" class="btn btn-outline-secondary btn-icon" title="<?php echo t('share_on_instagram'); ?>">
                   <i class="fab fa-instagram"></i>
                 </a>
               </div>

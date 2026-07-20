@@ -1,10 +1,10 @@
 <?php
 require_once __DIR__ . '/../inc/functions.php';
-$pageTitle = 'Register';
+$pageTitle = loadLang('register');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verifyCsrf($_POST['csrf_token'] ?? '')) {
-        setFlash('danger', 'Invalid request.');
+        setFlash('danger', loadLang('invalid_request'));
         header('Location: ' . BASE_URL . 'account/register.php');
         exit;
     }
@@ -16,13 +16,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $confirm = trim($_POST['confirm'] ?? '');
 
     if ($name === '' || $email === '' || $phone === '' || $password === '' || $confirm === '') {
-        setFlash('danger', 'Please fill all fields.');
+        setFlash('danger', loadLang('fill_all_fields'));
         header('Location: ' . BASE_URL . 'account/register.php');
         exit;
     }
 
     if ($password !== $confirm) {
-        setFlash('danger', 'Passwords do not match.');
+        setFlash('danger', loadLang('passwords_do_not_match'));
         header('Location: ' . BASE_URL . 'account/register.php');
         exit;
     }
@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $check = $pdo->prepare('SELECT cust_id FROM tbl_customer WHERE cust_email = ? LIMIT 1');
     $check->execute([$email]);
     if ($check->fetch()) {
-        setFlash('danger', 'This email already exists.');
+        setFlash('danger', loadLang('email_already_exists'));
         header('Location: ' . BASE_URL . 'account/register.php');
         exit;
     }
@@ -46,32 +46,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $_SESSION['customer_id'] = $customerId;
     $_SESSION['customer_name'] = $name;
-    setFlash('success', 'Registration successful.');
+    setFlash('success', loadLang('registration_successful'));
     header('Location: ' . BASE_URL . 'account/profile.php');
     exit;
 }
 
 include __DIR__ . '/../inc/header.php';
 $breadcrumbs = [
-    ['label' => 'Home', 'url' => BASE_URL],
-    ['label' => 'Register', 'url' => '']
+    ['label' => t('home'), 'url' => BASE_URL],
+    ['label' => t('register'), 'url' => '']
 ];
 echo renderBreadcrumbs($breadcrumbs);
 ?>
 <div class="row justify-content-center">
   <div class="col-lg-6">
     <div class="card card-hover p-4">
-      <h3 class="fw-bold mb-3">Create account</h3>
+      <h3 class="fw-bold mb-3"><?php echo t('create_account'); ?></h3>
       <form method="post" class="row g-3">
         <input type="hidden" name="csrf_token" value="<?php echo e(csrfToken()); ?>">
-        <div class="col-md-6"><label class="form-label">Full name</label><input class="form-control" name="cust_name" required></div>
-        <div class="col-md-6"><label class="form-label">Email</label><input class="form-control" type="email" name="email" required></div>
-        <div class="col-md-6"><label class="form-label">Phone</label><input class="form-control" name="phone" required></div>
-        <div class="col-md-6"><label class="form-label">Password</label><input class="form-control" type="password" name="password" required></div>
-        <div class="col-12"><label class="form-label">Confirm password</label><input class="form-control" type="password" name="confirm" required></div>
-        <div class="col-12"><button class="btn btn-dark">Register</button></div>
+        <div class="col-md-6"><label class="form-label"><?php echo t('full_name'); ?></label><input class="form-control" name="cust_name" required></div>
+        <div class="col-md-6"><label class="form-label"><?php echo t('email'); ?></label><input class="form-control" type="email" name="email" required></div>
+        <div class="col-md-6"><label class="form-label"><?php echo t('phone'); ?></label><input class="form-control" name="phone" required></div>
+        <div class="col-md-6"><label class="form-label"><?php echo t('password'); ?></label><input class="form-control" type="password" name="password" required></div>
+        <div class="col-12"><label class="form-label"><?php echo t('confirm_password'); ?></label><input class="form-control" type="password" name="confirm" required></div>
+        <div class="col-12"><button class="btn btn-dark"><?php echo t('register'); ?></button></div>
         <div class="col-12 text-center small text-muted">
-          Already have an account? <a href="<?php echo BASE_URL; ?>account/login.php" class="text-decoration-none fw-bold">Login here</a>
+          <?php echo t('already_have_account'); ?> <a href="<?php echo BASE_URL; ?>account/login.php" class="text-decoration-none fw-bold"><?php echo t('login_here'); ?></a>
         </div>
       </form>
     </div>

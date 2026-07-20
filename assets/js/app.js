@@ -1,4 +1,26 @@
 document.addEventListener('DOMContentLoaded', function () {
+    const foamIntro = document.getElementById('foamIntro');
+    if (foamIntro) {
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const alreadySeen = sessionStorage.getItem('foamIntroSeen') === '1';
+
+        const finishIntro = function () {
+            foamIntro.classList.add('is-leaving');
+            setTimeout(function () {
+                foamIntro.classList.add('is-done');
+                setTimeout(function () { foamIntro.remove(); }, 380);
+            }, 280);
+            try { sessionStorage.setItem('foamIntroSeen', '1'); } catch (e) {}
+        };
+
+        if (reduceMotion || alreadySeen) {
+            foamIntro.remove();
+        } else {
+            // Hand slides in + foam bursts, then exits (~1 second total)
+            setTimeout(finishIntro, 1000);
+        }
+    }
+
     const loader = document.getElementById('pageLoader');
     if (loader) {
         window.addEventListener('load', function () {

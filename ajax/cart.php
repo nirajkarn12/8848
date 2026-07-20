@@ -3,7 +3,7 @@ require_once __DIR__ . '/../inc/functions.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+    echo json_encode(['success' => false, 'message' => loadLang('method_not_allowed')]);
     exit;
 }
 
@@ -24,10 +24,10 @@ if ($action === 'add') {
             } else {
                 $_SESSION['cart'][$productId] = ['product_id' => $product['p_id'], 'product_name' => $product['p_name'], 'photo' => $product['p_featured_photo'], 'quantity' => $quantity, 'notes' => ''];
             }
-            echo json_encode(['success' => true, 'message' => 'Added to booking.', 'count' => count($_SESSION['cart'])]);
+            echo json_encode(['success' => true, 'message' => loadLang('added_to_booking'), 'count' => count($_SESSION['cart'])]);
             exit;
         }
     }
 }
 
-echo json_encode(['success' => false, 'message' => 'Unable to add service']);
+echo json_encode(['success' => false, 'message' => loadLang('unable_to_add_service')]);

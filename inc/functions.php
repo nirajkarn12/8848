@@ -37,6 +37,23 @@ function t($key) {
     return e(loadLang($key));
 }
 
+function tf($key, ...$args) {
+    $text = loadLang($key);
+    return e($args ? vsprintf($text, $args) : $text);
+}
+
+function langSwitchUrl($code) {
+    $uri = $_SERVER['REQUEST_URI'] ?? '/';
+    $parts = parse_url($uri);
+    $path = $parts['path'] ?? '/';
+    $query = [];
+    if (!empty($parts['query'])) {
+        parse_str($parts['query'], $query);
+    }
+    $query['lang'] = $code;
+    return $path . '?' . http_build_query($query);
+}
+
 function csrfToken() {
     if (empty($_SESSION['csrf_token'])) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -100,10 +117,10 @@ function getMarqueeNotices() {
 
     if (!$notices) {
         $notices = array(
-            'Book home & office cleaning online — fast confirmation',
-            'Professional trained staff assigned to every booking',
-            'Flexible time slots · Same-day service where available',
-            'Call us for custom quotes and recurring cleaning plans',
+            loadLang('marquee_1'),
+            loadLang('marquee_2'),
+            loadLang('marquee_3'),
+            loadLang('marquee_4'),
         );
     }
 

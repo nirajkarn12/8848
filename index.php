@@ -1,8 +1,9 @@
 <?php
 require_once __DIR__ . '/inc/functions.php';
-$pageTitle = 'Home';
-$metaDescription = 'Professional home and office cleaning. Book trusted cleaners online with Koshi Cleaning.';
+$pageTitle = loadLang('home');
+$metaDescription = loadLang('meta_home_description');
 $fullWidth = true;
+$showWaterSplash = true;
 include __DIR__ . '/inc/header.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['newsletter_email'])) {
@@ -122,9 +123,9 @@ try {
 <section class="trust-strip">
   <div class="container">
     <div class="trust-grid">
-      <div class="trust-item"><i class="fa fa-shield-halved"></i><span>Vetted cleaners</span></div>
-      <div class="trust-item"><i class="fa fa-clock"></i><span>On-time visits</span></div>
-      <div class="trust-item"><i class="fa fa-spray-can-sparkles"></i><span>Home & office</span></div>
+      <div class="trust-item"><i class="fa fa-shield-halved"></i><span><?php echo t('trust_vetted'); ?></span></div>
+      <div class="trust-item"><i class="fa fa-clock"></i><span><?php echo t('trust_ontime'); ?></span></div>
+      <div class="trust-item"><i class="fa fa-spray-can-sparkles"></i><span><?php echo t('trust_home_office'); ?></span></div>
       <div class="trust-item"><i class="fa fa-phone"></i><a href="tel:<?php echo preg_replace('/\s+/', '', $phone); ?>"><?php echo $phone; ?></a></div>
     </div>
   </div>
@@ -158,6 +159,12 @@ try {
     </article>
   </div>
 </section>
+
+<?php
+$aboutPage = $pdo->query('SELECT about_title, about_content, about_banner FROM tbl_page LIMIT 1')->fetch(PDO::FETCH_ASSOC) ?: [];
+$aboutCompact = true;
+include __DIR__ . '/inc/partials/about-section.php';
+?>
 
 </div>
 
@@ -220,14 +227,24 @@ try {
 
 </div>
 
-<section class="site-ribbon site-ribbon-b reveal">
-  <div class="site-ribbon-inner">
-    <div class="site-ribbon-copy">
-      <div class="site-ribbon-kicker"><?php echo t('why_choose_us'); ?></div>
-      <h2 class="site-ribbon-title"><?php echo t('ribbon_2_title'); ?></h2>
-      <p class="site-ribbon-text"><?php echo t('ribbon_2_text'); ?></p>
+<?php
+$promoBannerImg = ASSET_URL . 'images/cleaning-hero.jpg';
+if (!empty($aboutPage['about_banner'])) {
+    $promoBannerImg = getProductImage($aboutPage['about_banner']);
+}
+?>
+<section class="home-promo-banner reveal" style="--promo-banner-image: url('<?php echo e($promoBannerImg); ?>');">
+  <div class="home-promo-banner-shade"></div>
+  <div class="home-promo-banner-inner">
+    <div class="home-promo-banner-copy">
+      <div class="home-promo-kicker"><?php echo t('why_choose_us'); ?></div>
+      <h2 class="home-promo-title"><?php echo t('cta_ready_title'); ?></h2>
+      <p class="home-promo-text"><?php echo t('cta_ready_text'); ?></p>
+      <div class="home-promo-actions">
+        <a href="book-service.php" class="btn btn-light btn-lg"><?php echo t('book_now'); ?></a>
+        <a href="contact.php" class="btn btn-outline-light btn-lg"><?php echo t('contact_us_btn'); ?></a>
+      </div>
     </div>
-    <a href="book-service.php" class="btn btn-light btn-lg"><?php echo t('ribbon_2_cta'); ?></a>
   </div>
 </section>
 
@@ -311,16 +328,24 @@ try {
 
 </div>
 
-<section class="site-ribbon site-ribbon-c reveal">
-  <div class="site-ribbon-inner">
-    <div class="site-ribbon-copy">
-      <div class="site-ribbon-kicker"><?php echo t('contact'); ?></div>
-      <h2 class="site-ribbon-title"><?php echo t('ribbon_3_title'); ?></h2>
-      <p class="site-ribbon-text"><?php echo t('ribbon_3_text'); ?></p>
-    </div>
-    <div class="d-flex flex-wrap gap-2">
-      <a href="contact.php" class="btn btn-light btn-lg"><?php echo t('ribbon_3_cta'); ?></a>
-      <a href="book-service.php" class="btn btn-outline-light btn-lg"><?php echo t('book_now'); ?></a>
+<?php
+$quoteBannerImg = ASSET_URL . 'images/cleaning-side.jpg';
+$quoteBannerPath = __DIR__ . '/assets/images/cleaning-side.jpg';
+if (!is_file($quoteBannerPath)) {
+    $quoteBannerImg = ASSET_URL . 'images/cleaning-hero.jpg';
+}
+?>
+<section class="home-promo-banner home-promo-banner--quote reveal" style="--promo-banner-image: url('<?php echo e($quoteBannerImg); ?>');">
+  <div class="home-promo-banner-shade"></div>
+  <div class="home-promo-banner-inner">
+    <div class="home-promo-banner-copy">
+      <div class="home-promo-kicker"><?php echo t('contact'); ?></div>
+      <h2 class="home-promo-title"><?php echo t('ribbon_3_title'); ?></h2>
+      <p class="home-promo-text"><?php echo t('ribbon_3_text'); ?></p>
+      <div class="home-promo-actions">
+        <a href="contact.php" class="btn btn-light btn-lg"><?php echo t('ribbon_3_cta'); ?></a>
+        <a href="book-service.php" class="btn btn-outline-light btn-lg"><?php echo t('book_now'); ?></a>
+      </div>
     </div>
   </div>
 </section>
@@ -469,12 +494,12 @@ try {
 <section class="clients-band">
   <div class="clients-band-inner">
     <div class="clients-kicker"><?php echo t('our_clients'); ?></div>
-    <h2 class="clients-title">Preferred By <span class="accent-word">Professionals</span></h2>
+    <h2 class="clients-title"><?php echo t('preferred_by_professionals'); ?></h2>
     <div class="clients-logos">
       <?php foreach ($homeClients as $client) {
         $logoUrl = getProductImage($client['logo']);
         $link = trim($client['website_url'] ?? '');
-        $alt = $client['name'] !== '' ? $client['name'] : 'Client';
+        $alt = $client['name'] !== '' ? $client['name'] : loadLang('client');
       ?>
         <?php if ($link !== '') { ?>
           <a class="client-logo-item" href="<?php echo e($link); ?>" target="_blank" rel="noopener noreferrer" aria-label="<?php echo e($alt); ?>">

@@ -2,14 +2,14 @@
     </div>
     <?php } ?>
 </main>
-<a href="#" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fa fa-arrow-up"></i></a>
+<a href="#" class="back-to-top" id="backToTop" aria-label="<?php echo t('back_to_top'); ?>"><i class="fa fa-arrow-up"></i></a>
 <a href="https://wa.me/9869224134" class="floating-wa" target="_blank" rel="noreferrer" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
 <footer class="site-footer">
     <div class="container py-5">
         <div class="row g-4 align-items-start">
             <div class="col-lg-3">
                 <div class="footer-brand mb-3">
-                    <img src="<?php echo getProductImage(getSiteSetting('logo', 'logo.jpg')); ?>" alt="Brand logo">
+                    <img src="<?php echo getProductImage(getSiteSetting('logo', 'logo.jpg')); ?>" alt="<?php echo t('brand_logo'); ?>">
                     <span><?php echo e(getSiteSetting('site_name', SITE_NAME)); ?></span>
                 </div>
                 <p class="text-white-50 mb-0"><?php echo t('crafted_with_care'); ?></p>
@@ -31,7 +31,7 @@
                 <p class="text-white-50 mb-0"><i class="fa fa-envelope me-2"></i><?php echo e(getSiteSetting('contact_email', 'contact@resinnepal.com.np')); ?></p>
             </div>
             <div class="col-lg-3">
-    <h5 class="fw-bold mb-3">Follow Us</h5>
+    <h5 class="fw-bold mb-3"><?php echo t('follow_us'); ?></h5>
 
     <div class="d-flex flex-wrap gap-2 social-links">
         <?php foreach (getSocialLinks() as $social) { ?>
@@ -55,7 +55,7 @@
                 <?php
                 $copyright = getSiteSetting(
                     'footer_copyright',
-                    '© {YEAR} Koshi Cleaning. All rights reserved.'
+                    '© {YEAR} 8848 Cleaning Service. All rights reserved.'
                 );
                 echo e(str_replace('{YEAR}', date('Y'), $copyright));
                 ?>
@@ -89,6 +89,6 @@ $(function() {
     });
 });
 </script>
-<script src="<?php echo ASSET_URL; ?>js/app.js?v=20260717f"></script>
+<script src="<?php echo ASSET_URL; ?>js/app.js?v=20260720i"></script>
 </body>
 </html>

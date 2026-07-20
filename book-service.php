@@ -7,7 +7,7 @@ $services = $pdo->query('SELECT p_id, p_name, p_short_description, p_featured_ph
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verifyCsrf($_POST['csrf_token'] ?? '')) {
-        setFlash('danger', 'Invalid request.');
+        setFlash('danger', loadLang('invalid_request'));
         header('Location: book-service.php');
         exit;
     }
@@ -41,13 +41,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'phone' => trim($_POST['phone'] ?? ''),
                 'email' => trim($_POST['email'] ?? ''),
             ];
-            setFlash('success', 'Service added. Complete your booking details.');
+            setFlash('success', loadLang('service_added_complete_booking'));
             header('Location: checkout.php');
             exit;
         }
     }
 
-    setFlash('danger', 'Please choose a valid service.');
+    setFlash('danger', loadLang('choose_valid_service'));
     header('Location: book-service.php');
     exit;
 }
@@ -75,7 +75,7 @@ echo renderFlash();
         <div class="col-12">
           <label class="form-label"><?php echo t('product'); ?></label>
           <select class="form-select" name="service_id" required>
-            <option value="">Select a service…</option>
+            <option value=""><?php echo t('select_service'); ?></option>
             <?php foreach ($services as $svc) { ?>
               <option value="<?php echo (int)$svc['p_id']; ?>" <?php echo $preselect === (int)$svc['p_id'] ? 'selected' : ''; ?>>
                 <?php echo e($svc['p_name']); ?>
@@ -88,7 +88,7 @@ echo renderFlash();
           <input class="form-control" name="customer_name" value="<?php echo e($pref['customer_name'] ?? ''); ?>">
         </div>
         <div class="col-md-6">
-          <label class="form-label">Phone</label>
+          <label class="form-label"><?php echo t('phone'); ?></label>
           <input class="form-control" name="phone" value="<?php echo e($pref['phone'] ?? ''); ?>">
         </div>
         <div class="col-12">
@@ -109,7 +109,7 @@ echo renderFlash();
         </div>
         <div class="col-12">
           <label class="form-label"><?php echo t('notes'); ?></label>
-          <textarea class="form-control" name="notes" rows="2" placeholder="Rooms, pets, special requests…"></textarea>
+          <textarea class="form-control" name="notes" rows="2" placeholder="<?php echo t('notes_placeholder'); ?>"></textarea>
         </div>
         <div class="col-12">
           <button class="btn btn-dark btn-lg"><?php echo t('proceed_booking'); ?></button>

@@ -12,13 +12,13 @@ if ($categoryId) {
     }
     $pageTitle = $category['mcat_name'];
 } else {
-    $pageTitle = 'Categories';
+    $pageTitle = loadLang('categories');
 }
 
 include __DIR__ . '/inc/header.php';
 $breadcrumbs = [
-    ['label' => 'Home', 'url' => BASE_URL],
-    ['label' => 'Categories', 'url' => BASE_URL . 'products.php'],
+    ['label' => t('home'), 'url' => BASE_URL],
+    ['label' => t('categories'), 'url' => BASE_URL . 'products.php'],
     ['label' => $pageTitle, 'url' => '']
 ];
 echo renderBreadcrumbs($breadcrumbs);
@@ -37,7 +37,7 @@ $products = $stmt->fetchAll();
 <div class="row g-4">
   <div class="col-lg-3">
     <div class="card card-hover p-4">
-      <h5 class="fw-bold mb-3">Category</h5>
+      <h5 class="fw-bold mb-3"><?php echo t('category'); ?></h5>
       <ul class="list-unstyled">
         <?php foreach (getTopCategories() as $top) { ?>
           <li class="mb-3"><strong><?php echo e($top['tcat_name']); ?></strong>

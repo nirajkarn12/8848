@@ -29,10 +29,10 @@ define('SMTP_PASS', 'eptg ikjc lbbd yosq');
 define('SMTP_PORT', 465);
 
 define('SMTP_FROM_EMAIL', 'nirajkarna66@gmail.com');
-define('SMTP_FROM_NAME', 'Koshi Supplier');
+define('SMTP_FROM_NAME', '8848 Cleaning Service');
 
 define('SMTP_REPLYTO_EMAIL', 'nirajkarna66@gmail.com');
-define('SMTP_REPLYTO_NAME', 'Koshi Supplier');
+define('SMTP_REPLYTO_NAME', '8848 Cleaning Service');
 
 try {
 	$pdo = new PDO("mysql:host={$dbhost};dbname={$dbname}", $dbuser, $dbpass);

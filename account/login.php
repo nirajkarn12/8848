@@ -1,10 +1,10 @@
 <?php
 require_once __DIR__ . '/../inc/functions.php';
-$pageTitle = 'Login';
+$pageTitle = loadLang('login');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verifyCsrf($_POST['csrf_token'] ?? '')) {
-        setFlash('danger', 'Invalid request.');
+        setFlash('danger', loadLang('invalid_request'));
         header('Location: ' . BASE_URL . 'account/login.php');
         exit;
     }
@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = trim($_POST['password'] ?? '');
 
     if ($email === '' || $password === '') {
-        setFlash('danger', 'Email and password are required.');
+        setFlash('danger', loadLang('email_password_required'));
         header('Location: ' . BASE_URL . 'account/login.php');
         exit;
     }
@@ -23,36 +23,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $customer = $stmt->fetch();
 
     if (!$customer || !verifyPassword($password, $customer['cust_password'])) {
-        setFlash('danger', 'Invalid credentials.');
+        setFlash('danger', loadLang('invalid_credentials'));
         header('Location: ' . BASE_URL . 'account/login.php');
         exit;
     }
 
     $_SESSION['customer_id'] = $customer['cust_id'];
     $_SESSION['customer_name'] = $customer['cust_name'];
-    setFlash('success', 'Welcome back.');
+    setFlash('success', loadLang('welcome_back'));
     header('Location: ' . BASE_URL . 'account/profile.php');
     exit;
 }
 
 include __DIR__ . '/../inc/header.php';
 $breadcrumbs = [
-    ['label' => 'Home', 'url' => BASE_URL],
-    ['label' => 'Login', 'url' => '']
+    ['label' => t('home'), 'url' => BASE_URL],
+    ['label' => t('login'), 'url' => '']
 ];
 echo renderBreadcrumbs($breadcrumbs);
 ?>
 <div class="row justify-content-center">
   <div class="col-lg-5">
     <div class="card card-hover p-4">
-      <h3 class="fw-bold mb-3">Customer login</h3>
+      <h3 class="fw-bold mb-3"><?php echo t('customer_login'); ?></h3>
       <form method="post" class="d-grid gap-3">
         <input type="hidden" name="csrf_token" value="<?php echo e(csrfToken()); ?>">
-        <div><label class="form-label">Email</label><input type="email" class="form-control" name="email" required></div>
-        <div><label class="form-label">Password</label><input type="password" class="form-control" name="password" required></div>
-        <button class="btn btn-dark">Login</button>
+        <div><label class="form-label"><?php echo t('email'); ?></label><input type="email" class="form-control" name="email" required></div>
+        <div><label class="form-label"><?php echo t('password'); ?></label><input type="password" class="form-control" name="password" required></div>
+        <button class="btn btn-dark"><?php echo t('login'); ?></button>
         <div class="d-flex justify-content-center small text-muted">
-          <a href="<?php echo BASE_URL; ?>account/register.php" class="text-decoration-none">Create account</a>
+          <a href="<?php echo BASE_URL; ?>account/register.php" class="text-decoration-none"><?php echo t('create_account'); ?></a>
         </div>
       </form>
     </div>

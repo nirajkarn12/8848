@@ -263,7 +263,7 @@ require_once __DIR__ . '/breadcrumbs.php';
     <nav class="navbar navbar-expand-lg container py-3">
         <a class="navbar-brand" href="<?php echo BASE_URL; ?>">
             <img src="<?php echo getProductImage('logo.jpg'); ?>" alt="Brand logo">
-            <span>koshi supplier</span>
+            <span><?php echo $siteName; ?></span>
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>

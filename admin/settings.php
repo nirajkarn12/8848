@@ -89,6 +89,13 @@ if(isset($_POST['form3'])) {
     // updating the database
     $marquee_on_off = $_POST['marquee_on_off'] ?? 1;
     $marquee_notices = $_POST['marquee_notices'] ?? '';
+    $site_name = trim($_POST['site_name'] ?? '');
+
+    $statement = $pdo->prepare("SHOW COLUMNS FROM tbl_settings LIKE 'site_name'");
+    $statement->execute();
+    if ($statement->rowCount() > 0 && $site_name !== '') {
+        $pdo->prepare("UPDATE tbl_settings SET site_name=? WHERE id=1")->execute(array($site_name));
+    }
 
     $statement = $pdo->prepare("SHOW COLUMNS FROM tbl_settings LIKE 'marquee_on_off'");
     $statement->execute();
@@ -814,6 +821,7 @@ $result = $statement->fetchAll(PDO::FETCH_ASSOC);
 foreach ($result as $row) {
     $logo                            = $row['logo'];
     $favicon                         = $row['favicon'];
+    $site_name                       = $row['site_name'] ?? '8848 Cleaning Service';
     $footer_about                    = $row['footer_about'];
     $footer_copyright                = $row['footer_copyright'];
     $contact_address                 = $row['contact_address'];
@@ -998,6 +1006,14 @@ foreach ($result as $row) {
                             <form class="form-horizontal" action="" method="post">
                             <div class="box box-info">
                                 <div class="box-body">
+                                    <div class="form-group">
+                                        <label for="" class="col-sm-2 control-label">Website Name </label>
+                                        <div class="col-sm-6">
+                                            <input class="form-control" type="text" name="site_name" value="<?php echo htmlspecialchars($site_name); ?>">
+                                            <span class="help-block" style="margin-bottom:0;">Shown in header, footer, and page titles.</span>
+                                        </div>
+                                    </div>
+
                                     <div class="form-group">
                                         <label for="" class="col-sm-2 control-label">Newsletter Section </label>
                                         <div class="col-sm-3">
