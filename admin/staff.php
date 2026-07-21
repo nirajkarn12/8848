@@ -22,10 +22,7 @@
 								<th width="150">Name</th>
 								<th width="150">Email</th>
 								<th width="100">Phone</th>
-								<th width="100">Role</th>
-								<th width="70">Website</th>
 								<th width="120">Default Commission</th>
-								<th width="60">Status</th>
 								<th width="80">Action</th>
 							</tr>
 						</thead>
@@ -47,10 +44,7 @@
 									<td><?php echo htmlspecialchars($row['full_name']); ?></td>
 									<td><?php echo htmlspecialchars($row['email']); ?></td>
 									<td><?php echo htmlspecialchars($row['phone']); ?></td>
-									<td><?php echo htmlspecialchars($row['designation'] ?? ''); ?></td>
-									<td><?php echo !empty($row['show_on_website']) ? 'Yes' : 'No'; ?></td>
 									<td><?php echo $commissionLabel; ?></td>
-									<td><?php echo htmlspecialchars($row['status']); ?></td>
 									<td>
 										<a href="staff-edit.php?id=<?php echo (int)$row['staff_id']; ?>" class="btn btn-primary btn-xs">Edit</a>
 										<a href="staff-availability.php?id=<?php echo (int)$row['staff_id']; ?>" class="btn btn-warning btn-xs">Availability</a>
@@ -59,12 +53,12 @@
 								</tr>
 								<?php
 							}
-							if ($i === 0) {
-								echo '<tr><td colspan="10" class="text-center">No staff yet. <a href="staff-add.php">Add staff</a> or run <a href="run-staff-migration.php">migration</a>.</td></tr>';
-							}
 							?>
 						</tbody>
 					</table>
+					<?php if ($i === 0) { ?>
+						<p class="text-center text-muted" style="margin-top:12px;">No staff yet. <a href="staff-add.php">Add staff</a> or run <a href="run-staff-migration.php">migration</a>.</p>
+					<?php } ?>
 				</div>
 			</div>
 		</div>

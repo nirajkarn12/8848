@@ -13,7 +13,7 @@ if (!$products) {
     exit;
 }
 foreach ($products as $product) {
-    echo '<a href="product.php?id=' . (int)$product['p_id'] . '" class="d-flex align-items-center gap-2 text-decoration-none text-dark p-2 rounded-3 hover-bg">';
+    echo '<a href="' . BASE_URL . 'product.php?id=' . (int)$product['p_id'] . '" class="d-flex align-items-center gap-2 text-decoration-none text-dark p-2 rounded-3 hover-bg">';
     echo '<img src="' . getProductImage($product['p_featured_photo']) . '" alt="" style="width:42px;height:42px;object-fit:cover;border-radius:0.5rem;">';
     echo '<span class="small">' . e($product['p_name']) . '</span>';
     echo '</a>';

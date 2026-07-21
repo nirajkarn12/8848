@@ -1,5 +1,10 @@
 <?php
 require_once __DIR__ . '/inc/functions.php';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['contact_form'])) {
+    handleContactFormSubmission(BASE_URL . 'index.php');
+}
+
 $homeSeo = getHomeSeo();
 $pageTitle = $homeSeo['title'];
 $metaDescription = $homeSeo['description'];
@@ -65,6 +70,19 @@ try {
         $teamStaff = [];
     }
 }
+$homeGallery = [];
+try {
+    $homeGallery = $pdo->query("
+        SELECT g.id, g.title, g.content, g.photo, g.mcat_id, m.mcat_name
+        FROM tbl_gallery g
+        LEFT JOIN tbl_mid_category m ON m.mcat_id = g.mcat_id
+        WHERE g.status = 'Active'
+        ORDER BY g.sort_order ASC, g.id DESC
+        LIMIT 12
+    ")->fetchAll();
+} catch (Throwable $e) {
+    $homeGallery = [];
+}
 ?>
 <div class="hero-notice-stack">
 <section class="hero-banner">
@@ -83,12 +101,20 @@ try {
           <div class="hero-slide-shade"></div>
           <div class="container hero-slide-content">
             <div class="hero-copy">
-              <div class="agency-brand"><?php echo $brandName; ?></div>
-              <h1><?php echo e($heading); ?></h1>
-              <p><?php echo e($content); ?></p>
+              <div class="hero-kicker"><?php echo $brandName; ?></div>
+              <?php echo renderHeroHeadline($heading); ?>
+              <p class="hero-lead"><?php echo e($content); ?></p>
               <div class="hero-actions">
-                <a href="<?php echo e($btnUrl); ?>" class="btn btn-light btn-lg"><?php echo e($btnText); ?></a>
-                <a href="contact.php" class="btn btn-outline-light btn-lg"><?php echo t('contact_us_btn'); ?></a>
+                <a href="<?php echo e($btnUrl); ?>" class="hero-pill hero-pill-primary">
+                  <i class="fa fa-house-chimney"></i>
+                  <span><?php echo e($btnText !== '' ? $btnText : loadLang('hero_cta_home')); ?></span>
+                  <i class="fa fa-arrow-right hero-pill-arrow"></i>
+                </a>
+                <a href="contact.php" class="hero-pill hero-pill-dark">
+                  <i class="fa fa-spray-can-sparkles"></i>
+                  <span><?php echo t('hero_cta_quote'); ?></span>
+                  <i class="fa fa-arrow-right hero-pill-arrow"></i>
+                </a>
               </div>
             </div>
           </div>
@@ -101,12 +127,20 @@ try {
           <div class="hero-slide-shade"></div>
           <div class="container hero-slide-content">
             <div class="hero-copy">
-              <div class="agency-brand"><?php echo $brandName; ?></div>
-              <h1><?php echo t('hero_default_title'); ?></h1>
-              <p><?php echo t('hero_default_text'); ?></p>
+              <div class="hero-kicker"><?php echo $brandName; ?></div>
+              <?php echo renderHeroHeadline(); ?>
+              <p class="hero-lead"><?php echo t('hero_default_text'); ?></p>
               <div class="hero-actions">
-                <a href="book-service.php" class="btn btn-light btn-lg"><?php echo t('book_now'); ?></a>
-                <a href="contact.php" class="btn btn-outline-light btn-lg"><?php echo t('contact_us_btn'); ?></a>
+                <a href="book-service.php" class="hero-pill hero-pill-primary">
+                  <i class="fa fa-house-chimney"></i>
+                  <span><?php echo t('hero_cta_home'); ?></span>
+                  <i class="fa fa-arrow-right hero-pill-arrow"></i>
+                </a>
+                <a href="products.php" class="hero-pill hero-pill-dark">
+                  <i class="fa fa-building"></i>
+                  <span><?php echo t('hero_cta_office'); ?></span>
+                  <i class="fa fa-arrow-right hero-pill-arrow"></i>
+                </a>
               </div>
             </div>
           </div>
@@ -135,6 +169,160 @@ try {
 
 <div class="container page-wrap py-5">
 
+<?php
+$aboutPage = $pdo->query('SELECT about_title, about_content, about_banner FROM tbl_page LIMIT 1')->fetch(PDO::FETCH_ASSOC) ?: [];
+$aboutCompact = true;
+include __DIR__ . '/inc/partials/about-section.php';
+?>
+
+<?php if ($featured) { ?>
+<section class="section-block home-services-showcase reveal">
+  <div class="home-gallery-head">
+    <div>
+      <div class="section-kicker"><?php echo t('featured_picks'); ?></div>
+      <h2 class="home-gallery-title"><?php echo t('featured_products'); ?></h2>
+    </div>
+    <div class="home-gallery-nav">
+      <button type="button" class="home-gallery-btn home-services-prev" aria-label="<?php echo t('previous'); ?>"><i class="fa fa-arrow-left"></i></button>
+      <button type="button" class="home-gallery-btn home-gallery-next home-services-next" aria-label="<?php echo t('next'); ?>"><i class="fa fa-arrow-right"></i></button>
+    </div>
+  </div>
+  <div class="swiper homeServicesSwiper">
+    <div class="swiper-wrapper">
+      <?php foreach ($featured as $product) {
+        $svcId = (int)$product['p_id'];
+        $svcCat = getCategoryName($product['ecat_id']);
+        $svcCatName = $svcCat['ecat_name'] ?? t('featured');
+        $svcImg = getProductImage($product['p_featured_photo']);
+        $svcDesc = excerpt($product['p_short_description'], 70);
+      ?>
+      <div class="swiper-slide">
+        <article class="home-gallery-card home-service-card">
+          <img src="<?php echo e($svcImg); ?>" alt="<?php echo e($product['p_name']); ?>" loading="lazy">
+          <span class="home-gallery-shade"></span>
+          <span class="home-gallery-meta home-service-meta">
+            <span class="home-service-copy">
+              <span class="home-service-cat"><?php echo e($svcCatName); ?></span>
+              <span class="home-gallery-label"><?php echo e($product['p_name']); ?></span>
+              <?php if ($svcDesc !== '') { ?>
+                <span class="home-service-desc"><?php echo e($svcDesc); ?></span>
+              <?php } ?>
+              <a href="book-service.php?service=<?php echo $svcId; ?>" class="home-service-book"><?php echo t('book_now'); ?></a>
+            </span>
+            <a class="home-gallery-go" href="product.php?id=<?php echo $svcId; ?>" aria-label="<?php echo e(t('view_details')); ?>"><i class="fa fa-arrow-right"></i></a>
+          </span>
+        </article>
+      </div>
+      <?php } ?>
+    </div>
+    <div class="swiper-pagination home-services-dots"></div>
+  </div>
+  <div class="home-gallery-footer">
+    <a href="<?php echo BASE_URL; ?>book-service.php" class="look-at-us-link"><?php echo t('book_now'); ?> <i class="fa fa-arrow-right"></i></a>
+  </div>
+</section>
+<?php } ?>
+
+<?php
+$statTeamCount = max(count($teamStaff), 12);
+$statReviewCount = 0;
+try {
+    $statReviewCount = (int) $pdo->query("SELECT COUNT(*) FROM tbl_testimonial WHERE status = 'Active'")->fetchColumn();
+} catch (Throwable $e) {
+    $statReviewCount = count($homeReviews);
+}
+$statReviewCount = max($statReviewCount, 20);
+$statHomes = 500;
+$statAccounts = 120;
+?>
+<section class="section-block look-at-us reveal">
+  <div class="look-at-us-grid">
+    <div class="look-at-us-copy">
+      <span class="look-at-us-badge"><?php echo t('look_at_us_badge'); ?></span>
+      <h2 class="look-at-us-title"><?php echo t('look_at_us_title'); ?></h2>
+      <div class="look-at-us-text">
+        <p><?php echo t('look_at_us_p1'); ?></p>
+        <p><?php echo t('look_at_us_p2'); ?></p>
+        <p><?php echo t('look_at_us_p3'); ?></p>
+        <p class="look-at-us-note"><?php echo t('look_at_us_p4'); ?></p>
+      </div>
+      <div class="look-at-us-actions">
+        <a href="<?php echo BASE_URL; ?>products.php" class="btn btn-dark btn-lg"><?php echo t('explore_services'); ?></a>
+        <a href="<?php echo BASE_URL; ?>about.php" class="look-at-us-link"><?php echo t('about_us'); ?> <i class="fa fa-arrow-right"></i></a>
+      </div>
+    </div>
+    <div class="look-at-us-stats" aria-label="<?php echo t('our_story'); ?>">
+      <article class="look-stat">
+        <div class="look-stat-icon"><i class="fa fa-house-chimney"></i></div>
+        <div class="look-stat-value" data-count="<?php echo (int)$statHomes; ?>">0+</div>
+        <div class="look-stat-label"><?php echo t('stat_homes_label'); ?></div>
+      </article>
+      <article class="look-stat">
+        <div class="look-stat-icon"><i class="fa fa-building"></i></div>
+        <div class="look-stat-value" data-count="<?php echo (int)$statAccounts; ?>">0+</div>
+        <div class="look-stat-label"><?php echo t('stat_accounts_label'); ?></div>
+      </article>
+      <article class="look-stat">
+        <div class="look-stat-icon"><i class="fa fa-users"></i></div>
+        <div class="look-stat-value" data-count="<?php echo (int)$statTeamCount; ?>">0+</div>
+        <div class="look-stat-label"><?php echo t('stat_team_label'); ?></div>
+      </article>
+      <article class="look-stat">
+        <div class="look-stat-icon"><i class="fa fa-star"></i></div>
+        <div class="look-stat-value" data-count="<?php echo (int)$statReviewCount; ?>">0+</div>
+        <div class="look-stat-label"><?php echo t('stat_reviews_label'); ?></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<?php if ($homeGallery) { ?>
+<section class="section-block home-gallery-showcase reveal">
+  <div class="home-gallery-head">
+    <h2 class="home-gallery-title"><?php echo t('home_gallery_title'); ?></h2>
+    <div class="home-gallery-nav">
+      <button type="button" class="home-gallery-btn home-gallery-prev" aria-label="<?php echo t('previous'); ?>"><i class="fa fa-arrow-left"></i></button>
+      <button type="button" class="home-gallery-btn home-gallery-next" aria-label="<?php echo t('next'); ?>"><i class="fa fa-arrow-right"></i></button>
+    </div>
+  </div>
+  <div class="swiper homeGallerySwiper">
+    <div class="swiper-wrapper">
+      <?php foreach ($homeGallery as $gItem) {
+        $gImg = getProductImage($gItem['photo']);
+        $gTitle = trim((string)($gItem['title'] ?? ''));
+        if ($gTitle === '') {
+            $gTitle = trim((string)($gItem['mcat_name'] ?? ''));
+        }
+        if ($gTitle === '') {
+            $gTitle = loadLang('gallery');
+        }
+        $gCaption = trim((string)($gItem['content'] ?? ''));
+      ?>
+      <div class="swiper-slide">
+        <a
+          href="<?php echo e($gImg); ?>"
+          class="home-gallery-card"
+          data-fancybox="home-gallery"
+          data-caption="<?php echo e($gTitle . ($gCaption !== '' ? ' — ' . $gCaption : '')); ?>"
+        >
+          <img src="<?php echo e($gImg); ?>" alt="<?php echo e($gTitle); ?>" loading="lazy">
+          <span class="home-gallery-shade"></span>
+          <span class="home-gallery-meta">
+            <span class="home-gallery-label"><?php echo e($gTitle); ?></span>
+            <span class="home-gallery-go" aria-hidden="true"><i class="fa fa-arrow-right"></i></span>
+          </span>
+        </a>
+      </div>
+      <?php } ?>
+    </div>
+    <div class="swiper-pagination home-gallery-dots"></div>
+  </div>
+  <div class="home-gallery-footer">
+    <a href="<?php echo BASE_URL; ?>gallery.php" class="look-at-us-link"><?php echo t('view_full_gallery'); ?> <i class="fa fa-arrow-right"></i></a>
+  </div>
+</section>
+<?php } ?>
+
 <section class="section-block reveal">
   <div class="section-head">
     <div>
@@ -162,12 +350,6 @@ try {
   </div>
 </section>
 
-<?php
-$aboutPage = $pdo->query('SELECT about_title, about_content, about_banner FROM tbl_page LIMIT 1')->fetch(PDO::FETCH_ASSOC) ?: [];
-$aboutCompact = true;
-include __DIR__ . '/inc/partials/about-section.php';
-?>
-
 </div>
 
 <section class="site-ribbon site-ribbon-a reveal">
@@ -182,19 +364,6 @@ include __DIR__ . '/inc/partials/about-section.php';
 </section>
 
 <div class="container page-wrap">
-
-<section class="section-block">
-  <div class="section-head">
-    <div>
-      <div class="section-kicker"><?php echo t('featured_picks'); ?></div>
-      <h2 class="section-title"><?php echo t('featured_products'); ?></h2>
-    </div>
-    <a href="book-service.php" class="btn btn-outline-dark"><?php echo t('book_now'); ?></a>
-  </div>
-  <div class="row g-4">
-    <?php foreach ($featured as $product) { include __DIR__ . '/pages/product-card.php'; } ?>
-  </div>
-</section>
 
 <section class="section-block reveal">
   <div class="section-head">
@@ -252,6 +421,217 @@ if (!empty($aboutPage['about_banner'])) {
 
 <div class="container page-wrap">
 
+<section class="section-block home-popular-services reveal">
+  <div class="section-head">
+    <div>
+      <div class="section-kicker"><?php echo t('popular_products'); ?></div>
+      <h2 class="section-title"><?php echo t('popular_products'); ?></h2>
+    </div>
+  </div>
+  <div class="row g-4 g-lg-4 home-popular-grid">
+    <?php foreach ($popular as $product) { include __DIR__ . '/pages/product-card.php'; } ?>
+  </div>
+</section>
+
+<?php if ($topCategories) { ?>
+<section class="section-block reveal">
+  <div class="section-head">
+    <div>
+      <div class="section-kicker"><?php echo t('browse_by_category'); ?></div>
+      <h2 class="section-title"><?php echo t('browse_by_category'); ?></h2>
+    </div>
+  </div>
+  <div class="row g-4">
+    <?php foreach ($topCategories as $top) { ?>
+      <div class="col-md-4">
+        <a class="category-tile" href="category.php?id=<?php echo (int)$top['tcat_id']; ?>">
+          <h5><?php echo e($top['tcat_name']); ?></h5>
+          <p><?php echo t('discover_category_text'); ?></p>
+          <span><?php echo t('explore'); ?> <i class="fa fa-arrow-right"></i></span>
+        </a>
+      </div>
+    <?php } ?>
+  </div>
+</section>
+<?php } ?>
+
+</div>
+
+<section class="site-ribbon site-ribbon-b reveal">
+  <div class="site-ribbon-inner">
+    <div class="site-ribbon-copy">
+      <div class="site-ribbon-kicker"><?php echo t('contact'); ?></div>
+      <h2 class="site-ribbon-title"><?php echo t('ribbon_3_title'); ?></h2>
+      <p class="site-ribbon-text"><?php echo t('ribbon_3_text'); ?></p>
+    </div>
+    <a href="contact.php" class="btn btn-light btn-lg"><?php echo t('ribbon_3_cta'); ?></a>
+  </div>
+</section>
+
+<div class="container page-wrap">
+
+<section class="section-block">
+  <div class="section-head">
+    <div>
+      <div class="section-kicker"><?php echo t('visit_us'); ?></div>
+      <h2 class="section-title"><?php echo t('visit_us'); ?></h2>
+    </div>
+  </div>
+  <div class="map-shell">
+    <iframe loading="lazy" title="Service area" src="https://www.google.com/maps?q=Kathmandu,Nepal&output=embed"></iframe>
+  </div>
+</section>
+
+</div>
+
+<section class="site-ribbon site-ribbon-c reveal" id="newsletter">
+  <div class="site-ribbon-inner site-ribbon-inner--subscribe">
+    <div class="site-ribbon-copy">
+      <div class="site-ribbon-kicker"><?php echo t('from_the_blog'); ?></div>
+      <h2 class="site-ribbon-title"><?php echo t('ribbon_tips_title'); ?></h2>
+      <p class="site-ribbon-text"><?php echo e($newsletterEnabled ? $newsletterText : t('ribbon_tips_text')); ?></p>
+    </div>
+    <?php if ($newsletterEnabled) { ?>
+      <form method="post" class="site-ribbon-subscribe" action="<?php echo e(BASE_URL); ?>index.php#newsletter">
+        <?php if (!empty($newsletterMessage)) { ?>
+          <div class="site-ribbon-subscribe-msg"><?php echo e($newsletterMessage); ?></div>
+        <?php } ?>
+        <div class="site-ribbon-subscribe-row">
+          <input type="email" class="form-control" name="newsletter_email" placeholder="<?php echo t('your_email'); ?>" required>
+          <button class="btn btn-light btn-lg" type="submit"><?php echo t('subscribe'); ?></button>
+        </div>
+      </form>
+    <?php } else { ?>
+      <a href="<?php echo BASE_URL; ?>blog.php" class="btn btn-light btn-lg"><?php echo t('read_more'); ?></a>
+    <?php } ?>
+  </div>
+</section>
+
+<div class="container page-wrap">
+
+<?php if ($posts) { ?>
+<section class="section-block home-tips-showcase reveal">
+  <div class="section-head">
+    <div>
+      <div class="section-kicker"><?php echo t('blog'); ?></div>
+      <h2 class="section-title"><?php echo t('from_the_blog'); ?></h2>
+    </div>
+    <a href="<?php echo BASE_URL; ?>blog.php" class="btn btn-outline-dark"><?php echo t('read_more'); ?></a>
+  </div>
+  <div class="row g-4">
+    <?php foreach ($posts as $post) { ?>
+      <div class="col-md-6 col-lg-4">
+        <article class="card-hover blog-card home-tip-card h-100">
+          <div class="home-tip-media">
+            <img src="<?php echo getProductImage($post['photo']); ?>" alt="<?php echo e($post['post_title']); ?>" loading="lazy">
+          </div>
+          <div class="home-tip-body">
+            <h5><?php echo e($post['post_title']); ?></h5>
+            <p class="text-muted"><?php echo excerpt(strip_tags($post['post_content']), 120); ?></p>
+            <a class="btn btn-dark" href="blog.php?id=<?php echo (int)$post['post_id']; ?>"><?php echo t('read_more'); ?></a>
+          </div>
+        </article>
+      </div>
+    <?php } ?>
+  </div>
+</section>
+<?php } ?>
+
+<?php if ($teamStaff) { ?>
+<section class="section-block home-team-showcase reveal">
+  <div class="home-gallery-head">
+    <div>
+      <div class="section-kicker"><?php echo t('our_team'); ?></div>
+      <h2 class="home-gallery-title"><?php echo t('professional_team'); ?></h2>
+      <p class="section-subtitle mb-0"><?php echo t('professional_team_subtitle'); ?></p>
+    </div>
+    <div class="home-gallery-nav">
+      <button type="button" class="home-gallery-btn home-team-prev" aria-label="<?php echo t('previous'); ?>"><i class="fa fa-arrow-left"></i></button>
+      <button type="button" class="home-gallery-btn home-gallery-next home-team-next" aria-label="<?php echo t('next'); ?>"><i class="fa fa-arrow-right"></i></button>
+    </div>
+  </div>
+  <div class="swiper homeTeamSwiper">
+    <div class="swiper-wrapper">
+      <?php foreach ($teamStaff as $member) {
+        $rating = max(1, min(5, (int)($member['rating'] ?? 5)));
+        $role = trim($member['designation'] ?? '');
+        $fb = trim($member['facebook_url'] ?? '');
+        $ig = trim($member['instagram_url'] ?? '');
+        $call = preg_replace('/\s+/', '', (string)($member['phone'] ?? ''));
+        $photo = !empty($member['photo']) ? getProductImage($member['photo']) : (ASSET_URL . 'images/placeholder.svg');
+      ?>
+      <div class="swiper-slide">
+        <article class="home-gallery-card home-team-card">
+          <img src="<?php echo e($photo); ?>" alt="<?php echo e($member['full_name']); ?>" loading="lazy">
+          <span class="home-gallery-shade"></span>
+          <span class="home-gallery-meta home-team-meta">
+            <span class="home-team-copy">
+              <span class="home-gallery-label"><?php echo e($member['full_name']); ?></span>
+              <?php if ($role !== '') { ?>
+                <span class="home-team-role"><?php echo e($role); ?></span>
+              <?php } ?>
+              <span class="review-stars team-stars home-team-stars" aria-label="<?php echo $rating; ?> stars">
+                <?php for ($i = 1; $i <= 5; $i++) { ?>
+                  <i class="fa fa-star<?php echo $i <= $rating ? '' : '-o'; ?>"></i>
+                <?php } ?>
+              </span>
+              <span class="home-team-social">
+                <?php if ($fb !== '') { ?>
+                  <a href="<?php echo e($fb); ?>" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <?php } ?>
+                <?php if ($ig !== '') { ?>
+                  <a href="<?php echo e($ig); ?>" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                <?php } ?>
+                <?php if ($call !== '') { ?>
+                  <a href="tel:<?php echo e($call); ?>" aria-label="Call"><i class="fa fa-phone"></i></a>
+                <?php } ?>
+              </span>
+            </span>
+            <?php if ($call !== '') { ?>
+              <a class="home-gallery-go" href="tel:<?php echo e($call); ?>" aria-label="Call <?php echo e($member['full_name']); ?>"><i class="fa fa-phone"></i></a>
+            <?php } else { ?>
+              <span class="home-gallery-go" aria-hidden="true"><i class="fa fa-arrow-right"></i></span>
+            <?php } ?>
+          </span>
+        </article>
+      </div>
+      <?php } ?>
+    </div>
+    <div class="swiper-pagination home-team-dots"></div>
+  </div>
+</section>
+<?php } ?>
+
+<section class="section-block">
+  <div class="section-head">
+    <div>
+      <div class="section-kicker"><?php echo t('faqs'); ?></div>
+      <h2 class="section-title"><?php echo t('faqs'); ?></h2>
+    </div>
+  </div>
+  <div class="accordion faq-accordion" id="faqAccordion">
+    <?php if ($faqs) { foreach ($faqs as $faq) { ?>
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="faqHeading<?php echo $faq['faq_id']; ?>">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse<?php echo $faq['faq_id']; ?>">
+            <span class="faq-question-icon"><i class="fa fa-question-circle"></i></span>
+            <?php echo e($faq['faq_title']); ?>
+          </button>
+        </h2>
+        <div id="faqCollapse<?php echo $faq['faq_id']; ?>" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+          <div class="accordion-body faq-answer">
+            <div class="faq-answer-text rich-content"><?php echo renderRichHtml($faq['faq_content']); ?></div>
+          </div>
+        </div>
+      </div>
+    <?php } } else { ?>
+      <div class="alert alert-light rounded-4"><?php echo t('no_faqs_yet'); ?></div>
+    <?php } ?>
+  </div>
+</section>
+
+<?php include __DIR__ . '/inc/partials/contact-section.php'; ?>
+
 <?php if ($homeReviews) { ?>
 <section class="section-block reveal">
   <div class="section-head">
@@ -294,222 +674,39 @@ if (!empty($aboutPage['about_banner'])) {
 </section>
 <?php } ?>
 
-<section class="section-block">
-  <div class="section-head">
-    <div>
-      <div class="section-kicker"><?php echo t('popular_products'); ?></div>
-      <h2 class="section-title"><?php echo t('popular_products'); ?></h2>
-    </div>
-  </div>
-  <div class="row g-4">
-    <?php foreach ($popular as $product) { include __DIR__ . '/pages/product-card.php'; } ?>
-  </div>
-</section>
-
-<?php if ($topCategories) { ?>
-<section class="section-block reveal">
-  <div class="section-head">
-    <div>
-      <div class="section-kicker"><?php echo t('browse_by_category'); ?></div>
-      <h2 class="section-title"><?php echo t('browse_by_category'); ?></h2>
-    </div>
-  </div>
-  <div class="row g-4">
-    <?php foreach ($topCategories as $top) { ?>
-      <div class="col-md-4">
-        <a class="category-tile" href="category.php?id=<?php echo (int)$top['tcat_id']; ?>">
-          <h5><?php echo e($top['tcat_name']); ?></h5>
-          <p><?php echo t('discover_category_text'); ?></p>
-          <span><?php echo t('explore'); ?> <i class="fa fa-arrow-right"></i></span>
-        </a>
-      </div>
-    <?php } ?>
-  </div>
-</section>
-<?php } ?>
-
 </div>
 
-<?php
-$quoteBannerImg = ASSET_URL . 'images/cleaning-side.jpg';
-$quoteBannerPath = __DIR__ . '/assets/images/cleaning-side.jpg';
-if (!is_file($quoteBannerPath)) {
-    $quoteBannerImg = ASSET_URL . 'images/cleaning-hero.jpg';
-}
+<?php if ($homeClients) {
+  $clientLogoItems = [];
+  foreach ($homeClients as $client) {
+      $clientLogoItems[] = [
+          'logo' => getProductImage($client['logo']),
+          'link' => trim($client['website_url'] ?? ''),
+          'alt' => $client['name'] !== '' ? $client['name'] : loadLang('client'),
+      ];
+  }
+  // Duplicate for seamless infinite slide (extra copies when few logos)
+  $clientLogoLoop = $clientLogoItems;
+  while (count($clientLogoLoop) < 10) {
+      $clientLogoLoop = array_merge($clientLogoLoop, $clientLogoItems);
+  }
+  $clientLogoLoop = array_merge($clientLogoLoop, $clientLogoLoop);
 ?>
-<section class="home-promo-banner home-promo-banner--quote reveal" style="--promo-banner-image: url('<?php echo e($quoteBannerImg); ?>');">
-  <div class="home-promo-banner-shade"></div>
-  <div class="home-promo-banner-inner">
-    <div class="home-promo-banner-copy">
-      <div class="home-promo-kicker"><?php echo t('contact'); ?></div>
-      <h2 class="home-promo-title"><?php echo t('ribbon_3_title'); ?></h2>
-      <p class="home-promo-text"><?php echo t('ribbon_3_text'); ?></p>
-      <div class="home-promo-actions">
-        <a href="contact.php" class="btn btn-light btn-lg"><?php echo t('ribbon_3_cta'); ?></a>
-        <a href="book-service.php" class="btn btn-outline-light btn-lg"><?php echo t('book_now'); ?></a>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div class="container page-wrap">
-
-<section class="section-block">
-  <div class="section-head">
-    <div>
-      <div class="section-kicker"><?php echo t('visit_us'); ?></div>
-      <h2 class="section-title"><?php echo t('visit_us'); ?></h2>
-    </div>
-  </div>
-  <div class="map-shell">
-    <iframe loading="lazy" title="Service area" src="https://www.google.com/maps?q=Kathmandu,Nepal&output=embed"></iframe>
-  </div>
-</section>
-
-<?php if ($newsletterEnabled) { ?>
-<section class="section-block">
-  <div class="row g-4">
-    <div class="col-lg-8">
-      <div class="section-head mb-3">
-        <div>
-          <div class="section-kicker"><?php echo t('from_the_blog'); ?></div>
-          <h2 class="section-title"><?php echo t('from_the_blog'); ?></h2>
-        </div>
-      </div>
-      <div class="row g-4">
-        <?php foreach ($posts as $post) { ?>
-          <div class="col-md-6 col-lg-4">
-            <article class="card-hover blog-card h-100">
-              <img src="<?php echo getProductImage($post['photo']); ?>" alt="">
-              <div class="p-3">
-                <h5><?php echo e($post['post_title']); ?></h5>
-                <p class="text-muted small"><?php echo excerpt(strip_tags($post['post_content']), 100); ?></p>
-                <a class="btn btn-dark btn-sm" href="blog.php?id=<?php echo (int)$post['post_id']; ?>"><?php echo t('read_more'); ?></a>
-              </div>
-            </article>
-          </div>
-        <?php } ?>
-      </div>
-    </div>
-    <div class="col-lg-4">
-      <div class="newsletter-panel h-100">
-        <div class="section-kicker"><?php echo t('newsletter'); ?></div>
-        <h3 class="section-title mb-3"><?php echo t('newsletter'); ?></h3>
-        <p class="text-muted mb-4"><?php echo e($newsletterText); ?></p>
-        <?php if (!empty($newsletterMessage)) { ?>
-          <div class="alert alert-<?php echo e($newsletterType); ?> rounded-4 mb-3"><?php echo e($newsletterMessage); ?></div>
-        <?php } ?>
-        <form method="post" class="d-grid gap-3">
-          <input type="email" class="form-control" name="newsletter_email" placeholder="<?php echo t('your_email'); ?>" required>
-          <button class="btn btn-dark" type="submit"><?php echo t('subscribe'); ?></button>
-        </form>
-      </div>
-    </div>
-  </div>
-</section>
-<?php } ?>
-
-<?php if ($teamStaff) { ?>
-<section class="section-block team-section">
-  <div class="section-head">
-    <div>
-      <div class="section-kicker"><?php echo t('our_team'); ?></div>
-      <h2 class="section-title"><?php echo t('professional_team'); ?></h2>
-      <p class="section-subtitle"><?php echo t('professional_team_subtitle'); ?></p>
-    </div>
-  </div>
-  <div class="swiper teamSwiper">
-    <div class="swiper-wrapper">
-      <?php foreach ($teamStaff as $member) {
-        $rating = max(1, min(5, (int)($member['rating'] ?? 5)));
-        $role = trim($member['designation'] ?? '');
-        $fb = trim($member['facebook_url'] ?? '');
-        $ig = trim($member['instagram_url'] ?? '');
-        $call = preg_replace('/\s+/', '', (string)($member['phone'] ?? ''));
-        $photo = !empty($member['photo']) ? getProductImage($member['photo']) : (ASSET_URL . 'images/placeholder.png');
-      ?>
-      <div class="swiper-slide">
-        <article class="team-card">
-          <div class="team-photo">
-            <img src="<?php echo e($photo); ?>" alt="<?php echo e($member['full_name']); ?>">
-          </div>
-          <h3><?php echo e($member['full_name']); ?></h3>
-          <?php if ($role !== '') { ?><p class="team-role"><?php echo e($role); ?></p><?php } ?>
-          <div class="review-stars team-stars" aria-label="<?php echo $rating; ?> stars">
-            <?php for ($i = 1; $i <= 5; $i++) { ?>
-              <i class="fa fa-star<?php echo $i <= $rating ? '' : '-o'; ?>"></i>
-            <?php } ?>
-          </div>
-          <div class="team-social">
-            <?php if ($fb !== '') { ?>
-              <a href="<?php echo e($fb); ?>" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-            <?php } ?>
-            <?php if ($ig !== '') { ?>
-              <a href="<?php echo e($ig); ?>" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-            <?php } ?>
-            <?php if ($call !== '') { ?>
-              <a href="tel:<?php echo e($call); ?>" aria-label="Call"><i class="fa fa-phone"></i></a>
-            <?php } ?>
-          </div>
-        </article>
-      </div>
-      <?php } ?>
-    </div>
-    <div class="swiper-pagination team-pagination"></div>
-    <div class="swiper-button-prev team-nav"></div>
-    <div class="swiper-button-next team-nav"></div>
-  </div>
-</section>
-<?php } ?>
-
-<section class="section-block">
-  <div class="section-head">
-    <div>
-      <div class="section-kicker"><?php echo t('faqs'); ?></div>
-      <h2 class="section-title"><?php echo t('faqs'); ?></h2>
-    </div>
-  </div>
-  <div class="accordion faq-accordion" id="faqAccordion">
-    <?php if ($faqs) { foreach ($faqs as $faq) { ?>
-      <div class="accordion-item">
-        <h2 class="accordion-header" id="faqHeading<?php echo $faq['faq_id']; ?>">
-          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse<?php echo $faq['faq_id']; ?>">
-            <span class="faq-question-icon"><i class="fa fa-question-circle"></i></span>
-            <?php echo e($faq['faq_title']); ?>
-          </button>
-        </h2>
-        <div id="faqCollapse<?php echo $faq['faq_id']; ?>" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-          <div class="accordion-body faq-answer">
-            <div class="faq-answer-text rich-content"><?php echo renderRichHtml($faq['faq_content']); ?></div>
-          </div>
-        </div>
-      </div>
-    <?php } } else { ?>
-      <div class="alert alert-light rounded-4"><?php echo t('no_faqs_yet'); ?></div>
-    <?php } ?>
-  </div>
-</section>
-
-</div>
-
-<?php if ($homeClients) { ?>
 <section class="clients-band">
   <div class="clients-band-inner">
     <div class="clients-kicker"><?php echo t('our_clients'); ?></div>
     <h2 class="clients-title"><?php echo t('preferred_by_professionals'); ?></h2>
-    <div class="clients-logos">
-      <?php foreach ($homeClients as $client) {
-        $logoUrl = getProductImage($client['logo']);
-        $link = trim($client['website_url'] ?? '');
-        $alt = $client['name'] !== '' ? $client['name'] : loadLang('client');
-      ?>
-        <?php if ($link !== '') { ?>
-          <a class="client-logo-item" href="<?php echo e($link); ?>" target="_blank" rel="noopener noreferrer" aria-label="<?php echo e($alt); ?>">
-            <img src="<?php echo e($logoUrl); ?>" alt="<?php echo e($alt); ?>">
+  </div>
+  <div class="clients-marquee" aria-label="<?php echo e(t('our_clients')); ?>">
+    <div class="clients-marquee-track">
+      <?php foreach ($clientLogoLoop as $client) { ?>
+        <?php if ($client['link'] !== '') { ?>
+          <a class="client-logo-item" href="<?php echo e($client['link']); ?>" target="_blank" rel="noopener noreferrer" aria-label="<?php echo e($client['alt']); ?>">
+            <img src="<?php echo e($client['logo']); ?>" alt="<?php echo e($client['alt']); ?>" loading="lazy">
           </a>
         <?php } else { ?>
           <div class="client-logo-item">
-            <img src="<?php echo e($logoUrl); ?>" alt="<?php echo e($alt); ?>">
+            <img src="<?php echo e($client['logo']); ?>" alt="<?php echo e($client['alt']); ?>" loading="lazy">
           </div>
         <?php } ?>
       <?php } ?>
@@ -536,20 +733,4 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 </script>
 <?php endif; ?>
-
-<!--Start of Tawk.to Script-->
-<script type="text/javascript">
-var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-(function(){
-var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-s1.async=true;
-s1.src='https://embed.tawk.to/6a5f1bd7940f101d5323c06d/1ju1o9hg6';
-s1.charset='UTF-8';
-s1.setAttribute('crossorigin','*');
-s0.parentNode.insertBefore(s1,s0);
-})();
-</script>
-<!--End of Tawk.to Script-->
-
 <?php include __DIR__ . '/inc/footer.php'; ?>
-

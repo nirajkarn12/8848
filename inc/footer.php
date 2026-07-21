@@ -3,7 +3,12 @@
     <?php } ?>
 </main>
 <a href="#" class="back-to-top" id="backToTop" aria-label="<?php echo t('back_to_top'); ?>"><i class="fa fa-arrow-up"></i></a>
-<a href="https://wa.me/9869224134" class="floating-wa" target="_blank" rel="noreferrer" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+<?php
+$whatsAppLink = getWhatsAppLink();
+if ($whatsAppLink !== '') {
+?>
+<a href="<?php echo e($whatsAppLink); ?>" class="floating-wa" target="_blank" rel="noreferrer" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+<?php } ?>
 <footer class="site-footer">
     <div class="container py-5">
         <div class="row g-4 align-items-start">
@@ -76,7 +81,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js"></script>
 <script>
 $(function() {
-    $('[data-fancybox="product-gallery"]').fancybox({
+    $('[data-fancybox="product-gallery"], [data-fancybox="home-gallery"]').fancybox({
         buttons: [
             "slideShow",
             "fullScreen",
@@ -89,7 +94,8 @@ $(function() {
     });
 });
 </script>
-<script src="<?php echo ASSET_URL; ?>js/app.js?v=20260721b"></script>
+<script>window.BASE_URL = <?php echo json_encode(BASE_URL); ?>;</script>
+<script src="<?php echo ASSET_URL; ?>js/app.js?v=20260721o"></script>
 <?php
 $scriptName = basename($_SERVER['SCRIPT_NAME'] ?? '');
 if ($scriptName === 'gallery.php') {

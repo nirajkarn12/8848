@@ -52,6 +52,6 @@ $products = $stmt->fetchAll();
   </form>
 </div>
 <div class="row g-4">
-  <?php if ($products) { foreach ($products as $product) { include __DIR__ . '/pages/product-card.php'; } else { ?><div class="col-12"><div class="alert alert-light rounded-4"><?php echo t('no_results_found'); ?></div></div><?php } ?>
+  <?php if ($products) { foreach ($products as $product) { include __DIR__ . '/pages/product-card.php'; } } else { ?><div class="col-12"><div class="alert alert-light rounded-4"><?php echo t('no_results_found'); ?></div></div><?php } ?>
 </div>
 <?php include __DIR__ . '/inc/footer.php'; ?>

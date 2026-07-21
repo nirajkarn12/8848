@@ -1,6 +1,10 @@
 <?php
 require_once __DIR__ . '/inc/functions.php';
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['contact_form'])) {
+    handleContactFormSubmission(BASE_URL . 'contact.php');
+}
+
 $contactSeo = getStaticPageSeo('contact');
 $pageTitle = $contactSeo['title'];
 $metaKeywords = $contactSeo['keywords'];
@@ -23,18 +27,21 @@ $breadcrumbs = [
     ['label' => t('contact'), 'url' => '']
 ];
 echo renderBreadcrumbs($breadcrumbs);
+echo renderFlash();
 ?>
 <div class="row g-4">
   <div class="col-lg-6">
     <div class="card card-hover p-4">
       <h3 class="fw-bold mb-3"><?php echo t('contact_us'); ?></h3>
       <p class="text-muted"><?php echo t('contact_intro'); ?></p>
-      <form class="d-grid gap-3">
-        <input class="form-control" placeholder="<?php echo t('your_name'); ?>">
-        <input class="form-control" placeholder="<?php echo t('email_address'); ?>">
-        <input class="form-control" placeholder="<?php echo t('subject'); ?>">
-        <textarea class="form-control" rows="4" placeholder="<?php echo t('message'); ?>"></textarea>
-        <button class="btn btn-dark"><?php echo t('send_message'); ?></button>
+      <form method="post" class="d-grid gap-3">
+        <input type="hidden" name="csrf_token" value="<?php echo e(csrfToken()); ?>">
+        <input type="hidden" name="contact_form" value="1">
+        <input class="form-control" name="contact_name" placeholder="<?php echo t('your_name'); ?>" required>
+        <input class="form-control" type="email" name="contact_email" placeholder="<?php echo t('email_address'); ?>" required>
+        <input class="form-control" name="contact_subject" placeholder="<?php echo t('subject'); ?>">
+        <textarea class="form-control" name="contact_message" rows="4" placeholder="<?php echo t('message'); ?>" required></textarea>
+        <button class="btn btn-dark" type="submit"><?php echo t('send_message'); ?></button>
       </form>
     </div>
   </div>

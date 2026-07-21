@@ -161,6 +161,26 @@ function getStaticPageSeo($prefix) {
     ];
 }
 
+function renderHeroHeadline($customHeading = '') {
+    $defaultTitle = loadLang('hero_default_title');
+    $customHeading = trim((string) $customHeading);
+    if ($customHeading !== '' && $customHeading !== $defaultTitle) {
+        return '<h1 class="hero-headline hero-headline-plain">' . e($customHeading) . '</h1>';
+    }
+
+    $mid = trim(loadLang('hero_word_the'));
+    $html = '<h1 class="hero-headline">';
+    $html .= '<span class="hero-line">' . e(loadLang('hero_word_cleaner')) . '</span> ';
+    $html .= '<span class="hero-chip"><span class="hero-chip-accent">' . e(loadLang('hero_word_when')) . '</span>';
+    if ($mid !== '') {
+        $html .= ' <span class="hero-chip-soft">' . e($mid) . '</span>';
+    }
+    $html .= ' <span class="hero-chip-accent">' . e(loadLang('hero_word_brand')) . '</span></span> ';
+    $html .= '<span class="hero-line">' . e(loadLang('hero_word_cleans')) . '</span>';
+    $html .= '</h1>';
+    return $html;
+}
+
 function applySeoMeta(array $seo) {
     $result = [
         'title' => (string) ($seo['title'] ?? ''),
@@ -228,7 +248,7 @@ function getMarqueeNotices() {
 
 function getProductImage($filename) {
     if (empty($filename)) {
-        return ASSET_URL . 'images/placeholder.png';
+        return ASSET_URL . 'images/placeholder.svg';
     }
 
     if (preg_match('#^https?://#i', $filename)) {
@@ -290,6 +310,72 @@ function getSocialLinks() {
     }
 
     return $links;
+}
+
+function normalizeWhatsAppNumber($value) {
+    $raw = trim((string) $value);
+    if ($raw === '') {
+        return '';
+    }
+
+    // Already a full WhatsApp / chat URL
+    if (preg_match('#^https?://#i', $raw)) {
+        return $raw;
+    }
+
+    $digits = preg_replace('/\D+/', '', $raw);
+    if ($digits === '') {
+        return '';
+    }
+
+    // Local Nepal mobile numbers like 98xxxxxxxx → add country code
+    if (strlen($digits) === 10 && preg_match('/^9[78]/', $digits)) {
+        $digits = '977' . $digits;
+    }
+
+    return $digits;
+}
+
+function getWhatsAppLink() {
+    global $pdo;
+    static $link = null;
+    if ($link !== null) {
+        return $link;
+    }
+
+    $candidates = [];
+
+    try {
+        $stmt = $pdo->prepare("SELECT social_url FROM tbl_social WHERE social_name = 'WhatsApp' AND social_url IS NOT NULL AND TRIM(social_url) <> '' LIMIT 1");
+        $stmt->execute();
+        $social = trim((string) $stmt->fetchColumn());
+        if ($social !== '') {
+            $candidates[] = $social;
+        }
+    } catch (Throwable $e) {
+        // ignore and fall back
+    }
+
+    $phone = trim((string) getSiteSetting('contact_phone', ''));
+    if ($phone !== '') {
+        $candidates[] = $phone;
+    }
+
+    foreach ($candidates as $candidate) {
+        $normalized = normalizeWhatsAppNumber($candidate);
+        if ($normalized === '') {
+            continue;
+        }
+        if (preg_match('#^https?://#i', $normalized)) {
+            $link = $normalized;
+            return $link;
+        }
+        $link = 'https://wa.me/' . $normalized;
+        return $link;
+    }
+
+    $link = '';
+    return $link;
 }
 
 function getProductGallery($productId) {
@@ -416,6 +502,108 @@ function linkGuestBookingsByEmail($customerId, $email) {
     $stmt = $pdo->prepare('UPDATE tbl_payment SET customer_id = ? WHERE customer_id = 0 AND customer_email = ?');
     $stmt->execute([$customerId, $email]);
     return $stmt->rowCount();
+}
+
+function ensureContactInquiryTable() {
+    global $pdo;
+    static $ready = null;
+    if ($ready !== null) {
+        return $ready;
+    }
+    try {
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `tbl_contact_inquiry` (
+              `id` int NOT NULL AUTO_INCREMENT,
+              `name` varchar(150) NOT NULL DEFAULT '',
+              `email` varchar(190) NOT NULL DEFAULT '',
+              `phone` varchar(60) NOT NULL DEFAULT '',
+              `subject` varchar(255) NOT NULL DEFAULT '',
+              `message` text NOT NULL,
+              `created_at` datetime DEFAULT NULL,
+              PRIMARY KEY (`id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ");
+        $ready = true;
+    } catch (Throwable $e) {
+        $ready = false;
+    }
+    return $ready;
+}
+
+function handleContactFormSubmission($redirectUrl = '') {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST' || empty($_POST['contact_form'])) {
+        return null;
+    }
+
+    if (!verifyCsrf($_POST['csrf_token'] ?? '')) {
+        setFlash('danger', loadLang('invalid_request'));
+        if ($redirectUrl !== '') {
+            header('Location: ' . $redirectUrl);
+            exit;
+        }
+        return ['type' => 'danger', 'message' => loadLang('invalid_request')];
+    }
+
+    $name = trim((string) ($_POST['contact_name'] ?? ''));
+    $email = trim((string) ($_POST['contact_email'] ?? ''));
+    $phone = trim((string) ($_POST['contact_phone'] ?? ''));
+    $subject = trim((string) ($_POST['contact_subject'] ?? ''));
+    $message = trim((string) ($_POST['contact_message'] ?? ''));
+
+    if ($name === '' || $email === '' || $message === '') {
+        $msg = loadLang('contact_form_required');
+        setFlash('danger', $msg);
+        if ($redirectUrl !== '') {
+            header('Location: ' . $redirectUrl);
+            exit;
+        }
+        return ['type' => 'danger', 'message' => $msg];
+    }
+
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $msg = loadLang('newsletter_invalid_email');
+        setFlash('danger', $msg);
+        if ($redirectUrl !== '') {
+            header('Location: ' . $redirectUrl);
+            exit;
+        }
+        return ['type' => 'danger', 'message' => $msg];
+    }
+
+    if ($subject === '') {
+        $subject = 'Website contact from ' . $name;
+    }
+
+    global $pdo;
+    if (ensureContactInquiryTable()) {
+        try {
+            $stmt = $pdo->prepare("INSERT INTO tbl_contact_inquiry (name, email, phone, subject, message, created_at) VALUES (?, ?, ?, ?, ?, NOW())");
+            $stmt->execute([$name, $email, $phone, $subject, $message]);
+        } catch (Throwable $e) {
+            // continue to email attempt
+        }
+    }
+
+    $to = trim((string) getSiteSetting('contact_email', SMTP_FROM_EMAIL));
+    $siteName = (string) getSiteSetting('site_name', SITE_NAME);
+    $body = '<p><strong>New contact message from the website</strong></p>';
+    $body .= '<p><strong>Name:</strong> ' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '<br>';
+    $body .= '<strong>Email:</strong> ' . htmlspecialchars($email, ENT_QUOTES, 'UTF-8') . '<br>';
+    if ($phone !== '') {
+        $body .= '<strong>Phone:</strong> ' . htmlspecialchars($phone, ENT_QUOTES, 'UTF-8') . '<br>';
+    }
+    $body .= '<strong>Subject:</strong> ' . htmlspecialchars($subject, ENT_QUOTES, 'UTF-8') . '</p>';
+    $body .= '<p>' . nl2br(htmlspecialchars($message, ENT_QUOTES, 'UTF-8')) . '</p>';
+
+    sendCustomerEmail($to, $siteName, $siteName . ' - ' . $subject, $body);
+
+    $ok = loadLang('contact_form_success');
+    setFlash('success', $ok);
+    if ($redirectUrl !== '') {
+        header('Location: ' . $redirectUrl . '#contact');
+        exit;
+    }
+    return ['type' => 'success', 'message' => $ok];
 }
 
 function sendCustomerEmail($toEmail, $toName, $subject, $htmlBody) {

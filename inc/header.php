@@ -45,7 +45,7 @@ $ogLocale = $ogLocaleMap[$currentHtmlLang] ?? 'en_US';
         'description' => $homeSeo['description'],
         'potentialAction' => [
             '@type' => 'SearchAction',
-            'target' => rtrim(BASE_URL, '/') . '/search.php?query={search_term_string}',
+            'target' => rtrim(BASE_URL, '/') . '/search.php?q={search_term_string}',
             'query-input' => 'required name=search_term_string'
         ],
     ];
@@ -102,7 +102,7 @@ $ogLocale = $ogLocaleMap[$currentHtmlLang] ?? 'en_US';
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css">
-    <link rel="stylesheet" href="<?php echo ASSET_URL; ?>css/style.css?v=20260721d">
+    <link rel="stylesheet" href="<?php echo ASSET_URL; ?>css/style.css?v=20260721u">
     <style>
     /* Dropdown menu stays open when interacting inside */
     .mega-menu {

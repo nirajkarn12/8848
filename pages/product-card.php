@@ -7,7 +7,7 @@ $availability = (int)$product['p_qty'] > 0
     ? '<span class="stock-pill in-stock"><i class="fa fa-check-circle"></i> ' . e(t('in_stock')) . '</span>'
     : '<span class="stock-pill out-stock">' . e(t('out_of_stock')) . '</span>';
 ?>
-<div class="col-lg-3 col-md-4 col-sm-6 reveal">
+<div class="col-lg-4 col-md-6 col-sm-6 reveal">
   <div class="card card-hover product-card h-100">
     <div class="product-card-media">
       <img src="<?php echo getProductImage($product['p_featured_photo']); ?>" alt="<?php echo e($product['p_name']); ?>">
