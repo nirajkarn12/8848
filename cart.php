@@ -10,12 +10,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 
     if ($_POST['action'] === 'update') {
-        foreach ($_POST['qty'] as $productId => $qty) {
+        foreach (($_POST['notes'] ?? []) as $productId => $note) {
             $id = (int)$productId;
-            $quantity = max(1, (int)$qty);
             if (isset($_SESSION['cart'][$id])) {
-                $_SESSION['cart'][$id]['quantity'] = $quantity;
-                $_SESSION['cart'][$id]['notes'] = trim($_POST['notes'][$id] ?? '');
+                $_SESSION['cart'][$id]['quantity'] = 1;
+                $_SESSION['cart'][$id]['notes'] = trim((string)$note);
             }
         }
         setFlash('success', loadLang('booking_updated'));
@@ -51,11 +50,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'add') {
             if (!isset($_SESSION['cart'])) {
                 $_SESSION['cart'] = [];
             }
-            if (isset($_SESSION['cart'][$id])) {
-                $_SESSION['cart'][$id]['quantity'] += $qty;
-            } else {
-                $_SESSION['cart'][$id] = ['product_id' => $product['p_id'], 'product_name' => $product['p_name'], 'photo' => $product['p_featured_photo'], 'quantity' => $qty, 'notes' => ''];
-            }
+            // Cleaning bookings are always one visit per selected service
+            $_SESSION['cart'][$id] = ['product_id' => $product['p_id'], 'product_name' => $product['p_name'], 'photo' => $product['p_featured_photo'], 'quantity' => 1, 'notes' => $_SESSION['cart'][$id]['notes'] ?? ''];
             setFlash('success', loadLang('added_to_booking'));
         }
     }
@@ -94,7 +90,7 @@ if (!empty($_SESSION['cart'])) {
         <div class="table-responsive">
           <table class="table align-middle">
             <thead>
-              <tr><th><?php echo t('product'); ?></th><th><?php echo t('qty'); ?></th><th><?php echo t('notes'); ?></th><th></th></tr>
+              <tr><th><?php echo t('product'); ?></th><th><?php echo t('notes'); ?></th><th></th></tr>
             </thead>
             <tbody>
               <?php foreach ($cartItems as $item) { ?>
@@ -108,7 +104,6 @@ if (!empty($_SESSION['cart'])) {
                       </div>
                     </div>
                   </td>
-                  <td><input type="number" class="form-control" name="qty[<?php echo (int)$item['product_id']; ?>]" value="<?php echo (int)$item['quantity']; ?>" min="1"></td>
                   <td><input type="text" class="form-control" name="notes[<?php echo (int)$item['product_id']; ?>]" value="<?php echo e($item['notes']); ?>" placeholder="<?php echo t('any_request'); ?>"></td>
                   <td><a href="cart.php?action=remove&id=<?php echo (int)$item['product_id']; ?>" class="btn btn-outline-danger btn-sm"><i class="fa fa-trash"></i></a></td>
                 </tr>

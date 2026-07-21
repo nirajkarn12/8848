@@ -2,9 +2,10 @@
 require_once __DIR__ . '/inc/functions.php';
 $postId = (int)($_GET['id'] ?? 0);
 $post = null;
-$pageTitle = t('blog');
-$metaDescription = '';
-$metaKeywords = '';
+$siteName = (string) getSiteSetting('site_name', SITE_NAME);
+$pageTitle = loadLang('blog');
+$metaDescription = seoCleanText(loadLang('blog') . ' tips and updates from ' . $siteName . '. ' . loadLang('meta_home_description'), 160);
+$metaKeywords = seoPick('blog, cleaning tips, ' . $siteName, getHomeSeo()['keywords']);
 $ogImage = '';
 $ogImageAlt = '';
 $canonicalUrl = '';
@@ -21,10 +22,10 @@ if ($postId) {
         header('Location: blog.php');
         exit;
     }
-    $pageTitle = $post['meta_title'] ? $post['meta_title'] : $post['post_title'];
-    $metaDescription = trim($post['meta_description'] ?: strip_tags($post['post_content']));
-    $metaKeywords = trim($post['meta_keyword'] ?: 'blog, article, news');
-    $ogImage = getProductImage($post['photo']);
+    $pageTitle = seoPick($post['meta_title'] ?? '', $post['post_title']);
+    $metaDescription = seoPick($post['meta_description'] ?? '', $post['post_content'] ?? '', 160);
+    $metaKeywords = seoPick($post['meta_keyword'] ?? '', 'blog, cleaning tips, ' . $siteName);
+    $ogImage = $post['photo'] ?? '';
     $ogImageAlt = $post['post_title'];
     $canonicalUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
     $ogType = 'article';

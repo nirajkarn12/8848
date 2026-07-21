@@ -14,7 +14,7 @@ if (!isset($aboutPage) || !is_array($aboutPage)) {
 
 $aboutTitle = trim((string)($aboutPage['about_title'] ?? ''));
 if ($aboutTitle === '') {
-    $aboutTitle = loadLang('about_koshi_supplier');
+    $aboutTitle = loadLang('about_8848_cleaning');
 }
 
 $aboutContent = (string)($aboutPage['about_content'] ?? '');

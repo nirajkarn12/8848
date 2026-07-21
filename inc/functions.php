@@ -98,6 +98,105 @@ function getSiteSetting($field, $default = '') {
     return array_key_exists($fieldName, $settings) && $settings[$fieldName] !== null ? $settings[$fieldName] : $default;
 }
 
+function seoCleanText($value, $maxLen = 0) {
+    $text = trim(preg_replace('/\s+/u', ' ', strip_tags((string) $value)));
+    if ($maxLen > 0 && $text !== '' && mb_strlen($text) > $maxLen) {
+        $text = rtrim(mb_substr($text, 0, $maxLen - 1)) . '…';
+    }
+    return $text;
+}
+
+function seoPick($value, $fallback = '', $maxLen = 0) {
+    $text = seoCleanText($value, $maxLen);
+    if ($text !== '') {
+        return $text;
+    }
+    return seoCleanText($fallback, $maxLen);
+}
+
+function getHomeSeo() {
+    $siteName = (string) getSiteSetting('site_name', SITE_NAME);
+    return [
+        'title' => seoPick(getSiteSetting('meta_title_home', ''), $siteName),
+        'keywords' => seoPick(
+            getSiteSetting('meta_keyword_home', ''),
+            'cleaning service, home cleaning, office cleaning, deep clean, Kathmandu, 8848 Cleaning Service'
+        ),
+        'description' => seoPick(
+            getSiteSetting('meta_description_home', ''),
+            loadLang('meta_home_description'),
+            160
+        ),
+    ];
+}
+
+function getStaticPageSeo($prefix) {
+    global $pdo;
+    static $pageRow = null;
+
+    if ($pageRow === null) {
+        try {
+            $pageRow = $pdo->query('SELECT * FROM tbl_page LIMIT 1')->fetch(PDO::FETCH_ASSOC) ?: [];
+        } catch (Throwable $e) {
+            $pageRow = [];
+        }
+    }
+
+    $prefix = preg_replace('/[^a-z_]/', '', strtolower((string) $prefix));
+    $home = getHomeSeo();
+    $defaultTitles = [
+        'about' => loadLang('about'),
+        'contact' => loadLang('contact'),
+        'faq' => loadLang('faqs'),
+    ];
+
+    return [
+        'title' => seoPick($pageRow[$prefix . '_meta_title'] ?? '', $defaultTitles[$prefix] ?? $home['title']),
+        'keywords' => seoPick($pageRow[$prefix . '_meta_keyword'] ?? '', $home['keywords']),
+        'description' => seoPick(
+            $pageRow[$prefix . '_meta_description'] ?? '',
+            seoPick($pageRow[$prefix . '_content'] ?? '', $home['description'], 160),
+            160
+        ),
+    ];
+}
+
+function applySeoMeta(array $seo) {
+    $result = [
+        'title' => (string) ($seo['title'] ?? ''),
+        'description' => (string) ($seo['description'] ?? ''),
+        'keywords' => (string) ($seo['keywords'] ?? ''),
+    ];
+
+    // Populate caller scope via globals for simple page scripts.
+    $GLOBALS['pageTitle'] = $result['title'] !== '' ? $result['title'] : ($GLOBALS['pageTitle'] ?? '');
+    $GLOBALS['metaDescription'] = $result['description'] !== '' ? $result['description'] : ($GLOBALS['metaDescription'] ?? '');
+    $GLOBALS['metaKeywords'] = $result['keywords'] !== '' ? $result['keywords'] : ($GLOBALS['metaKeywords'] ?? '');
+
+    return $result;
+}
+
+function getInvoiceCompanyProfile() {
+    $logo = (string) getSiteSetting('logo', '');
+    $dueDays = (int) getSiteSetting('invoice_due_days', 30);
+    if ($dueDays <= 0) {
+        $dueDays = 30;
+    }
+    return [
+        'site_name' => (string) getSiteSetting('site_name', SITE_NAME),
+        'logo' => $logo,
+        'logo_url' => getProductImage($logo ?: 'placeholder.png'),
+        'address' => (string) getSiteSetting('contact_address', ''),
+        'email' => (string) getSiteSetting('contact_email', ''),
+        'phone' => (string) getSiteSetting('contact_phone', ''),
+        'copyright' => (string) getSiteSetting('footer_copyright', ''),
+        'about' => (string) getSiteSetting('footer_about', ''),
+        'vat_no' => (string) getSiteSetting('invoice_vat_no', ''),
+        'due_days' => $dueDays,
+        'footer_note' => (string) getSiteSetting('invoice_footer_note', 'Thank you for choosing our cleaning service.'),
+    ];
+}
+
 function getMarqueeNotices() {
     if (!(int)getSiteSetting('marquee_on_off', 1)) {
         return array();
@@ -268,15 +367,95 @@ function currentCustomer() {
 }
 
 function verifyPassword($input, $stored) {
+    $stored = (string) $stored;
+    if ($stored === '') {
+        return false;
+    }
+
     if (password_get_info($stored)['algo'] ?? null) {
         return password_verify($input, $stored);
     }
 
-    if (strlen($stored) === 32) {
+    if (strlen($stored) === 32 && ctype_xdigit($stored)) {
         return md5($input) === $stored;
     }
 
-    return $input === $stored;
+    return hash_equals($stored, (string) $input);
+}
+
+function hashCustomerPassword($password) {
+    return password_hash((string) $password, PASSWORD_DEFAULT);
+}
+
+function safeAccountRedirect($redirect = '') {
+    $redirect = trim((string) $redirect);
+    if ($redirect === '') {
+        return BASE_URL . 'account/profile.php';
+    }
+    if (preg_match('#^https?://#i', $redirect)) {
+        $baseHost = parse_url(BASE_URL, PHP_URL_HOST);
+        $redirectHost = parse_url($redirect, PHP_URL_HOST);
+        if ($redirectHost && $baseHost && strcasecmp($redirectHost, $baseHost) === 0) {
+            return $redirect;
+        }
+        return BASE_URL . 'account/profile.php';
+    }
+    if (strpos($redirect, '//') === 0 || strpos($redirect, '..') !== false) {
+        return BASE_URL . 'account/profile.php';
+    }
+    return BASE_URL . ltrim($redirect, '/');
+}
+
+function linkGuestBookingsByEmail($customerId, $email) {
+    global $pdo;
+    $customerId = (int) $customerId;
+    $email = trim((string) $email);
+    if ($customerId <= 0 || $email === '') {
+        return 0;
+    }
+    $stmt = $pdo->prepare('UPDATE tbl_payment SET customer_id = ? WHERE customer_id = 0 AND customer_email = ?');
+    $stmt->execute([$customerId, $email]);
+    return $stmt->rowCount();
+}
+
+function sendCustomerEmail($toEmail, $toName, $subject, $htmlBody) {
+    $toEmail = trim((string) $toEmail);
+    if ($toEmail === '' || !filter_var($toEmail, FILTER_VALIDATE_EMAIL)) {
+        return false;
+    }
+
+    $phpMailerPath = __DIR__ . '/../PHPMailer/src/PHPMailer.php';
+    if (!is_file($phpMailerPath)) {
+        $headers = "MIME-Version: 1.0\r\nContent-type: text/html; charset=UTF-8\r\nFrom: " . SMTP_FROM_NAME . " <" . SMTP_FROM_EMAIL . ">\r\n";
+        return @mail($toEmail, $subject, $htmlBody, $headers);
+    }
+
+    require_once __DIR__ . '/../PHPMailer/src/Exception.php';
+    require_once __DIR__ . '/../PHPMailer/src/PHPMailer.php';
+    require_once __DIR__ . '/../PHPMailer/src/SMTP.php';
+
+    try {
+        $mail = new PHPMailer\PHPMailer\PHPMailer(true);
+        $mail->isSMTP();
+        $mail->Host = SMTP_HOST;
+        $mail->SMTPAuth = true;
+        $mail->Username = SMTP_USER;
+        $mail->Password = SMTP_PASS;
+        $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
+        $mail->Port = SMTP_PORT;
+        $mail->CharSet = 'UTF-8';
+        $mail->setFrom(SMTP_FROM_EMAIL, SMTP_FROM_NAME);
+        $mail->addReplyTo(SMTP_REPLYTO_EMAIL, SMTP_REPLYTO_NAME);
+        $mail->addAddress($toEmail, $toName ?: $toEmail);
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body = $htmlBody;
+        $mail->AltBody = strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $htmlBody));
+        $mail->send();
+        return true;
+    } catch (Throwable $e) {
+        return false;
+    }
 }
 
 function buildProductUrl($productId) {
@@ -415,4 +594,127 @@ function sortOptions($selected = '') {
         $html .= '<option value="' . $value . '" ' . $active . '>' . $label . '</option>';
     }
     return $html;
+}
+
+function ensureServiceLocationColumns(PDO $pdo) {
+    static $done = false;
+    if ($done) {
+        return;
+    }
+    $done = true;
+    $targets = [
+        'tbl_payment' => ['service_lat', 'service_lng'],
+        'tbl_booking_assignment' => ['service_lat', 'service_lng'],
+    ];
+    foreach ($targets as $table => $columns) {
+        foreach ($columns as $column) {
+            try {
+                $stmt = $pdo->query("SHOW COLUMNS FROM `{$table}` LIKE " . $pdo->quote($column));
+                if ($stmt && $stmt->rowCount() === 0) {
+                    $pdo->exec("ALTER TABLE `{$table}` ADD COLUMN `{$column}` DECIMAL(10,7) NULL");
+                }
+            } catch (Throwable $e) {
+                // Ignore if table is unavailable in older installs.
+            }
+        }
+    }
+}
+
+function normalizeMapCoordinate($value, $min, $max) {
+    if ($value === null || $value === '') {
+        return null;
+    }
+    if (!is_numeric($value)) {
+        return null;
+    }
+    $num = (float) $value;
+    if ($num < $min || $num > $max) {
+        return null;
+    }
+    return round($num, 7);
+}
+
+function mapsUrlForCoordinates($lat, $lng, $address = '') {
+    if ($lat !== null && $lng !== null) {
+        return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($lat . ',' . $lng);
+    }
+    return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode((string) $address);
+}
+
+function osmUrlForCoordinates($lat, $lng, $address = '') {
+    if ($lat !== null && $lng !== null) {
+        return 'https://www.openstreetmap.org/?mlat=' . rawurlencode((string) $lat) . '&mlon=' . rawurlencode((string) $lng) . '#map=16/' . rawurlencode((string) $lat) . '/' . rawurlencode((string) $lng);
+    }
+    return 'https://www.openstreetmap.org/search?query=' . rawurlencode((string) $address);
+}
+
+function directionsUrlForCoordinates($lat, $lng, $address = '') {
+    $destination = ($lat !== null && $lng !== null) ? ($lat . ',' . $lng) : (string) $address;
+    return 'https://www.google.com/maps/dir/?api=1&destination=' . rawurlencode($destination);
+}
+
+function renderServiceLocationPicker($options = []) {
+    $addressInput = $options['address_input'] ?? '#service_address';
+    $lat = $options['lat'] ?? '';
+    $lng = $options['lng'] ?? '';
+    $uid = $options['id'] ?? 'serviceLocationPicker';
+    $required = !empty($options['required']);
+    $requiredMessage = loadLang('map_pin_required');
+    ob_start();
+    ?>
+    <div class="alert alert-info border-0 rounded-4 py-2 px-3 mb-2 small">
+      <i class="fa fa-map-marker-alt me-1"></i> <?php echo t('map_pin_required_hint'); ?>
+    </div>
+    <div class="service-location-map-wrap" id="<?php echo e($uid); ?>" data-service-map="picker" data-address-input="<?php echo e($addressInput); ?>" <?php echo $required ? 'data-map-required="1"' : ''; ?> data-required-message="<?php echo e($requiredMessage); ?>">
+      <div class="service-location-map-toolbar">
+        <input type="search" class="form-control form-control-sm" data-map-search placeholder="<?php echo t('map_search_placeholder'); ?>" autocomplete="off">
+        <button type="button" class="btn btn-sm btn-outline-dark" data-map-search-btn><?php echo t('map_search'); ?></button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-map-locate-btn><?php echo t('map_use_my_location'); ?></button>
+      </div>
+      <div class="service-location-map-canvas" data-map-canvas></div>
+      <div class="service-location-map-meta" data-map-meta><?php echo t('map_pin_help'); ?></div>
+      <div class="service-location-map-meta" data-map-status></div>
+      <input type="hidden" name="service_lat" data-map-lat value="<?php echo e((string) $lat); ?>" <?php echo $required ? 'data-required="1"' : ''; ?>>
+      <input type="hidden" name="service_lng" data-map-lng value="<?php echo e((string) $lng); ?>" <?php echo $required ? 'data-required="1"' : ''; ?>>
+    </div>
+    <?php
+    return ob_get_clean();
+}
+
+function renderServiceLocationViewer($options = []) {
+    $lat = $options['lat'] ?? null;
+    $lng = $options['lng'] ?? null;
+    $address = $options['address'] ?? '';
+    $uid = $options['id'] ?? 'serviceLocationViewer';
+    $wrapperClass = $options['class'] ?? '';
+    $google = mapsUrlForCoordinates($lat, $lng, $address);
+    $osm = osmUrlForCoordinates($lat, $lng, $address);
+    $directions = directionsUrlForCoordinates($lat, $lng, $address);
+    ob_start();
+    ?>
+    <div class="<?php echo e($wrapperClass); ?>">
+      <div class="service-location-map-wrap" id="<?php echo e($uid); ?>" data-service-map="view" data-lat="<?php echo e((string) $lat); ?>" data-lng="<?php echo e((string) $lng); ?>" data-address="<?php echo e($address); ?>">
+        <div class="service-location-map-canvas" data-map-canvas></div>
+        <div class="service-location-map-meta" data-map-meta></div>
+        <div class="service-location-map-actions">
+          <a class="btn btn-success btn-sm" data-map-directions href="<?php echo e($directions); ?>" target="_blank" rel="noopener"><i class="fa fa-location-arrow"></i> <?php echo t('map_get_directions'); ?></a>
+          <a class="btn btn-primary btn-sm" data-map-google href="<?php echo e($google); ?>" target="_blank" rel="noopener"><i class="fa fa-map-marker"></i> Google Maps</a>
+          <a class="btn btn-default btn-sm" data-map-osm href="<?php echo e($osm); ?>" target="_blank" rel="noopener">OpenStreetMap</a>
+        </div>
+      </div>
+    </div>
+    <?php
+    return ob_get_clean();
+}
+
+function serviceLocationAssets() {
+    static $printed = false;
+    if ($printed) {
+        return '';
+    }
+    $printed = true;
+    return '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">'
+        . '<link rel="stylesheet" href="' . ASSET_URL . 'css/service-location-map.css?v=20260721b">'
+        . '<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>'
+        . '<script src="' . ASSET_URL . 'js/service-location-map.js?v=20260721b"></script>';
 }

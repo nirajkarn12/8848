@@ -55,20 +55,26 @@ function columnExists($pdo, $table, $column) {
                     <div class="row">
                         <div class="col-md-6">
                             <table class="table table-bordered table-striped">
-                                <tr><th width="35%">Order ID</th><td><?php echo htmlspecialchars($payment['payment_id']); ?></td></tr>
+                                <tr><th width="35%">Booking ID</th><td><?php echo htmlspecialchars($payment['payment_id']); ?></td></tr>
                                 <tr><th>Invoice ID</th><td><?php echo htmlspecialchars($payment['id']); ?></td></tr>
                                 <tr><th>Customer Name</th><td><?php echo htmlspecialchars($payment['customer_name']); ?></td></tr>
                                 <tr><th>Customer Email</th><td><?php echo htmlspecialchars($payment['customer_email']); ?></td></tr>
                                 <tr><th>Customer Phone</th><td><?php echo htmlspecialchars($payment['customer_phone'] ?? ''); ?></td></tr>
                                 <tr><th>Payment Method</th><td><?php echo htmlspecialchars($payment['payment_method']); ?></td></tr>
                                 <tr><th>Payment Status</th><td><?php echo htmlspecialchars($payment['payment_status']); ?></td></tr>
-                                <tr><th>Shipping Status</th><td><?php echo htmlspecialchars($payment['shipping_status']); ?></td></tr>
+                                <tr><th>Visit Status</th><td><?php echo htmlspecialchars($payment['shipping_status']); ?></td></tr>
+                                <?php if (!empty($payment['booking_status'])): ?>
+                                <tr><th>Booking Status</th><td><?php echo htmlspecialchars($payment['booking_status']); ?></td></tr>
+                                <?php endif; ?>
                                 <tr><th>Payment Date</th><td><?php echo htmlspecialchars($payment['payment_date']); ?></td></tr>
                                 <?php if(!empty($payment['notes'])): ?>
                                 <tr><th>Notes</th><td><?php echo nl2br(htmlspecialchars($payment['notes'])); ?></td></tr>
                                 <?php endif; ?>
                                 <?php if(!empty($payment['service_address'])): ?>
                                 <tr><th>Service Address</th><td><?php echo nl2br(htmlspecialchars($payment['service_address'])); ?></td></tr>
+                                <?php endif; ?>
+                                <?php if (!empty($payment['service_lat']) && !empty($payment['service_lng'])): ?>
+                                <tr><th>Map Pin</th><td><?php echo htmlspecialchars($payment['service_lat'] . ', ' . $payment['service_lng']); ?></td></tr>
                                 <?php endif; ?>
                                 <?php if(!empty($payment['preferred_date']) || !empty($payment['preferred_time'])): ?>
                                 <tr><th>Preferred Schedule</th><td><?php echo htmlspecialchars(trim(($payment['preferred_date'] ?? '') . ' ' . ($payment['preferred_time'] ?? ''))); ?></td></tr>
@@ -167,19 +173,16 @@ function columnExists($pdo, $table, $column) {
                         <?php } ?>
                     </div>
 
-                    <!-- Ordered Products -->
-                    <h3>Ordered Products</h3>
+                    <!-- Booked Services -->
+                    <h3>Booked Services</h3>
                     <div class="table-responsive">
                         <table class="table table-bordered table-striped">
                             <thead>
                                 <tr>
                                     <th>#</th>
-                                    <th>Product Name</th>
-                                    <th>Size</th>
-                                    <th>Color</th>
-                                    <th>Quantity</th>
-                                    <th>Unit Price</th>
-                                    <th>Line Total</th>
+                                    <th>Service Name</th>
+                                    <th>Price</th>
+                                    <th>Total</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -188,51 +191,51 @@ function columnExists($pdo, $table, $column) {
                                 $subtotalCheck = 0;
                                 foreach($orders as $item) {
                                     $counter++;
-                                    $lineTotal = (float)($item['quantity'] * $item['unit_price']);
+                                    $lineTotal = (float)($item['line_total'] ?? 0);
+                                    if ($lineTotal <= 0) {
+                                        $lineTotal = (float)$item['unit_price'];
+                                    }
                                     $subtotalCheck += $lineTotal;
                                     echo '<tr>';
                                     echo '<td>' . $counter . '</td>';
                                     echo '<td>' . htmlspecialchars($item['product_name']) . '</td>';
-                                    echo '<td>' . htmlspecialchars($item['size'] ?? '') . '</td>';
-                                    echo '<td>' . htmlspecialchars($item['color'] ?? '') . '</td>';
-                                    echo '<td>' . htmlspecialchars($item['quantity']) . '</td>';
-                                    echo '<td>' . number_format((float)$item['unit_price'], 2) . '</td>';
-                                    echo '<td>' . number_format($lineTotal, 2) . '</td>';
+                                    echo '<td>Rs. ' . number_format((float)$item['unit_price'], 2) . '</td>';
+                                    echo '<td>Rs. ' . number_format($lineTotal, 2) . '</td>';
                                     echo '</tr>';
                                 }
                                 if($counter == 0) {
-                                    echo '<tr><td colspan="7" class="text-center">No products found for this order.</td></tr>';
+                                    echo '<tr><td colspan="4" class="text-center">No services found for this booking.</td></tr>';
                                 }
                                 ?>
                             </tbody>
                             <tfoot>
                                 <tr>
-                                    <th colspan="6" class="text-right">Subtotal (from items)</th>
-                                    <th><?php echo number_format($subtotalCheck, 2); ?></th>
+                                    <th colspan="3" class="text-right">Subtotal (from items)</th>
+                                    <th>Rs. <?php echo number_format($subtotalCheck, 2); ?></th>
                                 </tr>
                                 <?php if(!empty($payment['discount_amount']) && (float)$payment['discount_amount'] > 0): ?>
                                 <tr>
-                                    <th colspan="6" class="text-right">Discount</th>
-                                    <th>- <?php echo number_format((float)$payment['discount_amount'], 2); ?></th>
+                                    <th colspan="3" class="text-right">Discount</th>
+                                    <th>- Rs. <?php echo number_format((float)$payment['discount_amount'], 2); ?></th>
                                 </tr>
                                 <?php endif; ?>
                                 <?php if(!empty($payment['vat_amount']) && (float)$payment['vat_amount'] > 0): ?>
                                 <tr>
-                                    <th colspan="6" class="text-right">VAT</th>
-                                    <th>+ <?php echo number_format((float)$payment['vat_amount'], 2); ?></th>
+                                    <th colspan="3" class="text-right">VAT</th>
+                                    <th>+ Rs. <?php echo number_format((float)$payment['vat_amount'], 2); ?></th>
                                 </tr>
                                 <?php endif; ?>
                                 <tr>
-                                    <th colspan="6" class="text-right">Grand Total</th>
-                                    <th><strong><?php echo number_format((float)$payment['grand_total'], 2); ?></strong></th>
+                                    <th colspan="3" class="text-right">Grand Total</th>
+                                    <th><strong>Rs. <?php echo number_format((float)$payment['grand_total'], 2); ?></strong></th>
                                 </tr>
                                 <tr>
-                                    <th colspan="6" class="text-right">Paid</th>
-                                    <th><?php echo number_format((float)$payment['paid_amount'], 2); ?></th>
+                                    <th colspan="3" class="text-right">Paid</th>
+                                    <th>Rs. <?php echo number_format((float)$payment['paid_amount'], 2); ?></th>
                                 </tr>
                                 <tr>
-                                    <th colspan="6" class="text-right">Due</th>
-                                    <th><?php echo number_format((float)$payment['due_amount'], 2); ?></th>
+                                    <th colspan="3" class="text-right">Due</th>
+                                    <th>Rs. <?php echo number_format((float)$payment['due_amount'], 2); ?></th>
                                 </tr>
                             </tfoot>
                         </table>
@@ -245,9 +248,21 @@ function columnExists($pdo, $table, $column) {
                     <a href="order-edit.php?id=<?php echo $id; ?>" class="btn btn-warning">Edit Order</a>
                 </div>
             </div>
+
+            <?php if (!empty($payment['service_address']) || (!empty($payment['service_lat']) && !empty($payment['service_lng']))) { ?>
+            <div class="box box-success">
+                <div class="box-header with-border">
+                    <h3 class="box-title">Client Service Location (OpenStreetMap)</h3>
+                </div>
+                <div class="box-body">
+                    <?php echo adminRenderServiceLocationViewer($payment['service_lat'] ?? null, $payment['service_lng'] ?? null, $payment['service_address'] ?? ''); ?>
+                </div>
+            </div>
+            <?php } ?>
             <!-- /.box -->
         </div>
     </div>
 </section>
 
+<?php echo adminServiceLocationAssets(); ?>
 <?php require_once('footer.php'); ?>

@@ -107,6 +107,20 @@ if(isset($_POST['form3'])) {
         $statement->execute(array($_POST['newsletter_on_off'],$_POST['footer_copyright'],$_POST['contact_address'],$_POST['contact_email'],$_POST['contact_phone'],$_POST['contact_map_iframe']));
     }
 
+    // Optional invoice profile fields
+    $invoiceFields = array(
+        'invoice_vat_no' => trim($_POST['invoice_vat_no'] ?? ''),
+        'invoice_due_days' => max(1, (int)($_POST['invoice_due_days'] ?? 30)),
+        'invoice_footer_note' => trim($_POST['invoice_footer_note'] ?? ''),
+    );
+    foreach ($invoiceFields as $column => $value) {
+        $check = $pdo->prepare("SHOW COLUMNS FROM tbl_settings LIKE ?");
+        $check->execute(array($column));
+        if ($check->rowCount() > 0) {
+            $pdo->prepare("UPDATE tbl_settings SET `{$column}` = ? WHERE id=1")->execute(array($value));
+        }
+    }
+
     $success_message = 'General content settings is updated successfully.';
     
 }
@@ -831,6 +845,9 @@ foreach ($result as $row) {
     $contact_map_iframe              = $row['contact_map_iframe'];
     $marquee_on_off                  = $row['marquee_on_off'] ?? 1;
     $marquee_notices                 = $row['marquee_notices'] ?? '';
+    $invoice_vat_no                  = $row['invoice_vat_no'] ?? '';
+    $invoice_due_days                = $row['invoice_due_days'] ?? 30;
+    $invoice_footer_note             = $row['invoice_footer_note'] ?? '';
     $receive_email                   = $row['receive_email'];
     $receive_email_subject           = $row['receive_email_subject'];
     $receive_email_thank_you_message = $row['receive_email_thank_you_message'];
@@ -1048,12 +1065,25 @@ foreach ($result as $row) {
                                             <input type="text" class="form-control" name="contact_phone" value="<?php echo $contact_phone; ?>">
                                         </div>
                                     </div>
-                                 <!-- <div class="form-group">
-                                        <label for="" class="col-sm-2 control-label">Contact Fax Number </label>
+                                    <div class="form-group">
+                                        <label for="" class="col-sm-2 control-label">Invoice VAT / PAN </label>
                                         <div class="col-sm-6">
-                                            <input type="text" class="form-control" name="contact_fax" value="<?php echo $contact_fax; ?>">
+                                            <input type="text" class="form-control" name="invoice_vat_no" value="<?php echo htmlspecialchars($invoice_vat_no); ?>" placeholder="e.g. 301908717">
+                                            <span class="help-block">Shown on customer and admin invoices.</span>
                                         </div>
-                                    </div>-->
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="" class="col-sm-2 control-label">Invoice Due Days </label>
+                                        <div class="col-sm-3">
+                                            <input type="number" min="1" class="form-control" name="invoice_due_days" value="<?php echo (int)$invoice_due_days; ?>">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="" class="col-sm-2 control-label">Invoice Footer Note </label>
+                                        <div class="col-sm-8">
+                                            <textarea class="form-control" name="invoice_footer_note" rows="3"><?php echo htmlspecialchars($invoice_footer_note); ?></textarea>
+                                        </div>
+                                    </div>
                                     <div class="form-group">
                                         <label for="" class="col-sm-2 control-label">Notice Marquee </label>
                                         <div class="col-sm-3">
@@ -1276,26 +1306,27 @@ foreach ($result as $row) {
                             </form>
 
                             
-                            <h3>Meta Section</h3>
+                            <h3>Home SEO / Meta Section</h3>
+                            <p class="text-muted" style="margin-left:10px;">Used dynamically on the homepage and as default SEO for other pages. About / Contact / FAQ SEO is managed under <strong>Page Settings</strong>.</p>
                             <form class="form-horizontal" action="" method="post">
                             <div class="box box-info">
                                 <div class="box-body">
                                     <div class="form-group">
                                         <label for="" class="col-sm-3 control-label">Meta Title </label>
                                         <div class="col-sm-8">
-                                            <input type="text" name="meta_title_home" class="form-control" value="<?php echo $meta_title_home ?>">
+                                            <input type="text" name="meta_title_home" class="form-control" value="<?php echo htmlspecialchars($meta_title_home); ?>">
                                         </div>
                                     </div>      
                                     <div class="form-group">
                                         <label for="" class="col-sm-3 control-label">Meta Keyword </label>
                                         <div class="col-sm-8">
-                                            <textarea class="form-control" name="meta_keyword_home" style="height:100px;"><?php echo $meta_keyword_home ?></textarea>
+                                            <textarea class="form-control" name="meta_keyword_home" style="height:100px;"><?php echo htmlspecialchars($meta_keyword_home); ?></textarea>
                                         </div>
                                     </div>  
                                     <div class="form-group">
                                         <label for="" class="col-sm-3 control-label">Meta Description </label>
                                         <div class="col-sm-8">
-                                            <textarea class="form-control" name="meta_description_home" style="height:200px;"><?php echo $meta_description_home ?></textarea>
+                                            <textarea class="form-control" name="meta_description_home" style="height:200px;"><?php echo htmlspecialchars($meta_description_home); ?></textarea>
                                         </div>
                                     </div>  
                                     <div class="form-group">

@@ -11,27 +11,17 @@ if(isset($_POST['form1'])) {
 
     if(empty($_POST['mcat_id'])) {
         $valid = 0;
-        $error_message .= "You must have to select a mid level category<br>";
-    }
-
-    if(empty($_POST['ecat_id'])) {
-        $valid = 0;
-        $error_message .= "You must have to select an end level category<br>";
+        $error_message .= "You must have to select a category<br>";
     }
 
     if(empty($_POST['p_name'])) {
         $valid = 0;
-        $error_message .= "Product name can not be empty<br>";
+        $error_message .= "Service name can not be empty<br>";
     }
 
     if(empty($_POST['p_current_price'])) {
         $valid = 0;
         $error_message .= "Current Price can not be empty<br>";
-    }
-
-    if(empty($_POST['p_qty'])) {
-        $valid = 0;
-        $error_message .= "Quantity can not be empty<br>";
     }
 
     $path = $_FILES['p_featured_photo']['name'];
@@ -48,6 +38,15 @@ if(isset($_POST['form1'])) {
 
 
     if($valid == 1) {
+        $ecatId = resolveServiceEndCategory($pdo, (int)$_POST['mcat_id']);
+        if ($ecatId <= 0) {
+            $valid = 0;
+            $error_message .= "Could not resolve category for this service<br>";
+        }
+    }
+
+    if($valid == 1) {
+        $_POST['ecat_id'] = $ecatId;
 
     	if( isset($_FILES['photo']["name"]) && isset($_FILES['photo']["tmp_name"]) )
         {
@@ -127,7 +126,7 @@ if(isset($_POST['form1'])) {
         							$_POST['p_name'],
         							$_POST['p_old_price'],
         							$_POST['p_current_price'],
-        							$_POST['p_qty'],
+        							1,
         							$cleanDescription,
         							$cleanShort,
         							$cleanFeature,
@@ -170,7 +169,7 @@ if(isset($_POST['form1'])) {
         							$_POST['p_name'],
         							$_POST['p_old_price'],
         							$_POST['p_current_price'],
-        							$_POST['p_qty'],
+        							1,
         							$final_name,
         							$cleanDescription,
         							$cleanShort,
@@ -225,7 +224,7 @@ if(isset($_POST['form1'])) {
 			// Phase 2 columns may not exist until migration is run.
 		}
 	
-    	$success_message = 'Product is updated successfully.';
+    	$success_message = 'Service is updated successfully.';
     }
 }
 ?>
@@ -249,7 +248,7 @@ if(!isset($_REQUEST['id'])) {
 
 <section class="content-header">
 	<div class="content-header-left">
-		<h1>Edit Product</h1>
+		<h1>Edit Service</h1>
 	</div>
 	<div class="content-header-right">
 		<a href="product.php" class="btn btn-primary btn-sm">View All</a>
@@ -335,10 +334,10 @@ foreach ($result as $row) {
 				<div class="box box-info">
 					<div class="box-body">
 						<div class="form-group">
-							<label for="" class="col-sm-3 control-label">Top Level Category Name <span>*</span></label>
+							<label for="" class="col-sm-3 control-label">Top Category <span>*</span></label>
 							<div class="col-sm-4">
 								<select name="tcat_id" class="form-control select2 top-cat">
-		                            <option value="">Select Top Level Category</option>
+		                            <option value="">Select Top Category</option>
 		                            <?php
 		                            $statement = $pdo->prepare("SELECT * FROM tbl_top_category ORDER BY tcat_name ASC");
 		                            $statement->execute();
@@ -353,10 +352,10 @@ foreach ($result as $row) {
 							</div>
 						</div>
 						<div class="form-group">
-							<label for="" class="col-sm-3 control-label">Mid Level Category Name <span>*</span></label>
+							<label for="" class="col-sm-3 control-label">Category <span>*</span></label>
 							<div class="col-sm-4">
 								<select name="mcat_id" class="form-control select2 mid-cat">
-		                            <option value="">Select Mid Level Category</option>
+		                            <option value="">Select Category</option>
 		                            <?php
 		                            $statement = $pdo->prepare("SELECT * FROM tbl_mid_category WHERE tcat_id = ? ORDER BY mcat_name ASC");
 		                            $statement->execute(array($tcat_id));
@@ -371,25 +370,7 @@ foreach ($result as $row) {
 							</div>
 						</div>
 						<div class="form-group">
-							<label for="" class="col-sm-3 control-label">End Level Category Name <span>*</span></label>
-							<div class="col-sm-4">
-								<select name="ecat_id" class="form-control select2 end-cat">
-		                            <option value="">Select End Level Category</option>
-		                            <?php
-		                            $statement = $pdo->prepare("SELECT * FROM tbl_end_category WHERE mcat_id = ? ORDER BY ecat_name ASC");
-		                            $statement->execute(array($mcat_id));
-		                            $result = $statement->fetchAll(PDO::FETCH_ASSOC);   
-		                            foreach ($result as $row) {
-		                                ?>
-		                                <option value="<?php echo $row['ecat_id']; ?>" <?php if($row['ecat_id'] == $ecat_id){echo 'selected';} ?>><?php echo $row['ecat_name']; ?></option>
-		                                <?php
-		                            }
-		                            ?>
-		                        </select>
-							</div>
-						</div>
-						<div class="form-group">
-							<label for="" class="col-sm-3 control-label">Product Name <span>*</span></label>
+							<label for="" class="col-sm-3 control-label">Service Name <span>*</span></label>
 							<div class="col-sm-4">
 								<input type="text" name="p_name" class="form-control" value="<?php echo $p_name; ?>">
 							</div>
@@ -406,62 +387,6 @@ foreach ($result as $row) {
 								<input type="text" name="p_current_price" class="form-control" value="<?php echo $p_current_price; ?>">
 							</div>
 						</div>	
-						<div class="form-group">
-							<label for="" class="col-sm-3 control-label">Quantity <span>*</span></label>
-							<div class="col-sm-4">
-								<input type="text" name="p_qty" class="form-control" value="<?php echo $p_qty; ?>">
-							</div>
-						</div>
-						<div class="form-group">
-							<label for="" class="col-sm-3 control-label">Select Size</label>
-							<div class="col-sm-4">
-								<select name="size[]" class="form-control select2" multiple="multiple">
-									<?php
-									$is_select = '';
-									$statement = $pdo->prepare("SELECT * FROM tbl_size ORDER BY size_id ASC");
-									$statement->execute();
-									$result = $statement->fetchAll(PDO::FETCH_ASSOC);			
-									foreach ($result as $row) {
-										if(isset($size_id)) {
-											if(in_array($row['size_id'],$size_id)) {
-												$is_select = 'selected';
-											} else {
-												$is_select = '';
-											}
-										}
-										?>
-										<option value="<?php echo $row['size_id']; ?>" <?php echo $is_select; ?>><?php echo $row['size_name']; ?></option>
-										<?php
-									}
-									?>
-								</select>
-							</div>
-						</div>
-						<div class="form-group">
-							<label for="" class="col-sm-3 control-label">Select Color</label>
-							<div class="col-sm-4">
-								<select name="color[]" class="form-control select2" multiple="multiple">
-									<?php
-									$is_select = '';
-									$statement = $pdo->prepare("SELECT * FROM tbl_color ORDER BY color_id ASC");
-									$statement->execute();
-									$result = $statement->fetchAll(PDO::FETCH_ASSOC);			
-									foreach ($result as $row) {
-										if(isset($color_id)) {
-											if(in_array($row['color_id'],$color_id)) {
-												$is_select = 'selected';
-											} else {
-												$is_select = '';
-											}
-										}
-										?>
-										<option value="<?php echo $row['color_id']; ?>" <?php echo $is_select; ?>><?php echo $row['color_name']; ?></option>
-										<?php
-									}
-									?>
-								</select>
-							</div>
-						</div>
 						<div class="form-group">
 							<label for="" class="col-sm-3 control-label">Existing Featured Photo</label>
 							<div class="col-sm-4" style="padding-top:4px;">

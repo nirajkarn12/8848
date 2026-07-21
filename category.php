@@ -11,8 +11,19 @@ if ($categoryId) {
         exit;
     }
     $pageTitle = $category['mcat_name'];
+    $metaDescription = seoCleanText(
+        $category['mcat_name'] . ' cleaning services — ' .
+        getSiteSetting('site_name', SITE_NAME) . '. ' . loadLang('meta_home_description'),
+        160
+    );
+    $metaKeywords = seoPick(
+        $category['mcat_name'] . ', cleaning service, ' . getSiteSetting('site_name', SITE_NAME),
+        getHomeSeo()['keywords']
+    );
 } else {
     $pageTitle = loadLang('categories');
+    $metaDescription = getHomeSeo()['description'];
+    $metaKeywords = getHomeSeo()['keywords'];
 }
 
 include __DIR__ . '/inc/header.php';

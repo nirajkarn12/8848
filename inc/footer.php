@@ -89,6 +89,12 @@ $(function() {
     });
 });
 </script>
-<script src="<?php echo ASSET_URL; ?>js/app.js?v=20260720i"></script>
+<script src="<?php echo ASSET_URL; ?>js/app.js?v=20260721b"></script>
+<?php
+$scriptName = basename($_SERVER['SCRIPT_NAME'] ?? '');
+if ($scriptName === 'gallery.php') {
+    echo '<script src="' . ASSET_URL . 'js/gallery-page.js?v=20260721b"></script>';
+}
+?>
 </body>
 </html>

@@ -13,6 +13,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $serviceId = (int)($_POST['service_id'] ?? 0);
+    $serviceLat = normalizeMapCoordinate($_POST['service_lat'] ?? null, -90, 90);
+    $serviceLng = normalizeMapCoordinate($_POST['service_lng'] ?? null, -180, 180);
+    if ($serviceLat === null || $serviceLng === null) {
+        setFlash('danger', loadLang('map_pin_required'));
+        header('Location: book-service.php');
+        exit;
+    }
     if ($serviceId > 0) {
         $stmt = $pdo->prepare('SELECT p_id, p_name, p_featured_photo FROM tbl_product WHERE p_id = ? AND p_is_active = 1 LIMIT 1');
         $stmt->execute([$serviceId]);
@@ -22,19 +29,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['cart'] = [];
             }
             $id = (int)$product['p_id'];
-            if (isset($_SESSION['cart'][$id])) {
-                $_SESSION['cart'][$id]['quantity'] += 1;
-            } else {
-                $_SESSION['cart'][$id] = [
-                    'product_id' => $id,
-                    'product_name' => $product['p_name'],
-                    'photo' => $product['p_featured_photo'],
-                    'quantity' => 1,
-                    'notes' => trim($_POST['notes'] ?? ''),
-                ];
-            }
+            $_SESSION['cart'][$id] = [
+                'product_id' => $id,
+                'product_name' => $product['p_name'],
+                'photo' => $product['p_featured_photo'],
+                'quantity' => 1,
+                'notes' => trim($_POST['notes'] ?? ($_SESSION['cart'][$id]['notes'] ?? '')),
+            ];
             $_SESSION['booking_pref'] = [
                 'service_address' => trim($_POST['service_address'] ?? ''),
+                'service_lat' => $serviceLat,
+                'service_lng' => $serviceLng,
                 'preferred_date' => trim($_POST['preferred_date'] ?? ''),
                 'preferred_time' => trim($_POST['preferred_time'] ?? ''),
                 'customer_name' => trim($_POST['customer_name'] ?? ''),
@@ -97,7 +102,17 @@ echo renderFlash();
         </div>
         <div class="col-12">
           <label class="form-label"><?php echo t('service_address'); ?></label>
-          <textarea class="form-control" name="service_address" rows="3" required><?php echo e($pref['service_address'] ?? ''); ?></textarea>
+          <textarea class="form-control" id="service_address" name="service_address" rows="3" required><?php echo e($pref['service_address'] ?? ''); ?></textarea>
+        </div>
+        <div class="col-12">
+          <label class="form-label fw-semibold"><?php echo t('map_pin_location'); ?></label>
+          <?php echo renderServiceLocationPicker([
+              'address_input' => '#service_address',
+              'lat' => $pref['service_lat'] ?? '',
+              'lng' => $pref['service_lng'] ?? '',
+              'id' => 'bookServiceMapPicker',
+              'required' => true,
+          ]); ?>
         </div>
         <div class="col-md-6">
           <label class="form-label"><?php echo t('preferred_date'); ?></label>
@@ -146,4 +161,5 @@ echo renderFlash();
     </div>
   </div>
 </div>
+<?php echo serviceLocationAssets(); ?>
 <?php include __DIR__ . '/inc/footer.php'; ?>

@@ -245,12 +245,12 @@ require_once __DIR__ . '/breadcrumbs.php';
     <div class="spinner"></div>
 </div>
 <div class="topbar">
-    <div class="container d-flex justify-content-between align-items-center small">
-        <div class="d-flex flex-wrap gap-3">
-            <span><i class="fa fa-phone me-2"></i><?php echo e(getSiteSetting('contact_phone', '+977 9869224134')); ?></span>
-            <span><i class="fa fa-envelope me-2"></i><?php echo e(getSiteSetting('contact_email', 'contact@sastikatrading.com.np')); ?></span>
+    <div class="container topbar-inner small">
+        <div class="topbar-contact">
+            <span class="topbar-contact-item"><i class="fa fa-phone"></i><?php echo e(getSiteSetting('contact_phone', '+977 9869224134')); ?></span>
+            <span class="topbar-contact-item"><i class="fa fa-envelope"></i><?php echo e(getSiteSetting('contact_email', 'contact@sastikatrading.com.np')); ?></span>
         </div>
-        <div class="d-flex flex-wrap gap-2 social-links">
+        <div class="topbar-social social-links">
             <?php foreach (getSocialLinks() as $social) { ?>
                 <a href="<?php echo e($social['url']); ?>" target="_blank" rel="noreferrer" class="social-link" aria-label="<?php echo e($social['name']); ?>">
                     <i class="<?php echo e($social['icon']); ?>"></i>

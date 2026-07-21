@@ -10,7 +10,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $action = $_POST['action'] ?? '';
 if ($action === 'add') {
     $productId = (int)($_POST['product_id'] ?? 0);
-    $quantity = max(1, (int)($_POST['quantity'] ?? 1));
     if ($productId) {
         $stmt = $pdo->prepare('SELECT p_id, p_name, p_featured_photo FROM tbl_product WHERE p_id = ? LIMIT 1');
         $stmt->execute([$productId]);
@@ -19,11 +18,14 @@ if ($action === 'add') {
             if (!isset($_SESSION['cart'])) {
                 $_SESSION['cart'] = [];
             }
-            if (isset($_SESSION['cart'][$productId])) {
-                $_SESSION['cart'][$productId]['quantity'] += $quantity;
-            } else {
-                $_SESSION['cart'][$productId] = ['product_id' => $product['p_id'], 'product_name' => $product['p_name'], 'photo' => $product['p_featured_photo'], 'quantity' => $quantity, 'notes' => ''];
-            }
+            // One booking visit per selected service (no quantity)
+            $_SESSION['cart'][$productId] = [
+                'product_id' => $product['p_id'],
+                'product_name' => $product['p_name'],
+                'photo' => $product['p_featured_photo'],
+                'quantity' => 1,
+                'notes' => $_SESSION['cart'][$productId]['notes'] ?? '',
+            ];
             echo json_encode(['success' => true, 'message' => loadLang('added_to_booking'), 'count' => count($_SESSION['cart'])]);
             exit;
         }

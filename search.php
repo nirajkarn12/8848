@@ -1,8 +1,14 @@
 <?php
 require_once __DIR__ . '/inc/functions.php';
-$pageTitle = loadLang('search');
 $keyword = trim($_GET['q'] ?? '');
 $sort = $_GET['sort'] ?? 'newest';
+$siteName = (string) getSiteSetting('site_name', SITE_NAME);
+$pageTitle = $keyword !== '' ? (loadLang('search') . ': ' . $keyword) : loadLang('search');
+$metaDescription = seoCleanText(
+    ($keyword !== '' ? ('Search results for ' . $keyword . ' — ') : 'Search services — ') . $siteName,
+    160
+);
+$metaKeywords = getHomeSeo()['keywords'];
 include __DIR__ . '/inc/header.php';
 $breadcrumbs = [
     ['label' => t('home'), 'url' => BASE_URL],

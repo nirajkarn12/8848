@@ -49,6 +49,11 @@ if(isset($_POST['form1'])) {
         }
     }
 
+    if($valid == 1 && !empty($_POST['cust_password']) && strlen($_POST['cust_password']) < 6) {
+        $valid = 0;
+        $error_message .= "Password must be at least 6 characters<br>";
+    }
+
     if($valid == 1) {
         $statement = $pdo->prepare("UPDATE tbl_customer SET cust_name = ?, cust_email = ?, cust_phone = ?, cust_city = ?, cust_state = ?, cust_country = ? WHERE cust_id = ?");
         $statement->execute(array(
@@ -60,6 +65,12 @@ if(isset($_POST['form1'])) {
             strip_tags($_POST['cust_country']),
             $_REQUEST['id']
         ));
+
+        if (!empty($_POST['cust_password'])) {
+            $hashed = password_hash($_POST['cust_password'], PASSWORD_DEFAULT);
+            $pdo->prepare("UPDATE tbl_customer SET cust_password = ?, cust_token = '' WHERE cust_id = ?")
+                ->execute(array($hashed, $_REQUEST['id']));
+        }
 
         $success_message = 'Customer is updated successfully.';
 
@@ -120,6 +131,14 @@ if(isset($_POST['form1'])) {
                             <label for="cust_phone" class="col-sm-2 control-label">Phone</label>
                             <div class="col-sm-4">
                                 <input type="text" class="form-control" name="cust_phone" id="cust_phone" value="<?php echo isset($cust_phone) ? htmlspecialchars($cust_phone) : ''; ?>">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="cust_password" class="col-sm-2 control-label">New Login Password</label>
+                            <div class="col-sm-4">
+                                <input type="password" class="form-control" name="cust_password" id="cust_password" minlength="6">
+                                <span class="help-block">Leave blank to keep the current password. Set this if the customer cannot log in.</span>
                             </div>
                         </div>
 

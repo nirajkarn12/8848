@@ -14,6 +14,14 @@ if(isset($_POST['form1'])) {
         $error_message .= "Email can not be empty<br>";
     }
 
+    if(empty($_POST['cust_password'])) {
+        $valid = 0;
+        $error_message .= "Password can not be empty<br>";
+    } elseif(strlen($_POST['cust_password']) < 6) {
+        $valid = 0;
+        $error_message .= "Password must be at least 6 characters<br>";
+    }
+
     if($valid == 1) {
         $statement = $pdo->prepare("SELECT * FROM tbl_customer WHERE cust_email = ?");
         $statement->execute(array($_POST['cust_email']));
@@ -25,7 +33,8 @@ if(isset($_POST['form1'])) {
     }
 
     if($valid == 1) {
-        $statement = $pdo->prepare("INSERT INTO tbl_customer (cust_name, cust_email, cust_phone, cust_city, cust_state, cust_country, cust_status) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $hashed = password_hash($_POST['cust_password'], PASSWORD_DEFAULT);
+        $statement = $pdo->prepare("INSERT INTO tbl_customer (cust_name, cust_email, cust_phone, cust_city, cust_state, cust_country, cust_password, cust_token, cust_datetime, cust_timestamp, cust_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $statement->execute(array(
             strip_tags($_POST['cust_name']),
             strip_tags($_POST['cust_email']),
@@ -33,10 +42,14 @@ if(isset($_POST['form1'])) {
             strip_tags($_POST['cust_city']),
             strip_tags($_POST['cust_state']),
             strip_tags($_POST['cust_country']),
+            $hashed,
+            '',
+            date('Y-m-d H:i:s'),
+            time(),
             1
         ));
 
-        $success_message = 'Customer is added successfully.';
+        $success_message = 'Customer is added successfully. They can now log in with this email and password.';
     }
 }
 ?>
@@ -88,6 +101,14 @@ if(isset($_POST['form1'])) {
                             <label for="cust_phone" class="col-sm-2 control-label">Phone</label>
                             <div class="col-sm-4">
                                 <input type="text" class="form-control" name="cust_phone" id="cust_phone" value="<?php echo isset($_POST['cust_phone']) ? htmlspecialchars($_POST['cust_phone']) : ''; ?>">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="cust_password" class="col-sm-2 control-label">Login Password *</label>
+                            <div class="col-sm-4">
+                                <input type="password" class="form-control" name="cust_password" id="cust_password" minlength="6" required>
+                                <span class="help-block">Required so the customer can log in on the website.</span>
                             </div>
                         </div>
 

@@ -2,7 +2,7 @@
 
 <section class="content-header">
 	<div class="content-header-left">
-		<h1>View Top Level Categories</h1>
+		<h1>View Top Categories</h1>
 	</div>
 	<div class="content-header-right">
 		<a href="top-category-add.php" class="btn btn-primary btn-sm">Add New</a>

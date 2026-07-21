@@ -14,6 +14,31 @@ if (!$job) {
     exit;
 }
 
+$serviceLat = normalizeMapCoordinate($job['service_lat'] ?? null, -90, 90);
+$serviceLng = normalizeMapCoordinate($job['service_lng'] ?? null, -180, 180);
+
+// Fallback to booking payment coordinates if assignment was created before map feature
+if (($serviceLat === null || $serviceLng === null) && !empty($job['payment_row_id'])) {
+    try {
+        $payStmt = $pdo->prepare("SELECT service_lat, service_lng, service_address FROM tbl_payment WHERE id = ? LIMIT 1");
+        $payStmt->execute(array((int)$job['payment_row_id']));
+        $payRow = $payStmt->fetch(PDO::FETCH_ASSOC);
+        if ($payRow) {
+            if ($serviceLat === null) {
+                $serviceLat = normalizeMapCoordinate($payRow['service_lat'] ?? null, -90, 90);
+            }
+            if ($serviceLng === null) {
+                $serviceLng = normalizeMapCoordinate($payRow['service_lng'] ?? null, -180, 180);
+            }
+            if (empty($job['service_address']) && !empty($payRow['service_address'])) {
+                $job['service_address'] = $payRow['service_address'];
+            }
+        }
+    } catch (Throwable $e) {
+        // ignore
+    }
+}
+
 $pageTitle = 'Job Details';
 include __DIR__ . '/inc/header.php';
 ?>
@@ -49,13 +74,7 @@ include __DIR__ . '/inc/header.php';
 						<tr><th>Client Email</th><td><?php echo htmlspecialchars($job['client_email']); ?></td></tr>
 						<tr>
 							<th>Go To Address</th>
-							<td>
-								<?php echo nl2br(htmlspecialchars($job['service_address'])); ?>
-								<br><br>
-								<a href="<?php echo htmlspecialchars(mapsUrlForAddress($job['service_address'])); ?>" target="_blank" rel="noopener" class="btn btn-success btn-sm">
-									<i class="fa fa-map-marker"></i> Open in Google Maps
-								</a>
-							</td>
+							<td><?php echo nl2br(htmlspecialchars($job['service_address'])); ?></td>
 						</tr>
 						<tr><th>Schedule</th><td><?php echo htmlspecialchars(trim(($job['preferred_date'] ?? 'Not set') . ' ' . ($job['preferred_time'] ?? ''))); ?></td></tr>
 						<tr><th>Your Commission</th><td>Rs. <?php echo number_format((float)$job['commission_amount'], 2); ?> (<?php echo htmlspecialchars($job['commission_status']); ?>)</td></tr>
@@ -77,6 +96,22 @@ include __DIR__ . '/inc/header.php';
 						<tr><th>Admin Notes</th><td><?php echo nl2br(htmlspecialchars($job['admin_notes'])); ?></td></tr>
 						<?php } ?>
 					</table>
+				</div>
+			</div>
+
+			<div class="box box-success staff-map">
+				<div class="box-header with-border">
+					<h3 class="box-title"><i class="fa fa-map"></i> Client Service Location (OpenStreetMap)</h3>
+				</div>
+				<div class="box-body">
+					<p class="text-muted">Same map pin selected by the client while booking. Use directions to navigate.</p>
+					<?php echo renderServiceLocationViewer([
+						'lat' => $serviceLat,
+						'lng' => $serviceLng,
+						'address' => $job['service_address'] ?? '',
+						'id' => 'staffJobMap',
+						'class' => 'staff-map',
+					]); ?>
 				</div>
 			</div>
 		</div>
@@ -172,4 +207,5 @@ include __DIR__ . '/inc/header.php';
 </script>
 <?php } ?>
 
+<?php echo serviceLocationAssets(); ?>
 <?php include __DIR__ . '/inc/footer.php'; ?>

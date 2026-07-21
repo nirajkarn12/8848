@@ -6,12 +6,12 @@ if(isset($_POST['form1'])) {
 
     if(empty($_POST['tcat_id'])) {
         $valid = 0;
-        $error_message .= "You must have to select a top level category<br>";
+        $error_message .= "You must have to select a top category<br>";
     }
 
     if(empty($_POST['mcat_name'])) {
         $valid = 0;
-        $error_message .= "Mid Level Category Name can not be empty<br>";
+        $error_message .= "Category name can not be empty<br>";
     }
 
     if($valid == 1) {
@@ -19,15 +19,17 @@ if(isset($_POST['form1'])) {
 		// Saving data into the main table tbl_mid_category
 		$statement = $pdo->prepare("INSERT INTO tbl_mid_category (mcat_name,tcat_id) VALUES (?,?)");
 		$statement->execute(array($_POST['mcat_name'],$_POST['tcat_id']));
+		$mcatId = (int) $pdo->lastInsertId();
+		resolveServiceEndCategory($pdo, $mcatId);
 	
-    	$success_message = 'Mid Level Category is added successfully.';
+    	$success_message = 'Category is added successfully.';
     }
 }
 ?>
 
 <section class="content-header">
 	<div class="content-header-left">
-		<h1>Add Mid Level Category</h1>
+		<h1>Add Category</h1>
 	</div>
 	<div class="content-header-right">
 		<a href="mid-category.php" class="btn btn-primary btn-sm">View All</a>
@@ -61,10 +63,10 @@ if(isset($_POST['form1'])) {
 				<div class="box box-info">
 					<div class="box-body">
 						<div class="form-group">
-							<label for="" class="col-sm-3 control-label">Top Level Category Name <span>*</span></label>
+							<label for="" class="col-sm-3 control-label">Top Category <span>*</span></label>
 							<div class="col-sm-4">
 								<select name="tcat_id" class="form-control select2">
-									<option value="">Select Top Level Category</option>
+									<option value="">Select Top Category</option>
 									<?php
 									$statement = $pdo->prepare("SELECT * FROM tbl_top_category ORDER BY tcat_name ASC");
 									$statement->execute();
@@ -79,7 +81,7 @@ if(isset($_POST['form1'])) {
 							</div>
 						</div>
 						<div class="form-group">
-							<label for="" class="col-sm-3 control-label">Mid Level Category Name <span>*</span></label>
+							<label for="" class="col-sm-3 control-label">Category Name <span>*</span></label>
 							<div class="col-sm-4">
 								<input type="text" class="form-control" name="mcat_name">
 							</div>

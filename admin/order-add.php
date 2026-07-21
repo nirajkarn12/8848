@@ -7,19 +7,16 @@ $success_message = '';
 function renderOrderItemRow($products, $productId = 0, $productName = '', $size = '', $color = '', $qty = 1, $unitPrice = '') {
     $html = '<tr class="item-row">';
     $html .= '<td><select class="form-control product-select" name="item_product_id[]">';
-    $html .= '<option value="">Select Product</option>';
+    $html .= '<option value="">Select Service</option>';
     foreach ($products as $product) {
         $selected = ($productId == $product['p_id']) ? 'selected' : '';
         $html .= '<option value="' . htmlspecialchars($product['p_id'], ENT_QUOTES) . '" data-name="' . htmlspecialchars($product['p_name'], ENT_QUOTES) . '" data-price="' . htmlspecialchars($product['p_current_price'], ENT_QUOTES) . '" ' . $selected . '>' . htmlspecialchars($product['p_name']) . '</option>';
     }
     $html .= '</select></td>';
     $html .= '<td><input type="text" class="form-control item-product-name" name="item_product_name[]" value="' . htmlspecialchars($productName, ENT_QUOTES) . '"></td>';
-    $html .= '<td><input type="text" class="form-control item-size" name="item_size[]" value="' . htmlspecialchars($size, ENT_QUOTES) . '"></td>';
-    $html .= '<td><input type="text" class="form-control item-color" name="item_color[]" value="' . htmlspecialchars($color, ENT_QUOTES) . '"></td>';
-    $html .= '<td><input type="number" min="1" step="1" class="form-control item-qty" name="item_qty[]" value="' . htmlspecialchars((string)$qty, ENT_QUOTES) . '"></td>';
-    $html .= '<td><input type="number" min="0" step="0.01" class="form-control item-unit-price" name="item_unit_price[]" value="' . htmlspecialchars((string)$unitPrice, ENT_QUOTES) . '"></td>';
+    $html .= '<td><input type="hidden" class="item-size" name="item_size[]" value=""><input type="hidden" class="item-color" name="item_color[]" value=""><input type="hidden" class="item-qty" name="item_qty[]" value="1">';
+    $html .= '<input type="number" min="0" step="0.01" class="form-control item-unit-price" name="item_unit_price[]" value="' . htmlspecialchars((string)$unitPrice, ENT_QUOTES) . '"></td>';
     $html .= '<td><input type="text" class="form-control item-line-total" readonly value="0.00"></td>';
-    $html .= '<td><button type="button" class="btn btn-default btn-xs edit-row">Edit</button></td>';
     $html .= '<td><button type="button" class="btn btn-danger btn-xs remove-row">Delete</button></td>';
     $html .= '</tr>';
     return $html;
@@ -120,19 +117,19 @@ if (isset($_POST['form1'])) {
                 continue;
             }
 
-            $quantity = (float)($quantities[$index] ?? 0);
+            $quantity = 1;
             $unitPrice = (float)($unitPrices[$index] ?? 0);
-            if ($quantity <= 0 || $unitPrice < 0) {
+            if ($unitPrice < 0) {
                 $valid = 0;
-                $error_message .= 'Each selected item must have a positive quantity and a valid unit price.<br>';
+                $error_message .= 'Each selected service must have a valid price.<br>';
                 break;
             }
 
             $items[] = array(
                 'product_id' => $productId,
                 'product_name' => trim($productNames[$index] ?? ''),
-                'size' => trim($sizes[$index] ?? ''),
-                'color' => trim($colors[$index] ?? ''),
+                'size' => '',
+                'color' => '',
                 'quantity' => $quantity,
                 'unit_price' => $unitPrice,
             );
@@ -141,7 +138,7 @@ if (isset($_POST['form1'])) {
 
     if (empty($items)) {
         $valid = 0;
-        $error_message .= 'Please add at least one product item.<br>';
+        $error_message .= 'Please add at least one service.<br>';
     }
 
     if ($valid == 1) {
@@ -394,14 +391,10 @@ if (isset($_POST['form1'])) {
                                     <table class="table table-bordered table-striped">
                                         <thead>
                                             <tr>
-                                                <th>Product</th>
-                                                <th>Product Name</th>
-                                                <th>Size</th>
-                                                <th>Color</th>
-                                                <th>Qty</th>
-                                                <th>Unit Price</th>
+                                                <th>Service</th>
+                                                <th>Service Name</th>
+                                                <th>Price</th>
                                                 <th>Total</th>
-                                                <th>Edit</th>
                                                 <th>Delete</th>
                                             </tr>
                                         </thead>
@@ -456,9 +449,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function calculateRow(row) {
-        var qty = parseFloat(row.querySelector('.item-qty').value) || 0;
         var unitPrice = parseFloat(row.querySelector('.item-unit-price').value) || 0;
-        row.querySelector('.item-line-total').value = formatNumber(qty * unitPrice);
+        row.querySelector('.item-line-total').value = formatNumber(unitPrice);
         recalculateSummary();
     }
 
@@ -501,16 +493,8 @@ document.addEventListener('DOMContentLoaded', function () {
             calculateRow(row);
         });
 
-        row.querySelector('.item-qty').addEventListener('input', function () {
-            calculateRow(row);
-        });
-
         row.querySelector('.item-unit-price').addEventListener('input', function () {
             calculateRow(row);
-        });
-
-        row.querySelector('.edit-row').addEventListener('click', function () {
-            row.querySelector('.product-select').focus();
         });
 
         row.querySelector('.remove-row').addEventListener('click', function () {
@@ -518,7 +502,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 row.remove();
                 recalculateSummary();
             } else {
-                alert('At least one item is required.');
+                alert('At least one service is required.');
             }
         });
     }
@@ -530,8 +514,6 @@ document.addEventListener('DOMContentLoaded', function () {
         var newRow = document.querySelector('.item-row').cloneNode(true);
         newRow.querySelector('.product-select').value = '';
         newRow.querySelector('.item-product-name').value = '';
-        newRow.querySelector('.item-size').value = '';
-        newRow.querySelector('.item-color').value = '';
         newRow.querySelector('.item-qty').value = '1';
         newRow.querySelector('.item-unit-price').value = '';
         newRow.querySelector('.item-line-total').value = '0.00';

@@ -18,7 +18,7 @@ $dbuser = getenv('DB_USER') ?: 'root';
 $dbpass = getenv('DB_PASS') ?: '';
 
 // Defining base url
-define("BASE_URL", getenv('BASE_URL') ?: 'http://localhost/koshi_supplier/');
+define("BASE_URL", getenv('BASE_URL') ?: 'http://localhost/8848/');
 
 // Getting Admin url
 define("ADMIN_URL", BASE_URL . "admin" . "/");

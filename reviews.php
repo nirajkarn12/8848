@@ -1,14 +1,27 @@
 <?php
 require_once __DIR__ . '/inc/functions.php';
-$pageTitle = t('reviews');
-$metaDescription = 'Customer reviews and testimonials for our cleaning services.';
-
 $reviews = [];
 try {
     $reviews = $pdo->query("SELECT * FROM tbl_testimonial WHERE status = 'Active' ORDER BY sort_order ASC, id DESC")->fetchAll();
 } catch (Throwable $e) {
     $reviews = [];
 }
+
+$siteName = (string) getSiteSetting('site_name', SITE_NAME);
+$pageTitle = loadLang('reviews_title');
+$snippet = '';
+if ($reviews) {
+    $snippet = seoCleanText($reviews[0]['review'] ?? '', 90);
+}
+$metaDescription = seoCleanText(
+    loadLang('reviews_subtitle') . (count($reviews) ? ' (' . count($reviews) . ' ' . loadLang('reviews') . ')' : '') .
+    ($snippet !== '' ? ' — ' . $snippet : ''),
+    160
+);
+$metaKeywords = seoPick(
+    'reviews, testimonials, cleaning reviews, ' . $siteName,
+    getHomeSeo()['keywords']
+);
 
 include __DIR__ . '/inc/header.php';
 $breadcrumbs = [

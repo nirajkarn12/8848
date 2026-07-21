@@ -91,8 +91,7 @@ Payment Id: '.$row['payment_id'].'<br>
 Product Name: '.$row['product_name'].'<br>
 Size: '.$row['size'].'<br>
 Color: '.$row['color'].'<br>
-Quantity: '.$row['quantity'].'<br>
-Unit Price: '.$row['unit_price'].'<br>
+Price: '.$row['unit_price'].'<br>
             ';
         }
 
@@ -144,7 +143,7 @@ if($success_message != '') {
 
 <section class="content-header">
 	<div class="content-header-left">
-		<h1>View Orders</h1>
+		<h1>View Bookings</h1>
 	</div>
 	<div class="content-header-right">
 		<a href="order-add.php" class="btn btn-primary btn-sm">Add New</a>
@@ -160,13 +159,13 @@ if($success_message != '') {
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th>Order ID</th>
+                                <th>Booking ID</th>
                                 <th>Invoice ID</th>
                                 <th>Customer Name</th>
                                 <th>Customer Phone</th>
                                 <th>Assigned Staff</th>
                                 <th>Job Status</th>
-                                <th>Products</th>
+                                <th>Services</th>
                                 <th>Grand Total</th>
                                 <th>Paid</th>
                                 <th>Due</th>
@@ -203,7 +202,7 @@ if($success_message != '') {
                                     $statement1->execute(array($row['payment_id']));
                                     $result1 = $statement1->fetchAll(PDO::FETCH_ASSOC);
                                     foreach ($result1 as $row1) {
-                                        echo '<b>' . htmlspecialchars($row1['product_name']) . '</b> (Qty: ' . htmlspecialchars($row1['quantity']) . ')<br>';
+                                        echo '<b>' . htmlspecialchars($row1['product_name']) . '</b><br>';
                                     }
                                     ?>
                                 </td>

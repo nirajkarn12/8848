@@ -26,11 +26,16 @@ $firstOrder = $orders[0] ?? null;
 $serviceName = $firstOrder ? $firstOrder['product_name'] : 'Service';
 $productId = getPrimaryProductIdFromOrders($orders);
 
+ensureServiceLocationColumns($pdo);
 $service_address = $payment['service_address'] ?? '';
+$service_lat = normalizeMapCoordinate($payment['service_lat'] ?? null, -90, 90);
+$service_lng = normalizeMapCoordinate($payment['service_lng'] ?? null, -180, 180);
 $preferred_date = $payment['preferred_date'] ?? '';
 $preferred_time = $payment['preferred_time'] ?? '';
 $emailNotice = '';
 $hasShareCol = commissionColumnExists($pdo, 'tbl_booking_assignment', 'commission_share_percent');
+$hasAssignLat = commissionColumnExists($pdo, 'tbl_booking_assignment', 'service_lat');
+$hasAssignLng = commissionColumnExists($pdo, 'tbl_booking_assignment', 'service_lng');
 
 // Auto-suggest next staff (GET action)
 if (isset($_GET['auto_suggest'])) {
@@ -47,6 +52,8 @@ if (isset($_POST['form1'])) {
     $valid = 1;
     $staffId = (int)($_POST['staff_id'] ?? 0);
     $service_address = trim($_POST['service_address'] ?? '');
+    $service_lat = normalizeMapCoordinate($_POST['service_lat'] ?? null, -90, 90);
+    $service_lng = normalizeMapCoordinate($_POST['service_lng'] ?? null, -180, 180);
     $preferred_date = trim($_POST['preferred_date'] ?? '');
     $preferred_time = trim($_POST['preferred_time'] ?? '');
     $admin_notes = trim($_POST['admin_notes'] ?? '');
@@ -81,7 +88,39 @@ if (isset($_POST['form1'])) {
         $commissionAmount = $hasShareCol ? applyCommissionShare($fullCommission, $sharePercent) : $fullCommission;
         $assignedBy = (int)($_SESSION['user']['id'] ?? 0);
 
-        if ($hasShareCol) {
+        if ($hasShareCol && $hasAssignLat && $hasAssignLng) {
+            $statement = $pdo->prepare("
+                INSERT INTO tbl_booking_assignment (
+                    payment_id, payment_row_id, staff_id, assigned_by, assigned_at, job_status,
+                    service_address, service_lat, service_lng, preferred_date, preferred_time,
+                    client_name, client_phone, client_email,
+                    service_name, service_amount,
+                    commission_type, commission_value, commission_amount, commission_status,
+                    commission_share_percent, admin_notes
+                ) VALUES (?, ?, ?, ?, NOW(), 'Assigned', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
+            ");
+            $statement->execute(array(
+                $payment['payment_id'],
+                $id,
+                $staffId,
+                $assignedBy,
+                $service_address,
+                $service_lat,
+                $service_lng,
+                $preferred_date !== '' ? $preferred_date : null,
+                $preferred_time,
+                $payment['customer_name'],
+                $payment['customer_phone'] ?? '',
+                $payment['customer_email'],
+                $serviceName,
+                $baseAmount,
+                $rule['commission_type'],
+                $rule['commission_value'],
+                $commissionAmount,
+                $sharePercent,
+                $admin_notes
+            ));
+        } elseif ($hasShareCol) {
             $statement = $pdo->prepare("
                 INSERT INTO tbl_booking_assignment (
                     payment_id, payment_row_id, staff_id, assigned_by, assigned_at, job_status,
@@ -109,6 +148,37 @@ if (isset($_POST['form1'])) {
                 $rule['commission_value'],
                 $commissionAmount,
                 $sharePercent,
+                $admin_notes
+            ));
+        } elseif ($hasAssignLat && $hasAssignLng) {
+            $statement = $pdo->prepare("
+                INSERT INTO tbl_booking_assignment (
+                    payment_id, payment_row_id, staff_id, assigned_by, assigned_at, job_status,
+                    service_address, service_lat, service_lng, preferred_date, preferred_time,
+                    client_name, client_phone, client_email,
+                    service_name, service_amount,
+                    commission_type, commission_value, commission_amount, commission_status,
+                    admin_notes
+                ) VALUES (?, ?, ?, ?, NOW(), 'Assigned', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)
+            ");
+            $statement->execute(array(
+                $payment['payment_id'],
+                $id,
+                $staffId,
+                $assignedBy,
+                $service_address,
+                $service_lat,
+                $service_lng,
+                $preferred_date !== '' ? $preferred_date : null,
+                $preferred_time,
+                $payment['customer_name'],
+                $payment['customer_phone'] ?? '',
+                $payment['customer_email'],
+                $serviceName,
+                $baseAmount,
+                $rule['commission_type'],
+                $rule['commission_value'],
+                $commissionAmount,
                 $admin_notes
             ));
         } else {
@@ -144,6 +214,14 @@ if (isset($_POST['form1'])) {
 
         $updateSql = "UPDATE tbl_payment SET service_address = ?, preferred_date = ?, preferred_time = ?, assignment_status = 'Assigned'";
         $updateParams = array($service_address, $preferred_date !== '' ? $preferred_date : null, $preferred_time);
+        if (commissionColumnExists($pdo, 'tbl_payment', 'service_lat')) {
+            $updateSql .= ", service_lat = ?";
+            $updateParams[] = $service_lat;
+        }
+        if (commissionColumnExists($pdo, 'tbl_payment', 'service_lng')) {
+            $updateSql .= ", service_lng = ?";
+            $updateParams[] = $service_lng;
+        }
 
         if (commissionColumnExists($pdo, 'tbl_payment', 'booking_status')) {
             $updateSql .= ", booking_status = 'Confirmed'";
@@ -294,7 +372,9 @@ $serviceRule = getServiceCommissionRule($pdo, $productId);
                         <div class="form-group">
                             <label class="col-sm-2 control-label">Service Address *</label>
                             <div class="col-sm-6">
-                                <textarea class="form-control" name="service_address" rows="3" required><?php echo htmlspecialchars($service_address); ?></textarea>
+                                <textarea class="form-control" id="service_address" name="service_address" rows="3" required><?php echo htmlspecialchars($service_address); ?></textarea>
+                                <p class="help-block">Pin the same client location on the map so staff can navigate easily.</p>
+                                <?php echo adminRenderServiceLocationPicker($service_lat ?? '', $service_lng ?? '', '#service_address'); ?>
                             </div>
                         </div>
                         <div class="form-group">
@@ -438,4 +518,5 @@ $serviceRule = getServiceCommissionRule($pdo, $productId);
 })();
 </script>
 
+<?php echo adminServiceLocationAssets(); ?>
 <?php require_once('footer.php'); ?>

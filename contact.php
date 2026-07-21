@@ -1,13 +1,28 @@
 <?php
 require_once __DIR__ . '/inc/functions.php';
-$pageTitle = t('contact');
+
+$contactSeo = getStaticPageSeo('contact');
+$pageTitle = $contactSeo['title'];
+$metaKeywords = $contactSeo['keywords'];
+$metaDescription = $contactSeo['description'];
+
+$settings = $pdo->query('SELECT * FROM tbl_settings LIMIT 1')->fetch();
+if ($metaDescription === '' || $metaDescription === getHomeSeo()['description']) {
+    $bits = array_filter([
+        loadLang('contact_intro'),
+        $settings['contact_address'] ?? '',
+        $settings['contact_phone'] ?? '',
+        $settings['contact_email'] ?? '',
+    ]);
+    $metaDescription = seoCleanText(implode(' ', $bits), 160);
+}
+
 include __DIR__ . '/inc/header.php';
 $breadcrumbs = [
     ['label' => t('home'), 'url' => BASE_URL],
     ['label' => t('contact'), 'url' => '']
 ];
 echo renderBreadcrumbs($breadcrumbs);
-$settings = $pdo->query('SELECT * FROM tbl_settings LIMIT 1')->fetch();
 ?>
 <div class="row g-4">
   <div class="col-lg-6">

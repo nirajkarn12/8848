@@ -6,11 +6,17 @@ if (!isLoggedIn()) {
 }
 $pageTitle = t('profile');
 $customer = currentCustomer();
+if (!$customer) {
+    unset($_SESSION['customer_id'], $_SESSION['customer_name']);
+    header('Location: ' . BASE_URL . 'account/login.php');
+    exit;
+}
 $customerId = (int)$customer['cust_id'];
+linkGuestBookingsByEmail($customerId, $customer['cust_email']);
 $orderStatsStmt = $pdo->prepare('SELECT COUNT(*) AS total_orders, COALESCE(SUM(grand_total), 0) AS total_spent, SUM(CASE WHEN payment_status = "Completed" THEN 1 ELSE 0 END) AS completed_orders, SUM(CASE WHEN payment_status = "Pending" THEN 1 ELSE 0 END) AS pending_orders, MAX(payment_date) AS last_order_date FROM tbl_payment WHERE customer_id = ?');
 $orderStatsStmt->execute([$customerId]);
 $orderStats = $orderStatsStmt->fetch();
-$recentOrdersStmt = $pdo->prepare('SELECT id, payment_id, payment_date, payment_status, shipping_status, grand_total FROM tbl_payment WHERE customer_id = ? ORDER BY id DESC LIMIT 3');
+$recentOrdersStmt = $pdo->prepare('SELECT * FROM tbl_payment WHERE customer_id = ? ORDER BY id DESC LIMIT 3');
 $recentOrdersStmt->execute([$customerId]);
 $recentOrders = $recentOrdersStmt->fetchAll();
 include __DIR__ . '/../inc/header.php';
@@ -95,10 +101,17 @@ echo renderBreadcrumbs($breadcrumbs);
                 <div>
                   <div class="fw-semibold"><?php echo t('order'); ?> <?php echo e($order['payment_id']); ?></div>
                   <div class="small text-muted"><?php echo t('placed_on'); ?> <?php echo e($order['payment_date']); ?></div>
+                  <?php
+                    $schedule = trim(($order['preferred_date'] ?? '') . ' ' . ($order['preferred_time'] ?? ''));
+                    if ($schedule !== '') {
+                        echo '<div class="small text-muted">' . t('preferred_date') . ': ' . e($schedule) . '</div>';
+                    }
+                  ?>
                 </div>
                 <div class="text-md-end">
-                  <span class="badge bg-<?php echo strtolower($order['payment_status']) === 'completed' ? 'success' : 'warning'; ?> me-1"><?php echo e($order['payment_status']); ?></span>
-                  <span class="badge bg-secondary"><?php echo e($order['shipping_status']); ?></span>
+                  <?php $statusLabel = $order['booking_status'] ?? $order['shipping_status'] ?? $order['payment_status']; ?>
+                  <span class="badge bg-<?php echo strtolower((string)$order['payment_status']) === 'completed' ? 'success' : 'warning'; ?> me-1"><?php echo e($order['payment_status']); ?></span>
+                  <span class="badge bg-secondary"><?php echo e($statusLabel); ?></span>
                   <div class="mt-2"><?php echo t('total'); ?>: Rs. <?php echo number_format((float)($order['grand_total'] ?? 0), 2); ?></div>
                 </div>
               </div>

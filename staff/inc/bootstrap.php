@@ -3,9 +3,11 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../inc/functions.php';
 
-define('STAFF_URL', BASE_URL . 'staff/');
+if (!defined('STAFF_URL')) {
+    define('STAFF_URL', BASE_URL . 'staff/');
+}
 
 function staffIsLoggedIn() {
     return !empty($_SESSION['staff']['staff_id']);
@@ -33,6 +35,10 @@ function staffJobStatuses() {
     return array('Assigned', 'En Route', 'Arrived', 'In Progress', 'Completed', 'Cancelled');
 }
 
-function mapsUrlForAddress($address) {
-    return 'https://www.google.com/maps/search/?api=1&query=' . urlencode($address);
+function mapsUrlForAddress($address, $lat = null, $lng = null) {
+    return mapsUrlForCoordinates(
+        normalizeMapCoordinate($lat, -90, 90),
+        normalizeMapCoordinate($lng, -180, 180),
+        $address
+    );
 }

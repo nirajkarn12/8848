@@ -13,14 +13,17 @@ $ogLocale = $ogLocaleMap[$currentHtmlLang] ?? 'en_US';
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <?php
-    $siteName = e(getSiteSetting('site_name', SITE_NAME));
-    $defaultDescription = e(getSiteSetting('meta_description', loadLang('meta_home_description')));
-    $defaultKeywords = e(getSiteSetting('meta_keywords', 'cleaning service, home cleaning, office cleaning, deep clean, Kathmandu'));
-    $defaultAuthor = e(getSiteSetting('site_author', $siteName));
-    $pageTitleTag = e($pageTitle ?? $siteName);
-    $pageDescription = e($metaDescription ?? $defaultDescription);
-    $pageKeywords = e($metaKeywords ?? $defaultKeywords);
-    $pageAuthor = e($metaAuthor ?? $defaultAuthor);
+    $homeSeo = getHomeSeo();
+    $siteNameRaw = (string) getSiteSetting('site_name', SITE_NAME);
+    $siteName = e($siteNameRaw);
+    $defaultDescription = e($homeSeo['description']);
+    $defaultKeywords = e($homeSeo['keywords']);
+    $defaultAuthor = e(getSiteSetting('site_author', $siteNameRaw));
+    $resolvedTitle = seoPick($pageTitle ?? '', $homeSeo['title']);
+    $pageTitleTag = e($resolvedTitle !== '' ? $resolvedTitle : $siteNameRaw);
+    $pageDescription = e(seoPick($metaDescription ?? '', $homeSeo['description'], 160));
+    $pageKeywords = e(seoPick($metaKeywords ?? '', $homeSeo['keywords']));
+    $pageAuthor = e(seoPick($metaAuthor ?? '', $siteNameRaw));
     $canonicalUrl = e($canonicalUrl ?? ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']));
     $robotsContent = e($robots ?? 'index,follow');
     $ogType = e($ogType ?? 'website');
@@ -38,8 +41,8 @@ $ogLocale = $ogLocaleMap[$currentHtmlLang] ?? 'en_US';
         '@context' => 'https://schema.org',
         '@type' => 'WebSite',
         'url' => rtrim(BASE_URL, '/'),
-        'name' => $siteName,
-        'description' => $defaultDescription,
+        'name' => $siteNameRaw,
+        'description' => $homeSeo['description'],
         'potentialAction' => [
             '@type' => 'SearchAction',
             'target' => rtrim(BASE_URL, '/') . '/search.php?query={search_term_string}',
@@ -47,7 +50,15 @@ $ogLocale = $ogLocaleMap[$currentHtmlLang] ?? 'en_US';
         ],
     ];
     ?>
-    <title><?php echo $pageTitleTag; ?> | <?php echo $siteName; ?></title>
+    <title><?php
+        if ($resolvedTitle === '' || strcasecmp($resolvedTitle, $siteNameRaw) === 0) {
+            echo $siteName;
+        } elseif (stripos($resolvedTitle, $siteNameRaw) !== false) {
+            echo $pageTitleTag;
+        } else {
+            echo $pageTitleTag . ' | ' . $siteName;
+        }
+    ?></title>
     <meta name="description" content="<?php echo $pageDescription; ?>">
     <meta name="keywords" content="<?php echo $pageKeywords; ?>">
     <meta name="author" content="<?php echo $pageAuthor; ?>">
@@ -91,7 +102,7 @@ $ogLocale = $ogLocaleMap[$currentHtmlLang] ?? 'en_US';
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css">
-    <link rel="stylesheet" href="<?php echo ASSET_URL; ?>css/style.css?v=20260720i">
+    <link rel="stylesheet" href="<?php echo ASSET_URL; ?>css/style.css?v=20260721d">
     <style>
     /* Dropdown menu stays open when interacting inside */
     .mega-menu {
@@ -295,12 +306,12 @@ $ogLocale = $ogLocaleMap[$currentHtmlLang] ?? 'en_US';
 </div>
 <?php } ?>
 <div class="topbar">
-    <div class="container d-flex justify-content-between align-items-center small">
-        <div class="d-flex flex-wrap gap-3">
-            <span><i class="fa fa-phone me-2"></i><?php echo e(getSiteSetting('contact_phone', '+977 9869224134')); ?></span>
-            <span><i class="fa fa-envelope me-2"></i><?php echo e(getSiteSetting('contact_email', 'contact@sastikatrading.com.np')); ?></span>
+    <div class="container topbar-inner small">
+        <div class="topbar-contact">
+            <span class="topbar-contact-item"><i class="fa fa-phone"></i><?php echo e(getSiteSetting('contact_phone', '+977 9869224134')); ?></span>
+            <span class="topbar-contact-item"><i class="fa fa-envelope"></i><?php echo e(getSiteSetting('contact_email', 'contact@sastikatrading.com.np')); ?></span>
         </div>
-        <div class="d-flex flex-wrap gap-2 social-links">
+        <div class="topbar-social social-links">
             <?php foreach (getSocialLinks() as $social) { ?>
                 <a href="<?php echo e($social['url']); ?>" target="_blank" rel="noreferrer" class="social-link" aria-label="<?php echo e($social['name']); ?>">
                     <i class="<?php echo e($social['icon']); ?>"></i>
@@ -344,7 +355,7 @@ $ogLocale = $ogLocaleMap[$currentHtmlLang] ?? 'en_US';
     </ul>
 </li>
                 <li class="nav-item"><a class="nav-link" href="<?php echo BASE_URL; ?>about.php"><?php echo t('about'); ?></a></li>
-                <li class="nav-item"><a class="nav-link" href="<?php echo BASE_URL; ?>reviews.php"><?php echo t('reviews'); ?></a></li>
+                <li class="nav-item"><a class="nav-link" href="<?php echo BASE_URL; ?>gallery.php"><?php echo t('gallery'); ?></a></li>
                 <li class="nav-item"><a class="nav-link" href="<?php echo BASE_URL; ?>blog.php"><?php echo t('blog'); ?></a></li>
                 <li class="nav-item"><a class="nav-link" href="<?php echo BASE_URL; ?>contact.php"><?php echo t('contact'); ?></a></li>
             </ul>

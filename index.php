@@ -1,7 +1,9 @@
 <?php
 require_once __DIR__ . '/inc/functions.php';
-$pageTitle = loadLang('home');
-$metaDescription = loadLang('meta_home_description');
+$homeSeo = getHomeSeo();
+$pageTitle = $homeSeo['title'];
+$metaDescription = $homeSeo['description'];
+$metaKeywords = $homeSeo['keywords'];
 $fullWidth = true;
 $showWaterSplash = true;
 include __DIR__ . '/inc/header.php';
@@ -534,4 +536,20 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 </script>
 <?php endif; ?>
+
+<!--Start of Tawk.to Script-->
+<script type="text/javascript">
+var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+(function(){
+var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+s1.async=true;
+s1.src='https://embed.tawk.to/6a5f1bd7940f101d5323c06d/1ju1o9hg6';
+s1.charset='UTF-8';
+s1.setAttribute('crossorigin','*');
+s0.parentNode.insertBefore(s1,s0);
+})();
+</script>
+<!--End of Tawk.to Script-->
+
 <?php include __DIR__ . '/inc/footer.php'; ?>
+

@@ -15,27 +15,17 @@ if (isset($_POST['form1'])) {
 
     if (empty($_POST['mcat_id'])) {
         $valid = 0;
-        $error_message .= "You must select a mid level category<br>";
-    }
-
-    if (empty($_POST['ecat_id'])) {
-        $valid = 0;
-        $error_message .= "You must select an end level category<br>";
+        $error_message .= "You must select a category<br>";
     }
 
     if (empty($_POST['p_name'])) {
         $valid = 0;
-        $error_message .= "Product name cannot be empty<br>";
+        $error_message .= "Service name cannot be empty<br>";
     }
 
     if (empty($_POST['p_current_price'])) {
         $valid = 0;
         $error_message .= "Current price cannot be empty<br>";
-    }
-
-    if (empty($_POST['p_qty'])) {
-        $valid = 0;
-        $error_message .= "Quantity cannot be empty<br>";
     }
 
     // Featured photo validation
@@ -48,6 +38,15 @@ if (isset($_POST['form1'])) {
     } else {
         $valid = 0;
         $error_message .= "Featured photo is required<br>";
+    }
+
+    if ($valid == 1) {
+
+        $ecatId = resolveServiceEndCategory($pdo, (int)$_POST['mcat_id']);
+        if ($ecatId <= 0) {
+            $valid = 0;
+            $error_message .= "Could not resolve category for this service<br>";
+        }
     }
 
     if ($valid == 1) {
@@ -97,7 +96,7 @@ if (isset($_POST['form1'])) {
             $_POST['p_name'],
             $_POST['p_old_price'],
             $_POST['p_current_price'],
-            $_POST['p_qty'],
+            1, // services don't use stock quantity
             '',
             adminCleanEditorHtml($_POST['p_description'] ?? ''),
             adminCleanEditorHtml($_POST['p_short_description'] ?? ''),
@@ -107,7 +106,7 @@ if (isset($_POST['form1'])) {
             0,
             $_POST['p_is_featured'],
             $_POST['p_is_active'],
-            $_POST['ecat_id']
+            $ecatId
         ]);
 
         // 2️⃣ REAL PRODUCT ID
@@ -177,14 +176,14 @@ if (isset($_POST['form1'])) {
             }
         }
 
-        $success_message = "Product added successfully.";
+        $success_message = "Service added successfully.";
     }
 }
 ?>
 
 <section class="content-header">
 	<div class="content-header-left">
-		<h1>Add Product</h1>
+		<h1>Add Service</h1>
 	</div>
 	<div class="content-header-right">
 		<a href="product.php" class="btn btn-primary btn-sm">View All</a>
@@ -218,10 +217,10 @@ if (isset($_POST['form1'])) {
 				<div class="box box-info">
 					<div class="box-body">
 						<div class="form-group">
-							<label for="" class="col-sm-3 control-label">Top Level Category Name <span>*</span></label>
+							<label for="" class="col-sm-3 control-label">Top Category <span>*</span></label>
 							<div class="col-sm-4">
 								<select name="tcat_id" class="form-control select2 top-cat">
-									<option value="">Select Top Level Category</option>
+									<option value="">Select Top Category</option>
 									<?php
 									$statement = $pdo->prepare("SELECT * FROM tbl_top_category ORDER BY tcat_name ASC");
 									$statement->execute();
@@ -236,23 +235,15 @@ if (isset($_POST['form1'])) {
 							</div>
 						</div>
 						<div class="form-group">
-							<label for="" class="col-sm-3 control-label">Mid Level Category Name <span>*</span></label>
+							<label for="" class="col-sm-3 control-label">Category <span>*</span></label>
 							<div class="col-sm-4">
 								<select name="mcat_id" class="form-control select2 mid-cat">
-									<option value="">Select Mid Level Category</option>
+									<option value="">Select Category</option>
 								</select>
 							</div>
 						</div>
 						<div class="form-group">
-							<label for="" class="col-sm-3 control-label">End Level Category Name <span>*</span></label>
-							<div class="col-sm-4">
-								<select name="ecat_id" class="form-control select2 end-cat">
-									<option value="">Select End Level Category</option>
-								</select>
-							</div>
-						</div>
-						<div class="form-group">
-							<label for="" class="col-sm-3 control-label">Product Name <span>*</span></label>
+							<label for="" class="col-sm-3 control-label">Service Name <span>*</span></label>
 							<div class="col-sm-4">
 								<input type="text" name="p_name" class="form-control">
 							</div>
@@ -269,46 +260,6 @@ if (isset($_POST['form1'])) {
 								<input type="text" name="p_current_price" class="form-control">
 							</div>
 						</div>	
-						<div class="form-group">
-							<label for="" class="col-sm-3 control-label">Quantity <span>*</span></label>
-							<div class="col-sm-4">
-								<input type="text" name="p_qty" class="form-control">
-							</div>
-						</div>
-						<div class="form-group">
-							<label for="" class="col-sm-3 control-label">Select Size</label>
-							<div class="col-sm-4">
-								<select name="size[]" class="form-control select2" multiple="multiple">
-									<?php
-									$statement = $pdo->prepare("SELECT * FROM tbl_size ORDER BY size_id ASC");
-									$statement->execute();
-									$result = $statement->fetchAll(PDO::FETCH_ASSOC);			
-									foreach ($result as $row) {
-										?>
-										<option value="<?php echo $row['size_id']; ?>"><?php echo $row['size_name']; ?></option>
-										<?php
-									}
-									?>
-								</select>
-							</div>
-						</div>
-						<div class="form-group">
-							<label for="" class="col-sm-3 control-label">Select Color</label>
-							<div class="col-sm-4">
-								<select name="color[]" class="form-control select2" multiple="multiple">
-									<?php
-									$statement = $pdo->prepare("SELECT * FROM tbl_color ORDER BY color_id ASC");
-									$statement->execute();
-									$result = $statement->fetchAll(PDO::FETCH_ASSOC);			
-									foreach ($result as $row) {
-										?>
-										<option value="<?php echo $row['color_id']; ?>"><?php echo $row['color_name']; ?></option>
-										<?php
-									}
-									?>
-								</select>
-							</div>
-						</div>
 						<div class="form-group">
 							<label for="" class="col-sm-3 control-label">Featured Photo <span>*</span></label>
 							<div class="col-sm-4" style="padding-top:4px;">
@@ -402,7 +353,7 @@ if (isset($_POST['form1'])) {
 						<div class="form-group">
 							<label for="" class="col-sm-3 control-label"></label>
 							<div class="col-sm-6">
-								<button type="submit" class="btn btn-success pull-left" name="form1">Add Product</button>
+								<button type="submit" class="btn btn-success pull-left" name="form1">Add Service</button>
 							</div>
 						</div>
 					</div>

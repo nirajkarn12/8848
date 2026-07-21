@@ -27,7 +27,25 @@ $related = $pdo->prepare('SELECT p_id, p_name, p_featured_photo, p_short_descrip
 $related->execute([$product['ecat_id'], $productId]);
 $relatedProducts = $related->fetchAll();
 
+$siteName = (string) getSiteSetting('site_name', SITE_NAME);
 $pageTitle = $product['p_name'];
+$metaDescription = seoPick(
+    $product['p_short_description'] ?? '',
+    ($product['p_name'] . ' — ' . loadLang('book_now') . ' with ' . $siteName),
+    160
+);
+$metaKeywords = seoPick(
+    implode(', ', array_filter([
+        $product['p_name'],
+        is_array($category) ? ($category['mcat_name'] ?? '') : '',
+        is_array($category) ? ($category['tcat_name'] ?? '') : '',
+        'cleaning service',
+        $siteName,
+    ])),
+    getHomeSeo()['keywords']
+);
+$ogImage = $product['p_featured_photo'] ?? '';
+$ogImageAlt = $product['p_name'];
 include __DIR__ . '/inc/header.php';
 
 $breadcrumbs = [

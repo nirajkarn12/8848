@@ -1,0 +1,62 @@
+.service-location-map-wrap {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 1rem;
+  overflow: hidden;
+  background: #f7fafc;
+}
+
+.service-location-map-wrap.is-invalid-map {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15);
+}
+
+.service-location-map-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  background: #fff;
+}
+
+.service-location-map-toolbar .form-control,
+.service-location-map-toolbar .form-select {
+  min-width: 180px;
+}
+
+.service-location-map-canvas {
+  width: 100%;
+  height: 280px;
+  z-index: 1;
+}
+
+.service-location-map-meta {
+  padding: 0.65rem 0.85rem;
+  font-size: 0.875rem;
+  color: #5b6470;
+  background: #fff;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.service-location-map-meta strong {
+  color: #1f2937;
+}
+
+.service-location-map-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: #fff;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.admin-map .service-location-map-wrap,
+.staff-map .service-location-map-wrap {
+  border-radius: 4px;
+}
+
+.admin-map .service-location-map-canvas,
+.staff-map .service-location-map-canvas {
+  height: 320px;
+}

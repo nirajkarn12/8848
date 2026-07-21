@@ -41,8 +41,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ]);
 
     $customerId = $pdo->lastInsertId();
-    $hashed = password_hash($password, PASSWORD_DEFAULT);
+    $hashed = hashCustomerPassword($password);
     $pdo->prepare('UPDATE tbl_customer SET cust_password = ? WHERE cust_id = ?')->execute([$hashed, $customerId]);
+    linkGuestBookingsByEmail((int) $customerId, $email);
 
     $_SESSION['customer_id'] = $customerId;
     $_SESSION['customer_name'] = $name;
