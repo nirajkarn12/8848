@@ -30,9 +30,10 @@ if(isset($_POST['form1'])) {
     if($path!='') {
         $ext = pathinfo( $path, PATHINFO_EXTENSION );
         $file_name = basename( $path, '.' . $ext );
-        if( $ext!='jpg' && $ext!='png' && $ext!='jpeg' && $ext!='gif' ) {
+        $ext = strtolower($ext);
+        if( !adminIsAllowedImageExt($ext, false) ) {
             $valid = 0;
-            $error_message .= 'You must have to upload jpg, jpeg, gif or png file<br>';
+            $error_message .= 'You must upload jpg, jpeg, png, gif or webp file<br>';
         }
     }
 
@@ -70,8 +71,8 @@ if(isset($_POST['form1'])) {
             $m=0;
             for($i=0;$i<count($photo);$i++)
             {
-                $my_ext1 = pathinfo( $photo[$i], PATHINFO_EXTENSION );
-		        if( $my_ext1=='jpg' || $my_ext1=='png' || $my_ext1=='jpeg' || $my_ext1=='gif' ) {
+                $my_ext1 = strtolower(pathinfo( $photo[$i], PATHINFO_EXTENSION ));
+		        if( adminIsAllowedImageExt($my_ext1, false) ) {
 		            $final_name1[$m] = $z.'.'.$my_ext1;
                     move_uploaded_file($photo_temp[$i],"../assets/uploads/product_photos/".$final_name1[$m]);
                     $m++;
@@ -390,14 +391,15 @@ foreach ($result as $row) {
 						<div class="form-group">
 							<label for="" class="col-sm-3 control-label">Existing Featured Photo</label>
 							<div class="col-sm-4" style="padding-top:4px;">
-								<img src="../assets/uploads/<?php echo $p_featured_photo; ?>" alt="" style="width:150px;">
+								<img src="<?php echo htmlspecialchars(adminUploadUrl($p_featured_photo)); ?>" class="existing-photo" alt="" style="width:150px;">
 								<input type="hidden" name="current_photo" value="<?php echo $p_featured_photo; ?>">
 							</div>
 						</div>
 						<div class="form-group">
 							<label for="" class="col-sm-3 control-label">Change Featured Photo </label>
 							<div class="col-sm-4" style="padding-top:4px;">
-								<input type="file" name="p_featured_photo">
+								<input type="file" name="p_featured_photo" accept="<?php echo htmlspecialchars(adminImageAcceptAttribute(false)); ?>">
+								<span class="help-block">JPG, JPEG, PNG, GIF, WEBP</span>
 							</div>
 						</div>
 						<div class="form-group">

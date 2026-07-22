@@ -25,6 +25,23 @@ if(!isset($_SESSION['user'])) {
 	<title>Admin Panel</title>
 
 	<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+	<?php
+	$adminFaviconFile = '';
+	try {
+		$adminFavRow = $pdo->query("SELECT favicon, logo FROM tbl_settings WHERE id=1 LIMIT 1")->fetch(PDO::FETCH_ASSOC) ?: array();
+		$adminFaviconFile = trim((string) ($adminFavRow['favicon'] ?? ''));
+		if ($adminFaviconFile === '') {
+			$adminFaviconFile = trim((string) ($adminFavRow['logo'] ?? ''));
+		}
+	} catch (Exception $e) {
+		$adminFaviconFile = '';
+	}
+	if ($adminFaviconFile !== '' && is_file('../assets/uploads/' . $adminFaviconFile)):
+		$adminFaviconUrl = htmlspecialchars(adminUploadUrl($adminFaviconFile), ENT_QUOTES, 'UTF-8');
+	?>
+	<link rel="icon" href="<?php echo $adminFaviconUrl; ?>">
+	<link rel="shortcut icon" href="<?php echo $adminFaviconUrl; ?>">
+	<?php endif; ?>
 
 	<link rel="stylesheet" href="css/bootstrap.min.css">
 	<link rel="stylesheet" href="css/font-awesome.min.css">

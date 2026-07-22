@@ -1,0 +1,7 @@
+# Uploads are often overwritten with the same filename (logo.jpg, etc.).
+# Prevent browsers/proxies from keeping a stale copy.
+<IfModule mod_headers.c>
+    Header set Cache-Control "private, max-age=0, must-revalidate"
+    Header unset ETag
+</IfModule>
+FileETag None

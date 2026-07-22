@@ -3,84 +3,24 @@
 <?php
 //Change Logo
 if(isset($_POST['form1'])) {
-    $valid = 1;
-
-    $path = $_FILES['photo_logo']['name'];
-    $path_tmp = $_FILES['photo_logo']['tmp_name'];
-
-    if($path == '') {
-        $valid = 0;
-        $error_message .= 'You must have to select a photo<br>';
+    $saved = adminSaveNamedImageUpload($_FILES['photo_logo'] ?? array(), 'logo', false);
+    if (!$saved['ok']) {
+        $error_message .= $saved['error'];
     } else {
-        $ext = pathinfo( $path, PATHINFO_EXTENSION );
-        $file_name = basename( $path, '.' . $ext );
-        if( $ext!='jpg' && $ext!='png' && $ext!='jpeg' && $ext!='gif' ) {
-            $valid = 0;
-            $error_message .= 'You must have to upload jpg, jpeg, gif or png file<br>';
-        }
-    }
-
-    if($valid == 1) {
-        // removing the existing photo
-        $statement = $pdo->prepare("SELECT * FROM tbl_settings WHERE id=1");
-        $statement->execute();
-        $result = $statement->fetchAll(PDO::FETCH_ASSOC);                           
-        foreach ($result as $row) {
-            $logo = $row['logo'];
-            unlink('../assets/uploads/'.$logo);
-        }
-
-        // updating the data
-        $final_name = 'logo'.'.'.$ext;
-        move_uploaded_file( $path_tmp, '../assets/uploads/'.$final_name );
-
-        // updating the database
         $statement = $pdo->prepare("UPDATE tbl_settings SET logo=? WHERE id=1");
-        $statement->execute(array($final_name));
-
+        $statement->execute(array($saved['filename']));
         $success_message = 'Logo is updated successfully.';
-        
     }
 }
 // Change Favicon
 if(isset($_POST['form2'])) {
-    $valid = 1;
-
-    $path = $_FILES['photo_favicon']['name'];
-    $path_tmp = $_FILES['photo_favicon']['tmp_name'];
-
-    if($path == '') {
-        $valid = 0;
-        $error_message .= 'You must have to select a photo<br>';
+    $saved = adminSaveNamedImageUpload($_FILES['photo_favicon'] ?? array(), 'favicon', true);
+    if (!$saved['ok']) {
+        $error_message .= $saved['error'];
     } else {
-        $ext = pathinfo( $path, PATHINFO_EXTENSION );
-        $file_name = basename( $path, '.' . $ext );
-        if( $ext!='jpg' && $ext!='png' && $ext!='jpeg' && $ext!='gif' ) {
-            $valid = 0;
-            $error_message .= 'You must have to upload jpg, jpeg, gif or png file<br>';
-        }
-    }
-
-    if($valid == 1) {
-        // removing the existing photo
-        $statement = $pdo->prepare("SELECT * FROM tbl_settings WHERE id=1");
-        $statement->execute();
-        $result = $statement->fetchAll(PDO::FETCH_ASSOC);                           
-        foreach ($result as $row) {
-            $favicon = $row['favicon'];
-            unlink('../assets/uploads/'.$favicon);
-        }
-
-        // updating the data
-        $final_name = 'favicon'.'.'.$ext;
-        move_uploaded_file( $path_tmp, '../assets/uploads/'.$final_name );
-
-        // updating the database
         $statement = $pdo->prepare("UPDATE tbl_settings SET favicon=? WHERE id=1");
-        $statement->execute(array($final_name));
-
+        $statement->execute(array($saved['filename']));
         $success_message = 'Favicon is updated successfully.';
-        
     }
 }
 //Footer & Contact us page
@@ -966,13 +906,18 @@ foreach ($result as $row) {
                                     <div class="form-group">
                                         <label for="" class="col-sm-2 control-label">Existing Photo</label>
                                         <div class="col-sm-6" style="padding-top:6px;">
-                                            <img src="../assets/uploads/<?php echo $logo; ?>" class="existing-photo" style="height:80px;">
+                                            <?php if (!empty($logo)): ?>
+                                            <img src="<?php echo htmlspecialchars(adminUploadUrl($logo)); ?>" class="existing-photo" alt="Logo" style="height:80px;">
+                                            <?php else: ?>
+                                            <span class="text-muted">No logo uploaded yet</span>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                     <div class="form-group">
                                         <label for="" class="col-sm-2 control-label">New Photo</label>
                                         <div class="col-sm-6" style="padding-top:6px;">
-                                            <input type="file" name="photo_logo">
+                                            <input type="file" name="photo_logo" accept="<?php echo htmlspecialchars(adminImageAcceptAttribute(false)); ?>">
+                                            <span class="help-block">Allowed: JPG, JPEG, PNG, GIF, WEBP</span>
                                         </div>
                                     </div>
                                     <div class="form-group">
@@ -995,15 +940,20 @@ foreach ($result as $row) {
                             <div class="box box-info">
                                 <div class="box-body">
                                     <div class="form-group">
-                                        <label for="" class="col-sm-2 control-label">Existing Photo</label>
+                                        <label for="" class="col-sm-2 control-label">Existing Favicon</label>
                                         <div class="col-sm-6" style="padding-top:6px;">
-                                            <img src="../assets/uploads/<?php echo $favicon; ?>" class="existing-photo" style="height:40px;">
+                                            <?php if (!empty($favicon)): ?>
+                                            <img src="<?php echo htmlspecialchars(adminUploadUrl($favicon)); ?>" class="existing-photo" alt="Favicon" style="height:40px;width:40px;object-fit:contain;background:#f5f5f5;border:1px solid #ddd;padding:4px;">
+                                            <?php else: ?>
+                                            <span class="text-muted">No favicon uploaded yet</span>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                     <div class="form-group">
-                                        <label for="" class="col-sm-2 control-label">New Photo</label>
+                                        <label for="" class="col-sm-2 control-label">New Favicon</label>
                                         <div class="col-sm-6" style="padding-top:6px;">
-                                            <input type="file" name="photo_favicon">
+                                            <input type="file" name="photo_favicon" accept="<?php echo htmlspecialchars(adminImageAcceptAttribute(true)); ?>">
+                                            <span class="help-block">Allowed: PNG, ICO, JPG, JPEG, GIF, WEBP. Tip: square PNG 32×32 or 64×64 works best.</span>
                                         </div>
                                     </div>
                                     <div class="form-group">

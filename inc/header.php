@@ -91,6 +91,14 @@ $ogLocale = $ogLocaleMap[$currentHtmlLang] ?? 'en_US';
     <meta name="format-detection" content="telephone=no">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#062a62">
+    <?php
+    $siteFavicon = getSiteFavicon();
+    if (!empty($siteFavicon['url'])):
+    ?>
+    <link rel="icon" href="<?php echo e($siteFavicon['url']); ?>" type="<?php echo e($siteFavicon['type']); ?>">
+    <link rel="shortcut icon" href="<?php echo e($siteFavicon['url']); ?>" type="<?php echo e($siteFavicon['type']); ?>">
+    <link rel="apple-touch-icon" href="<?php echo e($siteFavicon['url']); ?>">
+    <?php endif; ?>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">

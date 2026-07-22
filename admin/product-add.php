@@ -31,9 +31,9 @@ if (isset($_POST['form1'])) {
     // Featured photo validation
     if (!empty($_FILES['p_featured_photo']['name'])) {
         $ext = strtolower(pathinfo($_FILES['p_featured_photo']['name'], PATHINFO_EXTENSION));
-        if (!in_array($ext, ['jpg','jpeg','png','gif'])) {
+        if (!adminIsAllowedImageExt($ext, false)) {
             $valid = 0;
-            $error_message .= "Featured photo must be jpg, jpeg, png or gif<br>";
+            $error_message .= "Featured photo must be jpg, jpeg, png, gif or webp<br>";
         }
     } else {
         $valid = 0;
@@ -138,7 +138,7 @@ if (isset($_POST['form1'])) {
 
                 $ext1 = strtolower(pathinfo($_FILES['photo']['name'][$i], PATHINFO_EXTENSION));
 
-                if (in_array($ext1, ['jpg','jpeg','png','gif'])) {
+                if (adminIsAllowedImageExt($ext1, false)) {
 
                     $unique = time() . '_' . bin2hex(random_bytes(4));
                     $photo_name = $unique . '.' . $ext1;

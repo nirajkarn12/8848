@@ -2,19 +2,11 @@
 /**
  * Dynamic XML sitemap for Google / Bing indexing.
  * Served as /sitemap.xml via .htaccess rewrite.
+ * Uses BASE_URL from config/database.php (deployment already defines this).
  */
 require_once __DIR__ . '/inc/functions.php';
 
-// Prefer the live request host so production sitemap URLs stay correct
-// even if local BASE_URL env is still pointed at localhost.
-$host = trim((string) ($_SERVER['HTTP_HOST'] ?? ''));
-if ($host !== '' && !preg_match('/^(localhost|127\.0\.0\.1)(:\d+)?$/i', $host)) {
-    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-        || ((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
-    $base = ($https ? 'https' : 'http') . '://' . $host . '/';
-} else {
-    $base = rtrim(BASE_URL, '/') . '/';
-}
+$base = rtrim((string) BASE_URL, '/') . '/';
 $today = date('Y-m-d');
 
 $urls = [];

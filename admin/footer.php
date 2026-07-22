@@ -350,5 +350,51 @@
         
     </script>
 
+	<script>
+	// Instant local preview when choosing a new image (no hard refresh needed)
+	(function ($) {
+		function findPreviewImg($input) {
+			var $scope = $input.closest('form, tr, .form-group, .box-body, td, .tab-pane');
+			var $img = $scope.find('img.existing-photo, img[src*="assets/uploads"]').filter(':visible').first();
+			if (!$img.length) {
+				$img = $scope.find('img.existing-photo, img[src*="assets/uploads"]').first();
+			}
+			return $img;
+		}
+
+		$(document).on('change', 'input[type="file"]', function () {
+			var input = this;
+			if (!input.files || !input.files[0]) {
+				return;
+			}
+			var file = input.files[0];
+			if (!file.type || file.type.indexOf('image/') !== 0) {
+				return;
+			}
+			var reader = new FileReader();
+			reader.onload = function (e) {
+				var $img = findPreviewImg($(input));
+				if ($img.length) {
+					$img.attr('src', e.target.result).show();
+				} else {
+					var $wrap = $(input).siblings('.admin-upload-live-preview');
+					if (!$wrap.length) {
+						$wrap = $('<div class="admin-upload-live-preview" style="margin:8px 0;"></div>');
+						$(input).before($wrap);
+					}
+					$wrap.html('<img src="' + e.target.result + '" alt="Preview" style="max-height:140px;max-width:100%;border:1px solid #ddd;padding:4px;background:#fff;">');
+				}
+			};
+			reader.readAsDataURL(file);
+		});
+	})(jQuery);
+	</script>
+
 </body>
 </html>
+<?php
+// Flush buffered page HTML with cache-busted upload image URLs
+if (ob_get_level() > 0) {
+	echo adminBustUploadImageUrls(ob_get_clean());
+}
+?>

@@ -374,12 +374,61 @@ function getProductImage($filename) {
 
     foreach ($possiblePaths as $path) {
         if (file_exists($path)) {
-            $relative = ltrim(str_replace(__DIR__ . '/../', '', $path), '/');
-            return BASE_URL . $relative;
+            $relative = ltrim(str_replace('\\', '/', str_replace(__DIR__ . '/../', '', $path)), '/');
+            $url = BASE_URL . $relative;
+            $mtime = @filemtime($path);
+            if ($mtime) {
+                $url .= '?v=' . rawurlencode($mtime . '-' . (int) @filesize($path));
+            }
+            return $url;
         }
     }
 
     return ASSET_URL . 'images/placeholder.png';
+}
+
+function getImageMimeByExtension($ext) {
+    $ext = strtolower((string) $ext);
+    $map = [
+        'ico' => 'image/x-icon',
+        'png' => 'image/png',
+        'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'gif' => 'image/gif',
+        'webp' => 'image/webp',
+        'svg' => 'image/svg+xml',
+    ];
+    return $map[$ext] ?? 'image/png';
+}
+
+/**
+ * Resolve site favicon from settings (falls back to logo).
+ * @return array{url:string,type:string,file:string,path:string}
+ */
+function getSiteFavicon() {
+    $candidates = [
+        trim((string) getSiteSetting('favicon', '')),
+        trim((string) getSiteSetting('logo', '')),
+    ];
+
+    foreach ($candidates as $file) {
+        if ($file === '') {
+            continue;
+        }
+        $path = __DIR__ . '/../assets/uploads/' . ltrim(str_replace('\\', '/', $file), '/');
+        if (!is_file($path)) {
+            continue;
+        }
+        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        return [
+            'url' => getProductImage($file),
+            'type' => getImageMimeByExtension($ext),
+            'file' => $file,
+            'path' => $path,
+        ];
+    }
+
+    return ['url' => '', 'type' => '', 'file' => '', 'path' => ''];
 }
 
 function getSocialLinks() {

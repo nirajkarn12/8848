@@ -6,17 +6,17 @@ Options -Indexes
     # Serve dynamic sitemap at the standard /sitemap.xml URL
     RewriteRule ^sitemap\.xml$ sitemap.php [L]
 
+    # Browsers often request /favicon.ico automatically
+    RewriteRule ^favicon\.ico$ favicon.php [L]
+
     # Prefer HTTPS when available (hosting/Cloudflare may already handle this)
     # RewriteCond %{HTTPS} off
     # RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 </IfModule>
 
-# Cache static assets lightly
+# Cache CSS/JS lightly (upload caching is controlled in assets/uploads/.htaccess)
 <IfModule mod_expires.c>
     ExpiresActive On
-    ExpiresByType image/jpeg "access plus 7 days"
-    ExpiresByType image/png "access plus 7 days"
-    ExpiresByType image/webp "access plus 7 days"
     ExpiresByType text/css "access plus 7 days"
     ExpiresByType application/javascript "access plus 7 days"
 </IfModule>

@@ -8,6 +8,154 @@ function get_ext($pdo,$fname)
 	return $file_ext;
 }
 
+/**
+ * Allowed image extensions for admin uploads.
+ * @param bool $includeIco include .ico (for favicon)
+ */
+function adminAllowedImageExtensions($includeIco = false) {
+	$exts = array('jpg', 'jpeg', 'png', 'gif', 'webp');
+	if ($includeIco) {
+		$exts[] = 'ico';
+	}
+	return $exts;
+}
+
+function adminNormalizeUploadExt($filename) {
+	return strtolower(pathinfo((string) $filename, PATHINFO_EXTENSION));
+}
+
+function adminIsAllowedImageExt($ext, $includeIco = false) {
+	return in_array(strtolower((string) $ext), adminAllowedImageExtensions($includeIco), true);
+}
+
+function adminImageAcceptAttribute($includeIco = false) {
+	$parts = array();
+	foreach (adminAllowedImageExtensions($includeIco) as $ext) {
+		$parts[] = '.' . $ext;
+		$parts[] = 'image/' . ($ext === 'jpg' ? 'jpeg' : ($ext === 'ico' ? 'x-icon' : $ext));
+	}
+	return implode(',', array_unique($parts));
+}
+
+/**
+ * Save an uploaded image into assets/uploads with a stable base name.
+ * Deletes previous base-name variants (logo.png vs logo.jpg, etc.).
+ *
+ * @return array{ok:bool,filename:string,error:string}
+ */
+function adminSaveNamedImageUpload($filesKey, $baseName, $includeIco = false) {
+	$upload = is_array($filesKey) ? $filesKey : array();
+	$name = (string) ($upload['name'] ?? '');
+	$tmp = (string) ($upload['tmp_name'] ?? '');
+	$error = (int) ($upload['error'] ?? UPLOAD_ERR_NO_FILE);
+
+	if ($name === '' || $error === UPLOAD_ERR_NO_FILE) {
+		return array('ok' => false, 'filename' => '', 'error' => 'Please select an image file.<br>');
+	}
+	if ($error !== UPLOAD_ERR_OK || $tmp === '' || !is_uploaded_file($tmp)) {
+		return array('ok' => false, 'filename' => '', 'error' => 'Image upload failed. Please try again.<br>');
+	}
+
+	$ext = adminNormalizeUploadExt($name);
+	if (!adminIsAllowedImageExt($ext, $includeIco)) {
+		$allowed = implode(', ', adminAllowedImageExtensions($includeIco));
+		return array('ok' => false, 'filename' => '', 'error' => 'Invalid format. Allowed: ' . $allowed . '<br>');
+	}
+
+	// Soft MIME check (ico often reports as application/octet-stream)
+	if (function_exists('finfo_open')) {
+		$finfo = finfo_open(FILEINFO_MIME_TYPE);
+		$mime = $finfo ? (string) finfo_file($finfo, $tmp) : '';
+		if ($finfo) {
+			finfo_close($finfo);
+		}
+		$okMimes = array(
+			'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+			'image/x-icon', 'image/vnd.microsoft.icon', 'image/ico', 'image/icon',
+			'application/octet-stream',
+		);
+		if ($mime !== '' && !in_array($mime, $okMimes, true) && strpos($mime, 'image/') !== 0) {
+			return array('ok' => false, 'filename' => '', 'error' => 'File does not look like a valid image.<br>');
+		}
+	}
+
+	$dir = dirname(__DIR__) . '/../assets/uploads/';
+	$dir = realpath($dir) ?: (dirname(__DIR__) . '/../assets/uploads');
+	$dir = rtrim(str_replace('\\', '/', $dir), '/') . '/';
+	if (!is_dir($dir)) {
+		@mkdir($dir, 0755, true);
+	}
+
+	$baseName = preg_replace('/[^a-zA-Z0-9_-]/', '', (string) $baseName);
+	if ($baseName === '') {
+		$baseName = 'image';
+	}
+
+	// Remove previous variants with any allowed extension
+	foreach (adminAllowedImageExtensions(true) as $oldExt) {
+		$oldPath = $dir . $baseName . '.' . $oldExt;
+		if (is_file($oldPath)) {
+			@unlink($oldPath);
+		}
+	}
+
+	$finalName = $baseName . '.' . $ext;
+	$dest = $dir . $finalName;
+	if (!move_uploaded_file($tmp, $dest)) {
+		return array('ok' => false, 'filename' => '', 'error' => 'Could not save uploaded image.<br>');
+	}
+	@chmod($dest, 0644);
+
+	return array('ok' => true, 'filename' => $finalName, 'error' => '');
+}
+
+/**
+ * Build an admin upload image URL with a filemtime cache-buster.
+ * Fixes stale previews when uploads overwrite the same filename.
+ */
+function adminUploadUrl($filename, $subdir = '') {
+	$filename = ltrim(str_replace('\\', '/', (string) $filename), '/');
+	if ($filename === '' || preg_match('#^(https?:)?//#i', $filename)) {
+		return $filename;
+	}
+	if (strpos($filename, 'assets/uploads/') === 0) {
+		$relative = '../' . $filename;
+	} elseif (strpos($filename, '../assets/uploads/') === 0) {
+		$relative = $filename;
+	} else {
+		$prefix = $subdir !== '' ? (rtrim($subdir, '/') . '/') : '';
+		$relative = '../assets/uploads/' . $prefix . $filename;
+	}
+	$fsPath = $relative;
+	$queryPos = strpos($fsPath, '?');
+	if ($queryPos !== false) {
+		$fsPath = substr($fsPath, 0, $queryPos);
+	}
+	$v = is_file($fsPath) ? ((int) @filemtime($fsPath) . '-' . (int) @filesize($fsPath)) : (string) time();
+	$base = preg_replace('/[?&]v=[^&]*/', '', $relative);
+	$base = rtrim($base, '?&');
+	return $base . (strpos($base, '?') !== false ? '&' : '?') . 'v=' . rawurlencode($v);
+}
+
+/**
+ * Rewrite upload <img src> URLs in buffered admin HTML so replaced files show immediately.
+ */
+function adminBustUploadImageUrls($html) {
+	return preg_replace_callback(
+		'#(\bsrc\s*=\s*)(["\'])((?:\.\./)?assets/uploads/[^"\']+)\2#i',
+		static function ($m) {
+			$src = $m[3];
+			$clean = preg_replace('/[?&]v=[^&]*/', '', $src);
+			$clean = rtrim($clean, '?&');
+			$fsPath = (strpos($clean, '../') === 0) ? $clean : ('../' . ltrim($clean, '/'));
+			$v = is_file($fsPath) ? ((int) @filemtime($fsPath) . '-' . (int) @filesize($fsPath)) : (string) time();
+			$bust = $clean . (strpos($clean, '?') !== false ? '&' : '?') . 'v=' . rawurlencode($v);
+			return $m[1] . $m[2] . $bust . $m[2];
+		},
+		(string) $html
+	);
+}
+
 function ext_check($pdo,$allowed_ext,$my_ext) 
 {
 

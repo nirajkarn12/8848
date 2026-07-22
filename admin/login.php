@@ -51,6 +51,23 @@ if(isset($_POST['form1'])) {
 	<title>Login</title>
 
 	<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+	<?php
+	$loginFavicon = '';
+	try {
+		$rowFav = $pdo->query("SELECT favicon, logo FROM tbl_settings WHERE id=1 LIMIT 1")->fetch(PDO::FETCH_ASSOC) ?: array();
+		$loginFavicon = trim((string) ($rowFav['favicon'] ?? ''));
+		if ($loginFavicon === '') {
+			$loginFavicon = trim((string) ($rowFav['logo'] ?? ''));
+		}
+	} catch (Exception $e) {
+		$loginFavicon = '';
+	}
+	if ($loginFavicon !== '' && is_file('../assets/uploads/' . $loginFavicon)):
+		$loginFaviconUrl = htmlspecialchars(adminUploadUrl($loginFavicon), ENT_QUOTES, 'UTF-8');
+	?>
+	<link rel="icon" href="<?php echo $loginFaviconUrl; ?>">
+	<link rel="shortcut icon" href="<?php echo $loginFaviconUrl; ?>">
+	<?php endif; ?>
 
 	<link rel="stylesheet" href="css/bootstrap.min.css">
 	<link rel="stylesheet" href="css/font-awesome.min.css">
