@@ -10,5 +10,4 @@ Disallow: /vendor/
 Disallow: /PHPMailer/
 Disallow: /config/
 
-# Keep this Sitemap URL matching BASE_URL from config/database.php on the server
-Sitemap: https://8848cleaningservice.com/sitemap.xml
+Sitemap: https://8848cleaningservice.com/sitemap.php

@@ -3,7 +3,7 @@ Options -Indexes
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # Serve dynamic sitemap at the standard /sitemap.xml URL
+    # Apache only (nginx: use /sitemap.php — .htaccess is ignored)
     RewriteRule ^sitemap\.xml$ sitemap.php [L]
 
     # Browsers often request /favicon.ico automatically

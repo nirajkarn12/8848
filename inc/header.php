@@ -66,7 +66,7 @@ $ogLocale = $ogLocaleMap[$currentHtmlLang] ?? 'en_US';
     <meta name="msvalidate.01" content="<?php echo $bingVerification; ?>">
     <?php endif; ?>
     <link rel="canonical" href="<?php echo $canonicalUrl; ?>">
-    <link rel="sitemap" type="application/xml" title="Sitemap" href="<?php echo e(rtrim(BASE_URL, '/') . '/sitemap.xml'); ?>">
+    <link rel="sitemap" type="application/xml" title="Sitemap" href="<?php echo e(rtrim(BASE_URL, '/') . '/sitemap.php'); ?>">
     <meta property="og:locale" content="<?php echo e($ogLocale); ?>">
     <meta property="og:site_name" content="<?php echo $siteName; ?>">
     <meta property="og:type" content="<?php echo $ogType; ?>">
