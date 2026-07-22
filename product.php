@@ -38,6 +38,9 @@ $metaKeywords = seoPick(
     implode(', ', array_filter([
         $product['p_name'],
         is_array($category) ? ($category['mcat_name'] ?? '') : '',
+        'Kathmandu',
+        'Nepal',
+        '8848 Cleaning Service',
         is_array($category) ? ($category['tcat_name'] ?? '') : '',
         'cleaning service',
         $siteName,

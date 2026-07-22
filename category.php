@@ -17,7 +17,7 @@ if ($categoryId) {
         160
     );
     $metaKeywords = seoPick(
-        $category['mcat_name'] . ', cleaning service, ' . getSiteSetting('site_name', SITE_NAME),
+        $category['mcat_name'] . ', cleaning service Kathmandu, ' . getSiteSetting('site_name', SITE_NAME) . ', Nepal',
         getHomeSeo()['keywords']
     );
 } else {

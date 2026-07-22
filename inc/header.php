@@ -37,22 +37,13 @@ $ogLocale = $ogLocaleMap[$currentHtmlLang] ?? 'en_US';
     $bingVerification = e(getSiteSetting('bing_site_verification', ''));
     $publishedTime = e($publishedTime ?? '');
     $modifiedTime = e($modifiedTime ?? '');
-    $jsonLdData = $jsonLd ?? [
-        '@context' => 'https://schema.org',
-        '@type' => 'WebSite',
-        'url' => rtrim(BASE_URL, '/'),
-        'name' => $siteNameRaw,
-        'description' => $homeSeo['description'],
-        'potentialAction' => [
-            '@type' => 'SearchAction',
-            'target' => rtrim(BASE_URL, '/') . '/search.php?q={search_term_string}',
-            'query-input' => 'required name=search_term_string'
-        ],
-    ];
+    $jsonLdData = $jsonLd ?? getDefaultSeoJsonLd();
+    $geoRegion = e(getSiteSetting('geo_region', 'NP-P3'));
+    $geoPlacename = e(getSiteSetting('geo_placename', 'Kathmandu, Nepal'));
     ?>
     <title><?php
         if ($resolvedTitle === '' || strcasecmp($resolvedTitle, $siteNameRaw) === 0) {
-            echo $siteName;
+            echo e($homeSeo['title'] !== '' ? $homeSeo['title'] : $siteNameRaw);
         } elseif (stripos($resolvedTitle, $siteNameRaw) !== false) {
             echo $pageTitleTag;
         } else {
@@ -66,6 +57,8 @@ $ogLocale = $ogLocaleMap[$currentHtmlLang] ?? 'en_US';
     <meta name="googlebot" content="<?php echo $robotsContent; ?>">
     <meta name="bingbot" content="<?php echo $robotsContent; ?>">
     <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="geo.region" content="<?php echo $geoRegion; ?>">
+    <meta name="geo.placename" content="<?php echo $geoPlacename; ?>">
     <?php if (!empty($googleVerification)): ?>
     <meta name="google-site-verification" content="<?php echo $googleVerification; ?>">
     <?php endif; ?>
@@ -73,6 +66,7 @@ $ogLocale = $ogLocaleMap[$currentHtmlLang] ?? 'en_US';
     <meta name="msvalidate.01" content="<?php echo $bingVerification; ?>">
     <?php endif; ?>
     <link rel="canonical" href="<?php echo $canonicalUrl; ?>">
+    <link rel="sitemap" type="application/xml" title="Sitemap" href="<?php echo e(rtrim(BASE_URL, '/') . '/sitemap.xml'); ?>">
     <meta property="og:locale" content="<?php echo e($ogLocale); ?>">
     <meta property="og:site_name" content="<?php echo $siteName; ?>">
     <meta property="og:type" content="<?php echo $ogType; ?>">

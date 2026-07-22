@@ -311,7 +311,7 @@ return [
     'unable_to_add_service' => 'Unable to add service',
     'service_added_complete_booking' => 'Service added. Complete your booking details.',
     'choose_valid_service' => 'Please choose a valid service.',
-    'meta_home_description' => 'Professional home and office cleaning. Book trusted cleaners online with 8848 Cleaning Service.',
+    'meta_home_description' => '8848 Cleaning Service — professional home & office cleaning in Kathmandu, Nepal. Book trusted cleaners online with flexible scheduling.',
     'client' => 'Client',
     'marquee_1' => 'Book home & office cleaning online — fast confirmation',
     'marquee_2' => 'Professional trained staff assigned to every booking',

@@ -117,16 +117,122 @@ function seoPick($value, $fallback = '', $maxLen = 0) {
 function getHomeSeo() {
     $siteName = (string) getSiteSetting('site_name', SITE_NAME);
     return [
-        'title' => seoPick(getSiteSetting('meta_title_home', ''), $siteName),
+        'title' => seoPick(
+            getSiteSetting('meta_title_home', ''),
+            $siteName . ' | Home & Office Cleaning in Kathmandu, Nepal'
+        ),
         'keywords' => seoPick(
             getSiteSetting('meta_keyword_home', ''),
-            'cleaning service, home cleaning, office cleaning, deep clean, Kathmandu, 8848 Cleaning Service'
+            '8848cleaningservice, 8848 cleaning service, 8848 cleaning service Nepal, home cleaning Kathmandu, office cleaning Kathmandu, deep cleaning Nepal, cleaning service Kathmandu, book cleaner online Nepal'
         ),
         'description' => seoPick(
             getSiteSetting('meta_description_home', ''),
             loadLang('meta_home_description'),
             160
         ),
+    ];
+}
+
+function getSocialProfileUrls() {
+    global $pdo;
+    static $urls = null;
+    if ($urls !== null) {
+        return $urls;
+    }
+    $urls = [];
+    try {
+        $rows = $pdo->query('SELECT social_name, social_url FROM tbl_social')->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($rows as $row) {
+            $url = trim((string) ($row['social_url'] ?? ''));
+            if ($url !== '' && preg_match('#^https?://#i', $url)) {
+                $urls[] = $url;
+            }
+        }
+    } catch (Throwable $e) {
+        $urls = [];
+    }
+    return $urls;
+}
+
+function getDefaultSeoJsonLd() {
+    $homeSeo = getHomeSeo();
+    $siteName = (string) getSiteSetting('site_name', SITE_NAME);
+    $siteUrl = rtrim(BASE_URL, '/');
+    $phone = trim((string) getSiteSetting('contact_phone', '+977-9810110800'));
+    $email = trim((string) getSiteSetting('contact_email', ''));
+    $addressText = trim((string) getSiteSetting('contact_address', 'Kathmandu, Nepal'));
+    $logo = (string) getSiteSetting('logo', '');
+    $logoUrl = $logo !== '' ? getProductImage($logo) : (ASSET_URL . 'images/og-default.png');
+    $social = getSocialProfileUrls();
+
+    $website = [
+        '@type' => 'WebSite',
+        '@id' => $siteUrl . '/#website',
+        'url' => $siteUrl,
+        'name' => $siteName,
+        'description' => $homeSeo['description'],
+        'inLanguage' => ['en', 'ne', 'hi'],
+        'publisher' => ['@id' => $siteUrl . '/#business'],
+        'potentialAction' => [
+            '@type' => 'SearchAction',
+            'target' => $siteUrl . '/search.php?q={search_term_string}',
+            'query-input' => 'required name=search_term_string',
+        ],
+    ];
+
+    $business = [
+        '@type' => ['LocalBusiness', 'CleaningService'],
+        '@id' => $siteUrl . '/#business',
+        'name' => $siteName,
+        'alternateName' => [
+            '8848 Cleaning Service',
+            '8848cleaningservice',
+            '8848 Cleaning Service Kathmandu',
+            '8848 Cleaning Service Nepal',
+        ],
+        'url' => $siteUrl,
+        'description' => $homeSeo['description'],
+        'image' => $logoUrl,
+        'logo' => $logoUrl,
+        'telephone' => $phone !== '' ? $phone : '+977-9810110800',
+        'address' => [
+            '@type' => 'PostalAddress',
+            'streetAddress' => $addressText !== '' ? $addressText : 'Kathmandu, Nepal',
+            'addressLocality' => 'Kathmandu',
+            'addressRegion' => 'Bagmati',
+            'addressCountry' => 'NP',
+        ],
+        'areaServed' => [
+            ['@type' => 'City', 'name' => 'Kathmandu'],
+            ['@type' => 'City', 'name' => 'Lalitpur'],
+            ['@type' => 'City', 'name' => 'Bhaktapur'],
+            ['@type' => 'Country', 'name' => 'Nepal'],
+        ],
+        'priceRange' => '$$',
+        'currenciesAccepted' => 'NPR',
+        'paymentAccepted' => 'Cash, Bank Transfer, Online Payment',
+        'openingHoursSpecification' => [
+            [
+                '@type' => 'OpeningHoursSpecification',
+                'dayOfWeek' => [
+                    'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
+                ],
+                'opens' => '07:00',
+                'closes' => '20:00',
+            ],
+        ],
+    ];
+
+    if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $business['email'] = $email;
+    }
+    if ($social) {
+        $business['sameAs'] = $social;
+    }
+
+    return [
+        '@context' => 'https://schema.org',
+        '@graph' => [$website, $business],
     ];
 }
 

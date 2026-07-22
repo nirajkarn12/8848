@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+# Do not index private / system areas
+Disallow: /admin/
+Disallow: /staff/
+Disallow: /account/
+Disallow: /ajax/
+Disallow: /vendor/
+Disallow: /PHPMailer/
+Disallow: /config/
+
+Sitemap: https://www.8848cleaningservice.com/sitemap.xml

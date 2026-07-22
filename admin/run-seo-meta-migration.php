@@ -5,24 +5,24 @@ $messages = array();
 $errors = array();
 
 $defaultHome = array(
-    'meta_title_home' => '8848 Cleaning Service | Home & Office Cleaning in Kathmandu',
-    'meta_keyword_home' => '8848 cleaning service, home cleaning Kathmandu, office cleaning, deep cleaning Nepal, book cleaner online',
-    'meta_description_home' => 'Professional home and office cleaning in Kathmandu. Book trusted cleaners online with 8848 Cleaning Service — flexible scheduling and reliable results.',
+    'meta_title_home' => '8848 Cleaning Service | Home & Office Cleaning in Kathmandu, Nepal',
+    'meta_keyword_home' => '8848cleaningservice, 8848 cleaning service, 8848 cleaning service Nepal, home cleaning Kathmandu, office cleaning Kathmandu, deep cleaning Nepal, cleaning service Kathmandu, book cleaner online Nepal',
+    'meta_description_home' => '8848 Cleaning Service — professional home and office cleaning in Kathmandu, Nepal. Book trusted cleaners online with flexible scheduling and reliable results.',
 );
 
 $defaultPage = array(
-    'about_meta_title' => 'About 8848 Cleaning Service',
-    'about_meta_keyword' => 'about 8848 cleaning service, cleaning company Kathmandu, professional cleaners Nepal',
-    'about_meta_description' => 'Learn about 8848 Cleaning Service — professional home and office cleaning in Kathmandu with trained staff and easy online booking.',
-    'contact_meta_title' => 'Contact 8848 Cleaning Service',
-    'contact_meta_keyword' => 'contact 8848 cleaning, cleaning service phone Kathmandu, book cleaning Nepal',
-    'contact_meta_description' => 'Contact 8848 Cleaning Service for home and office cleaning in Kathmandu. Call, email, or send a message to book your service.',
-    'faq_meta_title' => 'FAQ | 8848 Cleaning Service',
-    'faq_meta_keyword' => 'cleaning FAQ, booking questions, 8848 cleaning service help',
-    'faq_meta_description' => 'Frequently asked questions about booking, pricing, and cleaning services with 8848 Cleaning Service.',
+    'about_meta_title' => 'About 8848 Cleaning Service | Kathmandu, Nepal',
+    'about_meta_keyword' => 'about 8848cleaningservice, 8848 cleaning service Nepal, cleaning company Kathmandu, professional cleaners Nepal',
+    'about_meta_description' => 'Learn about 8848 Cleaning Service — professional home and office cleaning in Kathmandu, Nepal with trained staff and easy online booking.',
+    'contact_meta_title' => 'Contact 8848 Cleaning Service | Kathmandu',
+    'contact_meta_keyword' => 'contact 8848cleaningservice, 8848 cleaning service phone Kathmandu, book cleaning Nepal',
+    'contact_meta_description' => 'Contact 8848 Cleaning Service for home and office cleaning in Kathmandu, Nepal. Call, email, or send a message to book your service.',
+    'faq_meta_title' => 'FAQ | 8848 Cleaning Service Kathmandu',
+    'faq_meta_keyword' => 'cleaning FAQ Kathmandu, booking questions Nepal, 8848 cleaning service help',
+    'faq_meta_description' => 'Frequently asked questions about booking, pricing, and cleaning services with 8848 Cleaning Service in Kathmandu, Nepal.',
 );
 
-function looksStaleSeo($value) {
+function looksStaleSeo($value, $requireLocalBrand = false) {
     $value = strtolower((string) $value);
     if (trim($value) === '') {
         return true;
@@ -30,6 +30,14 @@ function looksStaleSeo($value) {
     $needles = array('ecommerce', 'garments', 'fashion store', 'sastika', "raise'n", 'resin', 'candle', 'koshi supplier');
     foreach ($needles as $needle) {
         if (strpos($value, $needle) !== false) {
+            return true;
+        }
+    }
+    // Refresh older SEO that does not yet target Nepal brand queries
+    if ($requireLocalBrand) {
+        $hasBrand = (strpos($value, '8848cleaningservice') !== false) || (strpos($value, '8848 cleaning service') !== false);
+        $hasLocal = (strpos($value, 'kathmandu') !== false) || (strpos($value, 'nepal') !== false);
+        if (!$hasBrand || !$hasLocal) {
             return true;
         }
     }
@@ -41,7 +49,7 @@ try {
     $updates = array();
     $params = array();
     foreach ($defaultHome as $col => $val) {
-        if (looksStaleSeo($row[$col] ?? '')) {
+        if (looksStaleSeo($row[$col] ?? '', true)) {
             $updates[] = "$col = ?";
             $params[] = $val;
         }
@@ -59,7 +67,7 @@ try {
     $updates = array();
     $params = array();
     foreach ($defaultPage as $col => $val) {
-        if (looksStaleSeo($page[$col] ?? '')) {
+        if (looksStaleSeo($page[$col] ?? '', true)) {
             $updates[] = "$col = ?";
             $params[] = $val;
         }
