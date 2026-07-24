@@ -87,6 +87,11 @@ function getSiteSetting($field, $default = '') {
     global $pdo;
     static $settings = null;
 
+    if ($field === '__refresh__') {
+        $settings = null;
+        return $default;
+    }
+
     if ($settings === null) {
         $settings = $pdo->query('SELECT * FROM tbl_settings LIMIT 1')->fetch(PDO::FETCH_ASSOC);
         if (!$settings) {
@@ -96,6 +101,331 @@ function getSiteSetting($field, $default = '') {
 
     $fieldName = preg_replace('/[^a-zA-Z0-9_]/', '', $field);
     return array_key_exists($fieldName, $settings) && $settings[$fieldName] !== null ? $settings[$fieldName] : $default;
+}
+
+function refreshSiteSettingsCache() {
+    getSiteSetting('__refresh__');
+}
+
+function ensureAuthIntegrations() {
+    global $pdo;
+    static $ready = null;
+    if ($ready !== null) {
+        return $ready;
+    }
+
+    $ready = false;
+    $altered = false;
+
+    try {
+        $custCol = $pdo->query("SHOW COLUMNS FROM `tbl_customer` LIKE 'cust_google_id'");
+        if ($custCol && $custCol->rowCount() === 0) {
+            $pdo->exec("ALTER TABLE `tbl_customer` ADD COLUMN `cust_google_id` varchar(64) NOT NULL DEFAULT '' AFTER `cust_email`");
+            $altered = true;
+        }
+
+        $settingCols = [
+            'google_client_id' => "varchar(255) NOT NULL DEFAULT ''",
+            'google_client_secret' => "varchar(255) NOT NULL DEFAULT ''",
+            'recaptcha_site_key' => "varchar(255) NOT NULL DEFAULT ''",
+            'recaptcha_secret_key' => "varchar(255) NOT NULL DEFAULT ''",
+        ];
+        foreach ($settingCols as $column => $definition) {
+            $stmt = $pdo->query("SHOW COLUMNS FROM `tbl_settings` LIKE " . $pdo->quote($column));
+            if ($stmt && $stmt->rowCount() === 0) {
+                $pdo->exec("ALTER TABLE `tbl_settings` ADD COLUMN `{$column}` {$definition}");
+                $altered = true;
+            }
+        }
+
+        if ($altered) {
+            refreshSiteSettingsCache();
+        }
+        $ready = true;
+    } catch (Throwable $e) {
+        $ready = false;
+    }
+
+    return $ready;
+}
+
+function getAuthConfig($key, $default = '') {
+    ensureAuthIntegrations();
+
+    $envMap = [
+        'google_client_id' => 'GOOGLE_CLIENT_ID',
+        'google_client_secret' => 'GOOGLE_CLIENT_SECRET',
+        'recaptcha_site_key' => 'RECAPTCHA_SITE_KEY',
+        'recaptcha_secret_key' => 'RECAPTCHA_SECRET_KEY',
+    ];
+
+    $fromSettings = trim((string) getSiteSetting($key, ''));
+    if ($fromSettings !== '') {
+        return $fromSettings;
+    }
+
+    $envName = $envMap[$key] ?? '';
+    if ($envName !== '') {
+        $fromEnv = getenv($envName);
+        if ($fromEnv !== false && trim((string) $fromEnv) !== '') {
+            return trim((string) $fromEnv);
+        }
+    }
+
+    return $default;
+}
+
+function isGoogleAuthEnabled() {
+    return getAuthConfig('google_client_id') !== '' && getAuthConfig('google_client_secret') !== '';
+}
+
+function isRecaptchaEnabled() {
+    return getAuthConfig('recaptcha_site_key') !== '' && getAuthConfig('recaptcha_secret_key') !== '';
+}
+
+function verifyRecaptcha($response) {
+    if (!isRecaptchaEnabled()) {
+        return true;
+    }
+
+    $response = trim((string) $response);
+    if ($response === '') {
+        return false;
+    }
+
+    $payload = http_build_query([
+        'secret' => getAuthConfig('recaptcha_secret_key'),
+        'response' => $response,
+        'remoteip' => $_SERVER['REMOTE_ADDR'] ?? '',
+    ]);
+
+    $raw = authHttpRequest('https://www.google.com/recaptcha/api/siteverify', $payload, 'application/x-www-form-urlencoded');
+    if ($raw === null) {
+        return false;
+    }
+
+    $data = json_decode($raw, true);
+    return !empty($data['success']);
+}
+
+function authHttpRequest($url, $body = null, $contentType = null, $method = null) {
+    $method = $method ?: ($body === null ? 'GET' : 'POST');
+    $headers = ['Accept: application/json'];
+    if ($contentType) {
+        $headers[] = 'Content-Type: ' . $contentType;
+    }
+
+    if (function_exists('curl_init')) {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 20,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTPHEADER => $headers,
+            CURLOPT_CUSTOMREQUEST => $method,
+        ]);
+        if ($body !== null) {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+        }
+        $raw = curl_exec($ch);
+        $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        if ($raw === false || $code >= 400) {
+            return null;
+        }
+        return $raw;
+    }
+
+    $opts = [
+        'http' => [
+            'method' => $method,
+            'header' => implode("\r\n", $headers),
+            'timeout' => 20,
+            'ignore_errors' => true,
+        ],
+    ];
+    if ($body !== null) {
+        $opts['http']['content'] = $body;
+    }
+    $raw = @file_get_contents($url, false, stream_context_create($opts));
+    return $raw === false ? null : $raw;
+}
+
+function googleAuthRedirectUri() {
+    return BASE_URL . 'account/google-callback.php';
+}
+
+function getGoogleAuthUrl($redirect = '') {
+    if (!isGoogleAuthEnabled()) {
+        return '';
+    }
+
+    $state = bin2hex(random_bytes(16));
+    $_SESSION['google_oauth_state'] = $state;
+    $_SESSION['google_oauth_redirect'] = trim((string) $redirect);
+
+    $params = [
+        'client_id' => getAuthConfig('google_client_id'),
+        'redirect_uri' => googleAuthRedirectUri(),
+        'response_type' => 'code',
+        'scope' => 'openid email profile',
+        'access_type' => 'online',
+        'prompt' => 'select_account',
+        'state' => $state,
+    ];
+
+    return 'https://accounts.google.com/o/oauth2/v2/auth?' . http_build_query($params);
+}
+
+function exchangeGoogleAuthCode($code) {
+    $payload = http_build_query([
+        'code' => $code,
+        'client_id' => getAuthConfig('google_client_id'),
+        'client_secret' => getAuthConfig('google_client_secret'),
+        'redirect_uri' => googleAuthRedirectUri(),
+        'grant_type' => 'authorization_code',
+    ]);
+
+    $raw = authHttpRequest('https://oauth2.googleapis.com/token', $payload, 'application/x-www-form-urlencoded');
+    if ($raw === null) {
+        return null;
+    }
+
+    $token = json_decode($raw, true);
+    if (empty($token['access_token'])) {
+        return null;
+    }
+
+    $accessToken = $token['access_token'];
+    $profileRaw = null;
+
+    if (function_exists('curl_init')) {
+        $ch = curl_init('https://www.googleapis.com/oauth2/v3/userinfo');
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 20,
+            CURLOPT_HTTPHEADER => [
+                'Authorization: Bearer ' . $accessToken,
+                'Accept: application/json',
+            ],
+        ]);
+        $profileRaw = curl_exec($ch);
+        curl_close($ch);
+        if ($profileRaw === false) {
+            return null;
+        }
+    } else {
+        $opts = [
+            'http' => [
+                'method' => 'GET',
+                'header' => "Authorization: Bearer {$accessToken}\r\nAccept: application/json\r\n",
+                'timeout' => 20,
+                'ignore_errors' => true,
+            ],
+        ];
+        $profileRaw = @file_get_contents('https://www.googleapis.com/oauth2/v3/userinfo', false, stream_context_create($opts));
+        if ($profileRaw === false) {
+            return null;
+        }
+    }
+
+    $profile = json_decode($profileRaw, true);
+    if (empty($profile['email'])) {
+        return null;
+    }
+
+    return $profile;
+}
+
+function loginOrRegisterGoogleUser(array $profile) {
+    global $pdo;
+    ensureAuthIntegrations();
+
+    $email = trim((string) ($profile['email'] ?? ''));
+    $googleId = trim((string) ($profile['sub'] ?? ''));
+    $name = trim((string) ($profile['name'] ?? ''));
+    if ($name === '') {
+        $name = trim((string) (($profile['given_name'] ?? '') . ' ' . ($profile['family_name'] ?? '')));
+    }
+    if ($name === '') {
+        $name = strstr($email, '@', true) ?: 'Customer';
+    }
+
+    if ($email === '' || $googleId === '') {
+        return ['ok' => false, 'error' => 'google_auth_failed'];
+    }
+
+    $customer = null;
+    $stmt = $pdo->prepare('SELECT * FROM tbl_customer WHERE cust_google_id = ? LIMIT 1');
+    $stmt->execute([$googleId]);
+    $customer = $stmt->fetch();
+
+    if (!$customer) {
+        $stmt = $pdo->prepare('SELECT * FROM tbl_customer WHERE cust_email = ? LIMIT 1');
+        $stmt->execute([$email]);
+        $customer = $stmt->fetch();
+    }
+
+    if ($customer) {
+        if ((string) ($customer['cust_status'] ?? '1') !== '1') {
+            return ['ok' => false, 'error' => 'account_inactive'];
+        }
+        if (empty($customer['cust_google_id'])) {
+            $pdo->prepare('UPDATE tbl_customer SET cust_google_id = ? WHERE cust_id = ?')
+                ->execute([$googleId, $customer['cust_id']]);
+        }
+        $_SESSION['customer_id'] = $customer['cust_id'];
+        $_SESSION['customer_name'] = $customer['cust_name'];
+        linkGuestBookingsByEmail((int) $customer['cust_id'], $customer['cust_email']);
+        return ['ok' => true, 'new' => false];
+    }
+
+    $stmt = $pdo->prepare('INSERT INTO tbl_customer (cust_name, cust_cname, cust_email, cust_google_id, cust_phone, cust_country, cust_address, cust_city, cust_state, cust_zip, cust_b_name, cust_b_cname, cust_b_phone, cust_b_country, cust_b_address, cust_b_city, cust_b_state, cust_b_zip, cust_s_name, cust_s_cname, cust_s_phone, cust_s_country, cust_s_address, cust_s_city, cust_s_state, cust_s_zip, cust_password, cust_token, cust_datetime, cust_timestamp, cust_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    $stmt->execute([
+        $name, '', $email, $googleId, '', 0, '', '', '', '', '', '', '', 0, '', '', '', '', '', '', '', 0, '', '', '', '',
+        hashCustomerPassword(bin2hex(random_bytes(16))),
+        '', date('Y-m-d H:i:s'), time(), 1,
+    ]);
+
+    $customerId = (int) $pdo->lastInsertId();
+    linkGuestBookingsByEmail($customerId, $email);
+    $_SESSION['customer_id'] = $customerId;
+    $_SESSION['customer_name'] = $name;
+
+    return ['ok' => true, 'new' => true];
+}
+
+function renderRecaptchaWidget() {
+    if (!isRecaptchaEnabled()) {
+        return '';
+    }
+    $siteKey = e(getAuthConfig('recaptcha_site_key'));
+    return '<div class="g-recaptcha" data-sitekey="' . $siteKey . '"></div>';
+}
+
+function renderRecaptchaScript() {
+    if (!isRecaptchaEnabled()) {
+        return '';
+    }
+    return '<script src="https://www.google.com/recaptcha/api.js" async defer></script>';
+}
+
+function renderGoogleAuthButton($redirect = '') {
+    if (!isGoogleAuthEnabled()) {
+        return '';
+    }
+    $url = e(getGoogleAuthUrl($redirect));
+    $label = t('continue_with_google');
+    return '<a href="' . $url . '" class="btn btn-outline-dark d-flex align-items-center justify-content-center gap-2">'
+        . '<i class="fa-brands fa-google" aria-hidden="true"></i><span>' . $label . '</span></a>';
+}
+
+function renderAuthDivider() {
+    return '<div class="d-flex align-items-center gap-3 my-1">'
+        . '<hr class="flex-grow-1 m-0">'
+        . '<span class="small text-muted text-uppercase">' . t('or') . '</span>'
+        . '<hr class="flex-grow-1 m-0">'
+        . '</div>';
 }
 
 function seoCleanText($value, $maxLen = 0) {

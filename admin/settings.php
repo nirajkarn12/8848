@@ -736,6 +736,33 @@ if(isset($_POST['form10'])) {
     $success_message = 'Head and Body Script is updated successfully.';
 }
 
+if(isset($_POST['form13'])) {
+    $authFields = array(
+        'google_client_id' => trim($_POST['google_client_id'] ?? ''),
+        'google_client_secret' => trim($_POST['google_client_secret'] ?? ''),
+        'recaptcha_site_key' => trim($_POST['recaptcha_site_key'] ?? ''),
+        'recaptcha_secret_key' => trim($_POST['recaptcha_secret_key'] ?? ''),
+    );
+    try {
+        foreach ($authFields as $column => $value) {
+            $check = $pdo->prepare("SHOW COLUMNS FROM tbl_settings LIKE ?");
+            $check->execute(array($column));
+            if ($check->rowCount() === 0) {
+                $pdo->exec("ALTER TABLE tbl_settings ADD COLUMN `{$column}` varchar(255) NOT NULL DEFAULT ''");
+            }
+            $pdo->prepare("UPDATE tbl_settings SET `{$column}` = ? WHERE id=1")->execute(array($value));
+        }
+        $custCol = $pdo->prepare("SHOW COLUMNS FROM tbl_customer LIKE ?");
+        $custCol->execute(array('cust_google_id'));
+        if ($custCol->rowCount() === 0) {
+            $pdo->exec("ALTER TABLE tbl_customer ADD COLUMN cust_google_id varchar(64) NOT NULL DEFAULT '' AFTER cust_email");
+        }
+        $success_message = 'Google login and reCAPTCHA settings updated successfully.';
+    } catch (PDOException $e) {
+        $error_message .= 'Could not update auth settings: ' . htmlspecialchars($e->getMessage()) . '<br>';
+    }
+}
+
 /*
 if(isset($_POST['form11'])) {
     // updating the database
@@ -837,6 +864,10 @@ foreach ($result as $row) {
     $before_head                     = $row['before_head'];
     $after_body                      = $row['after_body'];
     $before_body                     = $row['before_body'];
+    $google_client_id                = $row['google_client_id'] ?? '';
+    $google_client_secret            = $row['google_client_secret'] ?? '';
+    $recaptcha_site_key              = $row['recaptcha_site_key'] ?? '';
+    $recaptcha_secret_key            = $row['recaptcha_secret_key'] ?? '';
     $home_service_on_off             = $row['home_service_on_off'];
     $home_welcome_on_off             = $row['home_welcome_on_off'];
     $home_featured_product_on_off    = $row['home_featured_product_on_off'];
@@ -893,6 +924,7 @@ foreach ($result as $row) {
                         <li><a href="#tab_7" data-toggle="tab">Banner Settings</a></li>
                         <li><a href="#tab_9" data-toggle="tab">Payment Settings</a></li>
                         <li><a href="#tab_12" data-toggle="tab">Staff Commission</a></li>
+                        <li><a href="#tab_13" data-toggle="tab">Google & reCAPTCHA</a></li>
                         <li><a href="#tab_10" data-toggle="tab">Head & Body Scripts</a></li>
                        <!--<li><a href="#tab_11" data-toggle="tab">Ads</a></li>-->
                     </ul>
@@ -1620,6 +1652,54 @@ foreach ($result as $row) {
                             </form>
                         </div>
 
+
+                        <div class="tab-pane" id="tab_13">
+                            <form class="form-horizontal" action="" method="post">
+                                <div class="box box-info">
+                                    <div class="box-body">
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">Google Client ID</label>
+                                            <div class="col-sm-7">
+                                                <input type="text" name="google_client_id" class="form-control" value="<?php echo htmlspecialchars($google_client_id); ?>">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">Google Client Secret</label>
+                                            <div class="col-sm-7">
+                                                <input type="text" name="google_client_secret" class="form-control" value="<?php echo htmlspecialchars($google_client_secret); ?>">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">Authorized redirect URI</label>
+                                            <div class="col-sm-7">
+                                                <input type="text" class="form-control" readonly value="<?php echo htmlspecialchars(rtrim(BASE_URL, '/') . '/account/google-callback.php'); ?>">
+                                                <p class="help-block">Add this exact URI in Google Cloud Console → OAuth client → Authorized redirect URIs.</p>
+                                            </div>
+                                        </div>
+                                        <hr>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">reCAPTCHA Site Key</label>
+                                            <div class="col-sm-7">
+                                                <input type="text" name="recaptcha_site_key" class="form-control" value="<?php echo htmlspecialchars($recaptcha_site_key); ?>">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label">reCAPTCHA Secret Key</label>
+                                            <div class="col-sm-7">
+                                                <input type="text" name="recaptcha_secret_key" class="form-control" value="<?php echo htmlspecialchars($recaptcha_secret_key); ?>">
+                                                <p class="help-block">Use Google reCAPTCHA v2 ("I'm not a robot" Checkbox). Leave blank to disable.</p>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="col-sm-2 control-label"></label>
+                                            <div class="col-sm-6">
+                                                <button type="submit" class="btn btn-success pull-left" name="form13">Update</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
 
                         <div class="tab-pane" id="tab_10">
                             <form class="form-horizontal" action="" method="post">

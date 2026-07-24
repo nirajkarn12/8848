@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../inc/functions.php';
+ensureAuthIntegrations();
 $pageTitle = loadLang('login');
 $redirect = trim($_GET['redirect'] ?? $_POST['redirect'] ?? '');
 
@@ -11,6 +12,12 @@ if (isLoggedIn()) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verifyCsrf($_POST['csrf_token'] ?? '')) {
         setFlash('danger', loadLang('invalid_request'));
+        header('Location: ' . BASE_URL . 'account/login.php' . ($redirect !== '' ? '?redirect=' . urlencode($redirect) : ''));
+        exit;
+    }
+
+    if (!verifyRecaptcha($_POST['g-recaptcha-response'] ?? '')) {
+        setFlash('danger', loadLang('recaptcha_failed'));
         header('Location: ' . BASE_URL . 'account/login.php' . ($redirect !== '' ? '?redirect=' . urlencode($redirect) : ''));
         exit;
     }
@@ -61,11 +68,19 @@ $breadcrumbs = [
     ['label' => t('login'), 'url' => '']
 ];
 echo renderBreadcrumbs($breadcrumbs);
+echo renderFlash();
+echo renderRecaptchaScript();
 ?>
 <div class="row justify-content-center">
   <div class="col-lg-5">
     <div class="card card-hover p-4">
       <h3 class="fw-bold mb-3"><?php echo t('customer_login'); ?></h3>
+      <?php if (isGoogleAuthEnabled()): ?>
+        <div class="d-grid gap-3 mb-3">
+          <?php echo renderGoogleAuthButton($redirect); ?>
+          <?php echo renderAuthDivider(); ?>
+        </div>
+      <?php endif; ?>
       <form method="post" class="d-grid gap-3">
         <input type="hidden" name="csrf_token" value="<?php echo e(csrfToken()); ?>">
         <input type="hidden" name="redirect" value="<?php echo e($redirect); ?>">
@@ -77,6 +92,9 @@ echo renderBreadcrumbs($breadcrumbs);
           </div>
           <input type="password" class="form-control mt-2" name="password" required>
         </div>
+        <?php if (isRecaptchaEnabled()): ?>
+          <div><?php echo renderRecaptchaWidget(); ?></div>
+        <?php endif; ?>
         <button class="btn btn-dark"><?php echo t('login'); ?></button>
         <div class="d-flex justify-content-center small text-muted">
           <a href="<?php echo BASE_URL; ?>account/register.php" class="text-decoration-none"><?php echo t('create_account'); ?></a>
