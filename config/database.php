@@ -3,7 +3,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-date_default_timezone_set('Asia/Kathmandu');
+date_default_timezone_set('Pacific/auckland');
 
 $dbhost = getenv('DB_HOST') ?: 'localhost';
 $dbname = getenv('DB_NAME') ?: 'resinnep_ecommerceweb';

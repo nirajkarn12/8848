@@ -52,7 +52,7 @@ echo renderFlash();
       <p class="mb-2"><i class="fa fa-phone me-2"></i><?php echo e($settings['contact_phone'] ?? ''); ?></p>
       <p class="mb-2"><i class="fa fa-envelope me-2"></i><?php echo e($settings['contact_email'] ?? ''); ?></p>
       <div class="mt-3 map-shell">
-        <?php echo !empty($settings['contact_map_iframe']) ? $settings['contact_map_iframe'] : '<iframe loading="lazy" title="' . e(loadLang('store_location')) . '" src="https://www.google.com/maps?q=Kathmandu,Nepal&output=embed"></iframe>'; ?>
+        <?php echo !empty($settings['contact_map_iframe']) ? $settings['contact_map_iframe'] : '<iframe loading="lazy" title="' . e(loadLang('store_location')) . '" src="https://www.google.com/maps?q=auckland,New Zealand&output=embed"></iframe>'; ?>
       </div>
     </div>
   </div>

@@ -449,11 +449,11 @@ function getHomeSeo() {
     return [
         'title' => seoPick(
             getSiteSetting('meta_title_home', ''),
-            $siteName . ' | Home & Office Cleaning in Kathmandu, Nepal'
+            $siteName . ' | Home & Office Cleaning in Auckland, New Zealand'
         ),
         'keywords' => seoPick(
             getSiteSetting('meta_keyword_home', ''),
-            '8848cleaningservice, 8848 cleaning service, 8848 cleaning service Nepal, home cleaning Kathmandu, office cleaning Kathmandu, deep cleaning Nepal, cleaning service Kathmandu, book cleaner online Nepal'
+            '8848 Cleaning Service, 8848 Cleaning Service New Zealand, cleaning service Auckland, home cleaning Auckland, office cleaning Auckland, deep cleaning Auckland, professional cleaning Auckland, commercial cleaning Auckland'
         ),
         'description' => seoPick(
             getSiteSetting('meta_description_home', ''),
@@ -486,13 +486,19 @@ function getSocialProfileUrls() {
 
 function getDefaultSeoJsonLd() {
     $homeSeo = getHomeSeo();
+
     $siteName = (string) getSiteSetting('site_name', SITE_NAME);
     $siteUrl = rtrim(BASE_URL, '/');
-    $phone = trim((string) getSiteSetting('contact_phone', '+977-9810110800'));
+
+    $phone = trim((string) getSiteSetting('contact_phone', ''));
     $email = trim((string) getSiteSetting('contact_email', ''));
-    $addressText = trim((string) getSiteSetting('contact_address', 'Kathmandu, Nepal'));
+    $addressText = trim((string) getSiteSetting('contact_address', ''));
+
     $logo = (string) getSiteSetting('logo', '');
-    $logoUrl = $logo !== '' ? getProductImage($logo) : (ASSET_URL . 'images/og-default.png');
+    $logoUrl = $logo !== ''
+        ? getProductImage($logo)
+        : (ASSET_URL . 'images/og-default.png');
+
     $social = getSocialProfileUrls();
 
     $website = [
@@ -502,7 +508,9 @@ function getDefaultSeoJsonLd() {
         'name' => $siteName,
         'description' => $homeSeo['description'],
         'inLanguage' => ['en', 'ne', 'hi'],
-        'publisher' => ['@id' => $siteUrl . '/#business'],
+        'publisher' => [
+            '@id' => $siteUrl . '/#business'
+        ],
         'potentialAction' => [
             '@type' => 'SearchAction',
             'target' => $siteUrl . '/search.php?q={search_term_string}',
@@ -511,41 +519,62 @@ function getDefaultSeoJsonLd() {
     ];
 
     $business = [
-        '@type' => ['LocalBusiness', 'CleaningService'],
+        '@type' => [
+            'LocalBusiness',
+            'CleaningService'
+        ],
+
         '@id' => $siteUrl . '/#business',
+
         'name' => $siteName,
+
         'alternateName' => [
             '8848 Cleaning Service',
             '8848cleaningservice',
-            '8848 Cleaning Service Kathmandu',
-            '8848 Cleaning Service Nepal',
+            '8848 Cleaning Service Auckland',
+            '8848 Cleaning Service New Zealand',
         ],
+
         'url' => $siteUrl,
+
         'description' => $homeSeo['description'],
+
         'image' => $logoUrl,
+
         'logo' => $logoUrl,
-        'telephone' => $phone !== '' ? $phone : '+977-9810110800',
+
         'address' => [
             '@type' => 'PostalAddress',
-            'streetAddress' => $addressText !== '' ? $addressText : 'Kathmandu, Nepal',
-            'addressLocality' => 'Kathmandu',
-            'addressRegion' => 'Bagmati',
-            'addressCountry' => 'NP',
+            'streetAddress' => $addressText,
+            'addressLocality' => 'Auckland',
+            'addressRegion' => 'Auckland',
+            'addressCountry' => 'NZ',
         ],
+
         'areaServed' => [
-            ['@type' => 'City', 'name' => 'Kathmandu'],
-            ['@type' => 'City', 'name' => 'Lalitpur'],
-            ['@type' => 'City', 'name' => 'Bhaktapur'],
-            ['@type' => 'Country', 'name' => 'Nepal'],
+            [
+                '@type' => 'City',
+                'name' => 'Auckland',
+            ],
         ],
+
         'priceRange' => '$$',
-        'currenciesAccepted' => 'NPR',
-        'paymentAccepted' => 'Cash, Bank Transfer, Online Payment',
+
+        'currenciesAccepted' => 'NZD',
+
+        'paymentAccepted' => 'Cash, Bank Transfer, Credit Card, Online Payment',
+
         'openingHoursSpecification' => [
             [
                 '@type' => 'OpeningHoursSpecification',
                 'dayOfWeek' => [
-                    'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
+                    'Monday',
+                    'Tuesday',
+                    'Wednesday',
+                    'Thursday',
+                    'Friday',
+                    'Saturday',
+                    'Sunday',
                 ],
                 'opens' => '07:00',
                 'closes' => '20:00',
@@ -553,16 +582,24 @@ function getDefaultSeoJsonLd() {
         ],
     ];
 
+    if ($phone !== '') {
+        $business['telephone'] = $phone;
+    }
+
     if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $business['email'] = $email;
     }
+
     if ($social) {
         $business['sameAs'] = $social;
     }
 
     return [
         '@context' => 'https://schema.org',
-        '@graph' => [$website, $business],
+        '@graph' => [
+            $website,
+            $business
+        ],
     ];
 }
 
@@ -799,6 +836,7 @@ function getSocialLinks() {
 
 function normalizeWhatsAppNumber($value) {
     $raw = trim((string) $value);
+
     if ($raw === '') {
         return '';
     }
@@ -809,15 +847,30 @@ function normalizeWhatsAppNumber($value) {
     }
 
     $digits = preg_replace('/\D+/', '', $raw);
+
     if ($digits === '') {
         return '';
     }
 
-    // Local Nepal mobile numbers like 98xxxxxxxx → add country code
-    if (strlen($digits) === 10 && preg_match('/^9[78]/', $digits)) {
-        $digits = '977' . $digits;
+    // New Zealand number already using international country code
+    if (strpos($digits, '64') === 0) {
+        return $digits;
     }
 
+    // New Zealand local mobile number:
+    if (preg_match('/^02\d{7,9}$/', $digits)) {
+        $digits = '64' . substr($digits, 1);
+        return $digits;
+    }
+
+    // New Zealand local landline:
+    // 09 123 4567 -> 6491234567
+    if (preg_match('/^0\d{8,9}$/', $digits)) {
+        $digits = '64' . substr($digits, 1);
+        return $digits;
+    }
+
+    // Return as-is if already a numeric international number
     return $digits;
 }
 

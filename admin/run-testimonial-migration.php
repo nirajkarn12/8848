@@ -35,7 +35,7 @@ try {
     $count = (int)$pdo->query("SELECT COUNT(*) FROM tbl_testimonial")->fetchColumn();
     if ($count === 0) {
         $seed = $pdo->prepare("INSERT INTO tbl_testimonial (name, designation, company, review, rating, photo, status, sort_order, created_at) VALUES (?, ?, ?, ?, ?, '', 'Active', ?, NOW())");
-        $seed->execute(array('Anisha Shrestha', 'Homeowner', 'Kathmandu', 'The team arrived on time and left our home spotless. Booking online was easy and communication was clear.', 5, 1));
+        $seed->execute(array('Anisha Shrestha', 'Homeowner', 'auckland', 'The team arrived on time and left our home spotless. Booking online was easy and communication was clear.', 5, 1));
         $seed->execute(array('Rajesh Thapa', 'Office Manager', 'Lalitpur', 'We use 8848 Cleaning Service for our office every week. Reliable staff and consistent quality.', 5, 2));
         $seed->execute(array('Maya Gurung', 'Apartment Owner', 'Bhaktapur', 'Deep clean before moving in was excellent. Highly recommend for anyone who wants a professional finish.', 4, 3));
         $messages[] = 'Seeded 3 demo testimonials';

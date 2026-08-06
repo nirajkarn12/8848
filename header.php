@@ -9,8 +9,8 @@ require_once __DIR__ . '/breadcrumbs.php';
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <?php
     $siteName = e(getSiteSetting('site_name', SITE_NAME));
-    $defaultDescription = e(getSiteSetting('meta_description', 'Modern candle, resin and craft supplies storefront built from the existing database.'));
-    $defaultKeywords = e(getSiteSetting('meta_keywords', 'candles, resin, craft supplies, handmade products, online store'));
+    $defaultDescription = e(getSiteSetting('meta_description','8848 Cleaning Service provides professional residential and commercial cleaning services in Auckland, New Zealand.'));
+    $defaultKeywords = e(getSiteSetting('meta_keywords','8848 Cleaning Service, cleaning services Auckland, house cleaning Auckland, residential cleaning Auckland, commercial cleaning Auckland, office cleaning Auckland, deep cleaning Auckland, professional cleaners Auckland, New Zealand cleaning services'));
     $defaultAuthor = e(getSiteSetting('site_author', $siteName));
     $pageTitleTag = e($pageTitle ?? $siteName);
     $pageDescription = e($metaDescription ?? $defaultDescription);

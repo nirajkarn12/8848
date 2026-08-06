@@ -478,7 +478,7 @@ if (!empty($aboutPage['about_banner'])) {
     </div>
   </div>
   <div class="map-shell">
-    <?php echo !empty($settings['contact_map_iframe']) ? $settings['contact_map_iframe'] : '<iframe loading="lazy" title="Service area" src="https://www.google.com/maps?q=Kathmandu,Nepal&output=embed"></iframe>'; ?>
+    <?php echo !empty($settings['contact_map_iframe']) ? $settings['contact_map_iframe'] : '<iframe loading="lazy" title="Service area" src="https://www.google.com/maps?q=auckland,New Zealand&output=embed"></iframe>'; ?>
   </div>
 </section>
 

@@ -31,9 +31,9 @@ if ($whatsAppLink !== '') {
             </div>
             <div class="col-lg-3">
                 <h5 class="fw-bold mb-3"><?php echo t('contact'); ?></h5>
-                <p class="text-white-50 mb-2"><i class="fa fa-location-dot me-2"></i><?php echo e(getSiteSetting('contact_address', 'Kathmandu, Nepal')); ?></p>
+                <p class="text-white-50 mb-2"><i class="fa fa-location-dot me-2"></i><?php echo e(getSiteSetting('contact_address', 'auckland, New Zealand')); ?></p>
                 <p class="text-white-50 mb-2"><i class="fa fa-phone me-2"></i><?php echo e(getSiteSetting('contact_phone', '+977 9869224134')); ?></p>
-                <p class="text-white-50 mb-0"><i class="fa fa-envelope me-2"></i><?php echo e(getSiteSetting('contact_email', 'contact@resinnepal.com.np')); ?></p>
+                <p class="text-white-50 mb-0"><i class="fa fa-envelope me-2"></i><?php echo e(getSiteSetting('contact_email', 'contact@resinNew Zealand.com.np')); ?></p>
             </div>
             <div class="col-lg-3">
     <h5 class="fw-bold mb-3"><?php echo t('follow_us'); ?></h5>

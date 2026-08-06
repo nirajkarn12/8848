@@ -5,21 +5,21 @@ $messages = array();
 $errors = array();
 
 $defaultHome = array(
-    'meta_title_home' => '8848 Cleaning Service | Home & Office Cleaning in Kathmandu, Nepal',
-    'meta_keyword_home' => '8848cleaningservice, 8848 cleaning service, 8848 cleaning service Nepal, home cleaning Kathmandu, office cleaning Kathmandu, deep cleaning Nepal, cleaning service Kathmandu, book cleaner online Nepal',
-    'meta_description_home' => '8848 Cleaning Service — professional home and office cleaning in Kathmandu, Nepal. Book trusted cleaners online with flexible scheduling and reliable results.',
+    'meta_title_home' => '8848 Cleaning Service | Home & Office Cleaning in auckland, New Zealand',
+    'meta_keyword_home' => '8848cleaningservice, 8848 cleaning service, 8848 cleaning service New Zealand, home cleaning auckland, office cleaning auckland, deep cleaning New Zealand, cleaning service auckland, book cleaner online New Zealand',
+    'meta_description_home' => '8848 Cleaning Service — professional home and office cleaning in auckland, New Zealand. Book trusted cleaners online with flexible scheduling and reliable results.',
 );
 
 $defaultPage = array(
-    'about_meta_title' => 'About 8848 Cleaning Service | Kathmandu, Nepal',
-    'about_meta_keyword' => 'about 8848cleaningservice, 8848 cleaning service Nepal, cleaning company Kathmandu, professional cleaners Nepal',
-    'about_meta_description' => 'Learn about 8848 Cleaning Service — professional home and office cleaning in Kathmandu, Nepal with trained staff and easy online booking.',
-    'contact_meta_title' => 'Contact 8848 Cleaning Service | Kathmandu',
-    'contact_meta_keyword' => 'contact 8848cleaningservice, 8848 cleaning service phone Kathmandu, book cleaning Nepal',
-    'contact_meta_description' => 'Contact 8848 Cleaning Service for home and office cleaning in Kathmandu, Nepal. Call, email, or send a message to book your service.',
-    'faq_meta_title' => 'FAQ | 8848 Cleaning Service Kathmandu',
-    'faq_meta_keyword' => 'cleaning FAQ Kathmandu, booking questions Nepal, 8848 cleaning service help',
-    'faq_meta_description' => 'Frequently asked questions about booking, pricing, and cleaning services with 8848 Cleaning Service in Kathmandu, Nepal.',
+    'about_meta_title' => 'About 8848 Cleaning Service | auckland, New Zealand',
+    'about_meta_keyword' => 'about 8848cleaningservice, 8848 cleaning service New Zealand, cleaning company auckland, professional cleaners New Zealand',
+    'about_meta_description' => 'Learn about 8848 Cleaning Service — professional home and office cleaning in auckland, New Zealand with trained staff and easy online booking.',
+    'contact_meta_title' => 'Contact 8848 Cleaning Service | auckland',
+    'contact_meta_keyword' => 'contact 8848cleaningservice, 8848 cleaning service phone auckland, book cleaning New Zealand',
+    'contact_meta_description' => 'Contact 8848 Cleaning Service for home and office cleaning in auckland, New Zealand. Call, email, or send a message to book your service.',
+    'faq_meta_title' => 'FAQ | 8848 Cleaning Service auckland',
+    'faq_meta_keyword' => 'cleaning FAQ auckland, booking questions New Zealand, 8848 cleaning service help',
+    'faq_meta_description' => 'Frequently asked questions about booking, pricing, and cleaning services with 8848 Cleaning Service in auckland, New Zealand.',
 );
 
 function looksStaleSeo($value, $requireLocalBrand = false) {
@@ -33,10 +33,10 @@ function looksStaleSeo($value, $requireLocalBrand = false) {
             return true;
         }
     }
-    // Refresh older SEO that does not yet target Nepal brand queries
+    // Refresh older SEO that does not yet target New Zealand brand queries
     if ($requireLocalBrand) {
         $hasBrand = (strpos($value, '8848cleaningservice') !== false) || (strpos($value, '8848 cleaning service') !== false);
-        $hasLocal = (strpos($value, 'kathmandu') !== false) || (strpos($value, 'nepal') !== false);
+        $hasLocal = (strpos($value, 'auckland') !== false) || (strpos($value, 'New Zealand') !== false);
         if (!$hasBrand || !$hasLocal) {
             return true;
         }
