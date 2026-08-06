@@ -38,8 +38,8 @@ $ogLocale = $ogLocaleMap[$currentHtmlLang] ?? 'en_US';
     $publishedTime = e($publishedTime ?? '');
     $modifiedTime = e($modifiedTime ?? '');
     $jsonLdData = $jsonLd ?? getDefaultSeoJsonLd();
-    $geoRegion = e(getSiteSetting('geo_region', 'NP-P3'));
-    $geoPlacename = e(getSiteSetting('geo_placename', 'Kathmandu, Nepal'));
+    $geoRegion = e(getSiteSetting('geo_region', 'NZ-AUK'));
+    $geoPlacename = e(getSiteSetting('geo_placename', 'Auckland, New Zealand'));
     ?>
     <title><?php
         if ($resolvedTitle === '' || strcasecmp($resolvedTitle, $siteNameRaw) === 0) {
