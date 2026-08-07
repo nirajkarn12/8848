@@ -374,7 +374,7 @@ $ogLocale = $ogLocaleMap[$currentHtmlLang] ?? 'en_US';
                 $currentLang = getCurrentLang();
                 $langFlags = [
                     'en' => ['src' => ASSET_URL . 'images/flags/gb.svg', 'label' => 'English'],
-                    'ne' => ['src' => ASSET_URL . 'images/flags/np.svg', 'label' => 'नेपाली'],
+                    'ne' => ['src' => ASSET_URL . 'images/flags/np.svg', 'label' => 'Māori'],
                     'hi' => ['src' => ASSET_URL . 'images/flags/in.svg', 'label' => 'हिन्दी'],
                 ];
                 $currentLangFlag = $langFlags[$currentLang] ?? $langFlags['en'];
