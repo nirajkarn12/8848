@@ -122,7 +122,7 @@ if ($mapIframe !== '') {
 |--------------------------------------------------------------------------
 |
 | If the iframe does not contain valid coordinates,
-| use Kathmandu as the fallback location.
+| use Auckland as the fallback location.
 |
 | Latitude:  27.7172
 | Longitude: 85.3240
@@ -598,7 +598,7 @@ echo renderFlash();
                      *
                      * 1. Existing booking coordinates
                      * 2. Coordinates from admin contact_map_iframe
-                     * 3. Kathmandu fallback
+                     * 3. Auckland fallback
                      */
 
                     echo renderServiceLocationPicker([

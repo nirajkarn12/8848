@@ -64,7 +64,7 @@ return [
     'about_us' => 'About Our Agency',
     'look_at_us_badge' => '#CleanWithCare',
     'look_at_us_title' => 'Look at us go.',
-    'look_at_us_p1' => 'We started as a small local team helping busy homes in auckland stay fresh after long work weeks.',
+    'look_at_us_p1' => 'We started as a small local team helping busy homes in Auckland stay fresh after long work weeks.',
     'look_at_us_p2' => 'These days, 8848 Cleaning Service handles homes, offices, and deep cleans — booked online, done on time, and finished to a high standard.',
     'look_at_us_p3' => 'From regular housekeeping to move-in resets and commercial spaces, we bring trained staff, reliable schedules, and a spotless finish.',
     'look_at_us_p4' => 'Check out our numbers - they\'re looking tidy.',
