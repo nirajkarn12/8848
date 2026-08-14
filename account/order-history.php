@@ -124,7 +124,7 @@ function bookingStatusBadgeClass($status) {
                         </a>
                         <div>
                           <div class="fw-semibold"><?php echo e($item['product_name']); ?></div>
-                          <div class="small text-muted">Rs. <?php echo number_format((float)$item['unit_price'], 2); ?></div>
+                          <div class="small text-muted">NZ$ <?php echo number_format((float)$item['unit_price'], 2); ?></div>
                         </div>
                       </div>
                     </div>
@@ -141,8 +141,8 @@ function bookingStatusBadgeClass($status) {
               <?php } ?>
               <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2">
                 <div class="small text-muted">
-                  <div><strong><?php echo t('total'); ?>:</strong> Rs. <?php echo number_format((float)($payment['grand_total'] ?? 0), 2); ?></div>
-                  <div><strong><?php echo t('due'); ?>:</strong> Rs. <?php echo number_format((float)($payment['due_amount'] ?? 0), 2); ?></div>
+                  <div><strong><?php echo t('total'); ?>:</strong> NZ$ <?php echo number_format((float)($payment['grand_total'] ?? 0), 2); ?></div>
+                  <div><strong><?php echo t('due'); ?>:</strong> NZ$ <?php echo number_format((float)($payment['due_amount'] ?? 0), 2); ?></div>
                 </div>
                 <div class="d-flex gap-2 flex-wrap">
                   <a href="<?php echo $invoiceUrl; ?>" class="btn btn-dark btn-sm"><?php echo t('view_invoice'); ?></a>

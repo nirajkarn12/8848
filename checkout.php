@@ -305,13 +305,13 @@ $defaultLng = $pref['service_lng'] ?? '';
         ?>
           <li class="list-group-item d-flex justify-content-between px-0">
             <span><?php echo e($item['product_name']); ?></span>
-            <span>Rs. <?php echo number_format($unit, 2); ?></span>
+            <span>NZ$ <?php echo number_format($unit, 2); ?></span>
           </li>
         <?php } ?>
       </ul>
       <div class="d-flex justify-content-between fw-semibold mt-3">
         <span><?php echo t('total'); ?></span>
-        <span>Rs. <?php echo number_format($summaryTotal, 2); ?></span>
+        <span>NZ$ <?php echo number_format($summaryTotal, 2); ?></span>
       </div>
     </div>
   </div>

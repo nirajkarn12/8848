@@ -72,7 +72,7 @@ echo renderBreadcrumbs($breadcrumbs);
         <div class="col-sm-6 col-xl-3">
           <div class="border rounded-4 p-3 h-100">
             <div class="small text-muted mb-1"><?php echo t('total_spent'); ?></div>
-            <div class="fw-semibold fs-4">Rs. <?php echo number_format((float)$orderStats['total_spent'], 2); ?></div>
+            <div class="fw-semibold fs-4">NZ$ <?php echo number_format((float)$orderStats['total_spent'], 2); ?></div>
           </div>
         </div>
       </div>
@@ -112,7 +112,7 @@ echo renderBreadcrumbs($breadcrumbs);
                   <?php $statusLabel = $order['booking_status'] ?? $order['shipping_status'] ?? $order['payment_status']; ?>
                   <span class="badge bg-<?php echo strtolower((string)$order['payment_status']) === 'completed' ? 'success' : 'warning'; ?> me-1"><?php echo e($order['payment_status']); ?></span>
                   <span class="badge bg-secondary"><?php echo e($statusLabel); ?></span>
-                  <div class="mt-2"><?php echo t('total'); ?>: Rs. <?php echo number_format((float)($order['grand_total'] ?? 0), 2); ?></div>
+                  <div class="mt-2"><?php echo t('total'); ?>: NZ$ <?php echo number_format((float)($order['grand_total'] ?? 0), 2); ?></div>
                 </div>
               </div>
             </div>

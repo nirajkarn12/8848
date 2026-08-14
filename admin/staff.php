@@ -35,7 +35,7 @@
 							foreach ($result as $row) {
 								$i++;
 								$commissionLabel = ($row['default_commission_type'] === 'fixed')
-									? 'Rs. ' . number_format((float)$row['default_commission_value'], 2)
+									? 'NZ$ ' . number_format((float)$row['default_commission_value'], 2)
 									: number_format((float)$row['default_commission_value'], 2) . '%';
 								?>
 								<tr class="<?php echo ($row['status'] === 'Active') ? 'bg-g' : 'bg-r'; ?>">

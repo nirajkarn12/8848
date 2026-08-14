@@ -24,9 +24,42 @@ $ogLocale = $ogLocaleMap[$currentHtmlLang] ?? 'en_US';
     $pageDescription = e(seoPick($metaDescription ?? '', $homeSeo['description'], 160));
     $pageKeywords = e(seoPick($metaKeywords ?? '', $homeSeo['keywords']));
     $pageAuthor = e(seoPick($metaAuthor ?? '', $siteNameRaw));
-    $canonicalUrl = e($canonicalUrl ?? ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']));
-    $robotsContent = e($robots ?? 'index,follow');
+
+    $canonicalRequestUri = $_SERVER['REQUEST_URI'] ?? '/';
+    $canonicalRequestUri = preg_replace('/([?&])lang=[^&]+(&|$)/i', '$1', $canonicalRequestUri);
+    $canonicalRequestUri = preg_replace('/[?&]+$/', '', $canonicalRequestUri);
+    $canonicalRequestUri = preg_replace('/\?$/', '', $canonicalRequestUri);
+    if ($canonicalRequestUri === '') {
+        $canonicalRequestUri = '/';
+    }
+
+    $forwardedProto = strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? ''));
+    $serverHttps = strtolower((string) ($_SERVER['HTTPS'] ?? ''));
+    $canonicalScheme = ($forwardedProto === 'https' || $serverHttps === 'on' || strpos((string) ($_SERVER['HTTP_HOST'] ?? ''), '8848cleaningservice.com') !== false)
+        ? 'https'
+        : 'http';
+
+    $canonicalHost = strtolower(trim((string) ($_SERVER['HTTP_X_FORWARDED_HOST'] ?? $_SERVER['HTTP_HOST'] ?? '')));
+    if ($canonicalHost === '') {
+        $canonicalHost = '8848cleaningservice.com';
+    }
+    $canonicalHost = preg_replace('/^www\./i', '', $canonicalHost);
+
+    $canonicalUrlValue = $canonicalScheme . '://' . $canonicalHost . $canonicalRequestUri;
+    $canonicalUrl = e($canonicalUrl ?? $canonicalUrlValue);
+    $robotsContent = e($robots ?? 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1');
     $ogType = e($ogType ?? 'website');
+    
+    $geoRegion = e(getSiteSetting('geo_region', 'NZ'));
+    $geoPlacename = e(getSiteSetting('geo_placename', 'Auckland, New Zealand'));
+    $geoPosition = e(getSiteSetting('geo_position', '-37.7878,174.7726'));
+
+    $canonicalBaseUrl = rtrim(BASE_URL, '/');
+    $hreflangUrls = [];
+    $activeLanguages = ['en' => 'English'];
+    foreach ($activeLanguages as $langCode => $langLabel) {
+        $hreflangUrls[$langCode] = $canonicalBaseUrl . langSwitchUrl($langCode);
+    }
     $ogImageValue = $ogImage ?? getSiteSetting('og_image', 'assets/images/og-default.png');
     $ogImageUrl = e(getProductImage($ogImageValue));
     $ogImageAlt = e($ogImageAlt ?? $pageTitleTag);
@@ -38,8 +71,7 @@ $ogLocale = $ogLocaleMap[$currentHtmlLang] ?? 'en_US';
     $publishedTime = e($publishedTime ?? '');
     $modifiedTime = e($modifiedTime ?? '');
     $jsonLdData = $jsonLd ?? getDefaultSeoJsonLd();
-    $geoRegion = e(getSiteSetting('geo_region', 'NZ-AUK'));
-    $geoPlacename = e(getSiteSetting('geo_placename', 'Auckland, New Zealand'));
+
     ?>
     <title><?php
         if ($resolvedTitle === '' || strcasecmp($resolvedTitle, $siteNameRaw) === 0) {
@@ -56,9 +88,15 @@ $ogLocale = $ogLocaleMap[$currentHtmlLang] ?? 'en_US';
     <meta name="robots" content="<?php echo $robotsContent; ?>">
     <meta name="googlebot" content="<?php echo $robotsContent; ?>">
     <meta name="bingbot" content="<?php echo $robotsContent; ?>">
+    <?php foreach ($hreflangUrls as $langCode => $langUrl): ?>
+    <link rel="alternate" hreflang="<?php echo e($langCode); ?>" href="<?php echo e($langUrl); ?>">
+    <?php endforeach; ?>
+    <link rel="alternate" hreflang="x-default" href="<?php echo e(rtrim(BASE_URL, '/')); ?>">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="geo.region" content="<?php echo $geoRegion; ?>">
     <meta name="geo.placename" content="<?php echo $geoPlacename; ?>">
+    <meta name="geo.position" content="<?php echo $geoPosition; ?>">
+    <meta name="ICBM" content="<?php echo $geoPosition; ?>">
     <?php if (!empty($googleVerification)): ?>
     <meta name="google-site-verification" content="<?php echo $googleVerification; ?>">
     <?php endif; ?>

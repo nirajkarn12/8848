@@ -77,7 +77,7 @@ include __DIR__ . '/inc/header.php';
 							<td><?php echo nl2br(htmlspecialchars($job['service_address'])); ?></td>
 						</tr>
 						<tr><th>Schedule</th><td><?php echo htmlspecialchars(trim(($job['preferred_date'] ?? 'Not set') . ' ' . ($job['preferred_time'] ?? ''))); ?></td></tr>
-						<tr><th>Your Commission</th><td>Rs. <?php echo number_format((float)$job['commission_amount'], 2); ?> (<?php echo htmlspecialchars($job['commission_status']); ?>)</td></tr>
+						<tr><th>Your Commission</th><td>NZ$ <?php echo number_format((float)$job['commission_amount'], 2); ?> (<?php echo htmlspecialchars($job['commission_status']); ?>)</td></tr>
 						<?php if (!empty($job['arrived_at'])) { ?>
 						<tr>
 							<th>Checked In</th>

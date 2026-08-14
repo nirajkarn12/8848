@@ -108,10 +108,10 @@ $staffList = $pdo->query("SELECT staff_id, full_name FROM tbl_staff ORDER BY ful
                     </form>
 
                     <div class="row" style="margin-bottom:15px;">
-                        <div class="col-sm-3"><div class="info-box bg-aqua"><div class="info-box-content"><span class="info-box-text">Total</span><span class="info-box-number">Rs. <?php echo number_format($totals['all'], 2); ?></span></div></div></div>
-                        <div class="col-sm-3"><div class="info-box bg-yellow"><div class="info-box-content"><span class="info-box-text">Pending</span><span class="info-box-number">Rs. <?php echo number_format($totals['pending'], 2); ?></span></div></div></div>
-                        <div class="col-sm-3"><div class="info-box bg-green"><div class="info-box-content"><span class="info-box-text">Approved</span><span class="info-box-number">Rs. <?php echo number_format($totals['approved'], 2); ?></span></div></div></div>
-                        <div class="col-sm-3"><div class="info-box bg-purple"><div class="info-box-content"><span class="info-box-text">Paid</span><span class="info-box-number">Rs. <?php echo number_format($totals['paid'], 2); ?></span></div></div></div>
+                        <div class="col-sm-3"><div class="info-box bg-aqua"><div class="info-box-content"><span class="info-box-text">Total</span><span class="info-box-number">NZ$ <?php echo number_format($totals['all'], 2); ?></span></div></div></div>
+                        <div class="col-sm-3"><div class="info-box bg-yellow"><div class="info-box-content"><span class="info-box-text">Pending</span><span class="info-box-number">NZ$ <?php echo number_format($totals['pending'], 2); ?></span></div></div></div>
+                        <div class="col-sm-3"><div class="info-box bg-green"><div class="info-box-content"><span class="info-box-text">Approved</span><span class="info-box-number">NZ$ <?php echo number_format($totals['approved'], 2); ?></span></div></div></div>
+                        <div class="col-sm-3"><div class="info-box bg-purple"><div class="info-box-content"><span class="info-box-text">Paid</span><span class="info-box-number">NZ$ <?php echo number_format($totals['paid'], 2); ?></span></div></div></div>
                     </div>
 
                     <div class="table-responsive">
@@ -138,7 +138,7 @@ $staffList = $pdo->query("SELECT staff_id, full_name FROM tbl_staff ORDER BY ful
                                     $i++;
                                     $ruleLabel = ($row['commission_type'] === 'percent')
                                         ? number_format((float)$row['commission_value'], 2) . '%'
-                                        : 'Rs. ' . number_format((float)$row['commission_value'], 2);
+                                        : 'NZ$ ' . number_format((float)$row['commission_value'], 2);
                                     ?>
                                     <tr>
                                         <td><?php echo $i; ?></td>
@@ -155,7 +155,7 @@ $staffList = $pdo->query("SELECT staff_id, full_name FROM tbl_staff ORDER BY ful
                                         <td><?php echo htmlspecialchars($row['client_name']); ?></td>
                                         <td><?php echo htmlspecialchars($row['job_status']); ?></td>
                                         <td>
-                                            Rs. <?php echo number_format((float)$row['commission_amount'], 2); ?>
+                                            NZ$ <?php echo number_format((float)$row['commission_amount'], 2); ?>
                                             <br><small class="text-muted"><?php echo htmlspecialchars($ruleLabel); ?></small>
                                         </td>
                                         <td><?php echo htmlspecialchars($row['commission_status']); ?></td>

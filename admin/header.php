@@ -106,132 +106,468 @@ if(!isset($_SESSION['user'])) {
   		<aside class="main-sidebar">
     		<section class="sidebar">
       
-      			<ul class="sidebar-menu">
+<ul class="sidebar-menu">
 
-			        <li class="treeview <?php if($cur_page == 'index.php') {echo 'active';} ?>">
-			          <a href="index.php">
-			            <i class="fa fa-dashboard"></i> <span>Dashboard</span>
-			          </a>
-			        </li>
-
-					
-			        <li class="treeview <?php if( ($cur_page == 'settings.php') ) {echo 'active';} ?>">
-			          <a href="settings.php">
-			            <i class="fa fa-sliders"></i> <span>Website Settings</span>
-			          </a>
-			        </li>
-
-                    <li class="treeview <?php if( ($cur_page == 'size.php') || ($cur_page == 'size-add.php') || ($cur_page == 'size-edit.php') || ($cur_page == 'color.php') || ($cur_page == 'color-add.php') || ($cur_page == 'color-edit.php') || ($cur_page == 'country.php') || ($cur_page == 'country-add.php') || ($cur_page == 'country-edit.php') || ($cur_page == 'shipping-cost.php') || ($cur_page == 'shipping-cost-edit.php') || ($cur_page == 'top-category.php') || ($cur_page == 'top-category-add.php') || ($cur_page == 'top-category-edit.php') || ($cur_page == 'mid-category.php') || ($cur_page == 'mid-category-add.php') || ($cur_page == 'mid-category-edit.php') || ($cur_page == 'end-category.php') || ($cur_page == 'end-category-add.php') || ($cur_page == 'end-category-edit.php') ) {echo 'active';} ?>">
-                        <a href="#">
-                            <i class="fa fa-cogs"></i>
-                            <span>Service Settings</span>
-                            <span class="pull-right-container">
-								<i class="fa fa-angle-left pull-right"></i>
-							</span>
-                        </a>
-                        <ul class="treeview-menu">
-                            <li><a href="country.php"><i class="fa fa-circle-o"></i>Region/Location</a></li>
-                            <li><a href="top-category.php"><i class="fa fa-circle-o"></i> Top Category</a></li>
-                            <li><a href="mid-category.php"><i class="fa fa-circle-o"></i> Category</a></li>
-                        </ul>
-                    </li>
+    <!-- Dashboard -->
+    <li class="<?php if($cur_page == 'index.php') { echo 'active'; } ?>">
+        <a href="index.php">
+            <i class="fa fa-dashboard"></i>
+            <span>Dashboard</span>
+        </a>
+    </li>
 
 
-                    <li class="treeview <?php if( ($cur_page == 'product.php') || ($cur_page == 'product-add.php') || ($cur_page == 'product-edit.php') ) {echo 'active';} ?>">
-                        <a href="product.php">
-                            <i class="fa fa-shopping-bag"></i> <span>Service Catalog</span>
-                        </a>
-                    </li>
+    <!-- OPERATIONS -->
+    <li class="treeview <?php
+        if(
+            $cur_page == 'order.php' ||
+            $cur_page == 'order-add.php' ||
+            $cur_page == 'order-edit.php' ||
+            $cur_page == 'order-show.php' ||
+            $cur_page == 'order-assign.php' ||
+            $cur_page == 'customer.php' ||
+            $cur_page == 'customer-add.php' ||
+            $cur_page == 'customer-edit.php' ||
+            $cur_page == 'contact-inquiry.php' ||
+            $cur_page == 'contact-inquiry-add.php'
+        ) {
+            echo 'active';
+        }
+    ?>">
+        <a href="#">
+            <i class="fa fa-briefcase"></i>
+            <span>Operations</span>
+            <span class="pull-right-container">
+                <i class="fa fa-angle-left pull-right"></i>
+            </span>
+        </a>
+
+        <ul class="treeview-menu">
+
+            <li class="<?php
+                if(
+                    $cur_page == 'order.php' ||
+                    $cur_page == 'order-add.php' ||
+                    $cur_page == 'order-edit.php' ||
+                    $cur_page == 'order-show.php' ||
+                    $cur_page == 'order-assign.php'
+                ) {
+                    echo 'active';
+                }
+            ?>">
+                <a href="order.php">
+                    <i class="fa fa-calendar-check-o"></i>
+                    Booking Management
+                </a>
+            </li>
+
+            <li class="<?php
+                if(
+                    $cur_page == 'customer.php' ||
+                    $cur_page == 'customer-add.php' ||
+                    $cur_page == 'customer-edit.php'
+                ) {
+                    echo 'active';
+                }
+            ?>">
+                <a href="customer.php">
+                    <i class="fa fa-users"></i>
+                    Registered Customers
+                </a>
+            </li>
+
+            <li class="<?php
+                if(
+                    $cur_page == 'contact-inquiry.php' ||
+                    $cur_page == 'contact-inquiry-add.php'
+                ) {
+                    echo 'active';
+                }
+            ?>">
+                <a href="contact-inquiry.php">
+                    <i class="fa fa-envelope"></i>
+                    Contact Inquiries
+                </a>
+            </li>
+
+        </ul>
+    </li>
 
 
-                    <li class="treeview <?php if( ($cur_page == 'order.php') || ($cur_page == 'order-add.php') || ($cur_page == 'order-edit.php') || ($cur_page == 'order-show.php') || ($cur_page == 'order-assign.php') ) {echo 'active';} ?>">
-                        <a href="order.php">
-                            <i class="fa fa-sticky-note"></i> <span>Booking Management</span>
-                        </a>
-                    </li>
+    <!-- SERVICES -->
+    <li class="treeview <?php
+        if(
+            $cur_page == 'product.php' ||
+            $cur_page == 'product-add.php' ||
+            $cur_page == 'product-edit.php' ||
+            $cur_page == 'country.php' ||
+            $cur_page == 'country-add.php' ||
+            $cur_page == 'country-edit.php' ||
+            $cur_page == 'top-category.php' ||
+            $cur_page == 'top-category-add.php' ||
+            $cur_page == 'top-category-edit.php' ||
+            $cur_page == 'mid-category.php' ||
+            $cur_page == 'mid-category-add.php' ||
+            $cur_page == 'mid-category-edit.php' ||
+            $cur_page == 'end-category.php' ||
+            $cur_page == 'end-category-add.php' ||
+            $cur_page == 'end-category-edit.php' ||
+            $cur_page == 'size.php' ||
+            $cur_page == 'size-add.php' ||
+            $cur_page == 'size-edit.php' ||
+            $cur_page == 'color.php' ||
+            $cur_page == 'color-add.php' ||
+            $cur_page == 'color-edit.php' ||
+            $cur_page == 'shipping-cost.php' ||
+            $cur_page == 'shipping-cost-edit.php'
+        ) {
+            echo 'active';
+        }
+    ?>">
+        <a href="#">
+            <i class="fa fa-cogs"></i>
+            <span>Services</span>
+            <span class="pull-right-container">
+                <i class="fa fa-angle-left pull-right"></i>
+            </span>
+        </a>
 
-                    <li class="treeview <?php if( ($cur_page == 'staff.php') || ($cur_page == 'staff-add.php') || ($cur_page == 'staff-edit.php') || ($cur_page == 'staff-availability.php') ) {echo 'active';} ?>">
-                        <a href="staff.php">
-                            <i class="fa fa-id-badge"></i> <span>Staff Management</span>
-                        </a>
-                    </li>
+        <ul class="treeview-menu">
 
-                    <li class="treeview <?php if( ($cur_page == 'commission.php') || ($cur_page == 'commission-pay.php') || ($cur_page == 'staff-report.php') ) {echo 'active';} ?>">
-                        <a href="#">
-                            <i class="fa fa-money"></i>
-                            <span>Commissions</span>
-                            <span class="pull-right-container">
-                                <i class="fa fa-angle-left pull-right"></i>
-                            </span>
-                        </a>
-                        <ul class="treeview-menu">
-                            <li><a href="commission.php"><i class="fa fa-circle-o"></i> Commission Report</a></li>
-                            <li><a href="commission-pay.php"><i class="fa fa-circle-o"></i> Pay Commissions</a></li>
-                            <li><a href="staff-report.php"><i class="fa fa-circle-o"></i> Staff Report</a></li>
-                        </ul>
-                    </li>
+            <li class="<?php
+                if(
+                    $cur_page == 'product.php' ||
+                    $cur_page == 'product-add.php' ||
+                    $cur_page == 'product-edit.php'
+                ) {
+                    echo 'active';
+                }
+            ?>">
+                <a href="product.php">
+                    <i class="fa fa-list-alt"></i>
+                    Service Catalog
+                </a>
+            </li>
+
+            <li class="<?php
+                if(
+                    $cur_page == 'top-category.php' ||
+                    $cur_page == 'top-category-add.php' ||
+                    $cur_page == 'top-category-edit.php' ||
+                    $cur_page == 'mid-category.php' ||
+                    $cur_page == 'mid-category-add.php' ||
+                    $cur_page == 'mid-category-edit.php' ||
+                    $cur_page == 'end-category.php' ||
+                    $cur_page == 'end-category-add.php' ||
+                    $cur_page == 'end-category-edit.php'
+                ) {
+                    echo 'active';
+                }
+            ?>">
+                <a href="top-category.php">
+                    <i class="fa fa-sitemap"></i>
+                    Service Categories
+                </a>
+            </li>
+
+            <li class="<?php
+                if(
+                    $cur_page == 'country.php' ||
+                    $cur_page == 'country-add.php' ||
+                    $cur_page == 'country-edit.php'
+                ) {
+                    echo 'active';
+                }
+            ?>">
+                <a href="country.php">
+                    <i class="fa fa-map-marker"></i>
+                    Regions / Locations
+                </a>
+            </li>
+
+        </ul>
+    </li>
 
 
-                     <li class="treeview <?php if( ($cur_page == 'slider.php') ) {echo 'active';} ?>">
-			          <a href="slider.php">
-			            <i class="fa fa-picture-o"></i> <span>Manage Sliders</span>
-			          </a>
-			        </li>
-			        <li class="treeview <?php if( ($cur_page == 'gallery.php') || ($cur_page == 'gallery-add.php') || ($cur_page == 'gallery-edit.php') ) {echo 'active';} ?>">
-			          <a href="gallery.php">
-			            <i class="fa fa-camera"></i> <span>Gallery</span>
-			          </a>
-			        </li>
+    <!-- STAFF & FINANCE -->
+    <li class="treeview <?php
+        if(
+            $cur_page == 'staff.php' ||
+            $cur_page == 'staff-add.php' ||
+            $cur_page == 'staff-edit.php' ||
+            $cur_page == 'staff-availability.php' ||
+            $cur_page == 'commission.php' ||
+            $cur_page == 'commission-pay.php' ||
+            $cur_page == 'staff-report.php'
+        ) {
+            echo 'active';
+        }
+    ?>">
+        <a href="#">
+            <i class="fa fa-id-card"></i>
+            <span>Staff & Finance</span>
+            <span class="pull-right-container">
+                <i class="fa fa-angle-left pull-right"></i>
+            </span>
+        </a>
 
-                    <li class="treeview <?php if( ($cur_page == 'faq.php') || ($cur_page == 'faq-add.php') || ($cur_page == 'faq-edit.php') ) {echo 'active';} ?>">
-			          <a href="faq.php">
-			            <i class="fa fa-question-circle"></i> <span>FAQ</span>
-			          </a>
-			        </li>
+        <ul class="treeview-menu">
 
-                    <li class="treeview <?php if( ($cur_page == 'testimonial.php') || ($cur_page == 'testimonial-add.php') || ($cur_page == 'testimonial-edit.php') ) {echo 'active';} ?>">
-			          <a href="testimonial.php">
-			            <i class="fa fa-star"></i> <span>Testimonials / Reviews</span>
-			          </a>
-			        </li>
+            <li class="<?php
+                if(
+                    $cur_page == 'staff.php' ||
+                    $cur_page == 'staff-add.php' ||
+                    $cur_page == 'staff-edit.php' ||
+                    $cur_page == 'staff-availability.php'
+                ) {
+                    echo 'active';
+                }
+            ?>">
+                <a href="staff.php">
+                    <i class="fa fa-users"></i>
+                    Staff Management
+                </a>
+            </li>
 
-                    <li class="treeview <?php if( ($cur_page == 'client.php') || ($cur_page == 'client-add.php') || ($cur_page == 'client-edit.php') ) {echo 'active';} ?>">
-			          <a href="client.php">
-			            <i class="fa fa-building"></i> <span>Clients / Logos</span>
-			          </a>
-			        </li>
+            <li class="<?php
+                if($cur_page == 'commission.php') {
+                    echo 'active';
+                }
+            ?>">
+                <a href="commission.php">
+                    <i class="fa fa-bar-chart"></i>
+                    Commission Report
+                </a>
+            </li>
 
-						<li class="treeview <?php if( ($cur_page == 'customer.php') || ($cur_page == 'customer-add.php') || ($cur_page == 'customer-edit.php') ) {echo 'active';} ?>">
-			          <a href="customer.php">
-			            <i class="fa fa-user-plus"></i> <span>Registered Customer</span>
-			          </a>
-			        </li>
+            <li class="<?php
+                if($cur_page == 'commission-pay.php') {
+                    echo 'active';
+                }
+            ?>">
+                <a href="commission-pay.php">
+                    <i class="fa fa-money"></i>
+                    Pay Commissions
+                </a>
+            </li>
 
-			        <li class="treeview <?php if( ($cur_page == 'page.php') ) {echo 'active';} ?>">
-			          <a href="page.php">
-			            <i class="fa fa-tasks"></i> <span>Page Settings</span>
-			          </a>
-			        </li>
+            <li class="<?php
+                if($cur_page == 'staff-report.php') {
+                    echo 'active';
+                }
+            ?>">
+                <a href="staff-report.php">
+                    <i class="fa fa-file-text-o"></i>
+                    Staff Report
+                </a>
+            </li>
 
-			        <li class="treeview <?php if( ($cur_page == 'blog.php') || ($cur_page == 'blog-add.php') || ($cur_page == 'blog-edit.php') ) {echo 'active';} ?>">
-			          <a href="blog.php">
-			            <i class="fa fa-newspaper-o"></i> <span>Blog Management</span>
-			          </a>
-			        </li>
+        </ul>
+    </li>
 
-			        <li class="treeview <?php if( ($cur_page == 'social-media.php') ) {echo 'active';} ?>">
-			          <a href="social-media.php">
-			            <i class="fa fa-globe"></i> <span>Social Media</span>
-			          </a>
-			        </li>
 
-			        <li class="treeview <?php if( ($cur_page == 'subscriber.php')||($cur_page == 'subscriber.php') ) {echo 'active';} ?>">
-			          <a href="subscriber.php">
-			            <i class="fa fa-hand-o-right"></i> <span>Subscriber</span>
-			          </a>
-			        </li>
+    <!-- WEBSITE CONTENT -->
+    <li class="treeview <?php
+        if(
+            $cur_page == 'slider.php' ||
+            $cur_page == 'gallery.php' ||
+            $cur_page == 'gallery-add.php' ||
+            $cur_page == 'gallery-edit.php' ||
+            $cur_page == 'faq.php' ||
+            $cur_page == 'faq-add.php' ||
+            $cur_page == 'faq-edit.php' ||
+            $cur_page == 'testimonial.php' ||
+            $cur_page == 'testimonial-add.php' ||
+            $cur_page == 'testimonial-edit.php' ||
+            $cur_page == 'client.php' ||
+            $cur_page == 'client-add.php' ||
+            $cur_page == 'client-edit.php' ||
+            $cur_page == 'blog.php' ||
+            $cur_page == 'blog-add.php' ||
+            $cur_page == 'blog-edit.php'
+        ) {
+            echo 'active';
+        }
+    ?>">
+        <a href="#">
+            <i class="fa fa-edit"></i>
+            <span>Website Content</span>
+            <span class="pull-right-container">
+                <i class="fa fa-angle-left pull-right"></i>
+            </span>
+        </a>
 
-      			</ul>
+        <ul class="treeview-menu">
+
+            <li class="<?php if($cur_page == 'slider.php') { echo 'active'; } ?>">
+                <a href="slider.php">
+                    <i class="fa fa-picture-o"></i>
+                    Sliders
+                </a>
+            </li>
+
+            <li class="<?php
+                if(
+                    $cur_page == 'gallery.php' ||
+                    $cur_page == 'gallery-add.php' ||
+                    $cur_page == 'gallery-edit.php'
+                ) {
+                    echo 'active';
+                }
+            ?>">
+                <a href="gallery.php">
+                    <i class="fa fa-camera"></i>
+                    Gallery
+                </a>
+            </li>
+
+            <li class="<?php
+                if(
+                    $cur_page == 'blog.php' ||
+                    $cur_page == 'blog-add.php' ||
+                    $cur_page == 'blog-edit.php'
+                ) {
+                    echo 'active';
+                }
+            ?>">
+                <a href="blog.php">
+                    <i class="fa fa-newspaper-o"></i>
+                    Blog
+                </a>
+            </li>
+
+            <li class="<?php
+                if(
+                    $cur_page == 'faq.php' ||
+                    $cur_page == 'faq-add.php' ||
+                    $cur_page == 'faq-edit.php'
+                ) {
+                    echo 'active';
+                }
+            ?>">
+                <a href="faq.php">
+                    <i class="fa fa-question-circle"></i>
+                    FAQ
+                </a>
+            </li>
+
+            <li class="<?php
+                if(
+                    $cur_page == 'testimonial.php' ||
+                    $cur_page == 'testimonial-add.php' ||
+                    $cur_page == 'testimonial-edit.php'
+                ) {
+                    echo 'active';
+                }
+            ?>">
+                <a href="testimonial.php">
+                    <i class="fa fa-star"></i>
+                    Testimonials / Reviews
+                </a>
+            </li>
+
+            <li class="<?php
+                if(
+                    $cur_page == 'client.php' ||
+                    $cur_page == 'client-add.php' ||
+                    $cur_page == 'client-edit.php'
+                ) {
+                    echo 'active';
+                }
+            ?>">
+                <a href="client.php">
+                    <i class="fa fa-building"></i>
+                    Clients / Logos
+                </a>
+            </li>
+
+        </ul>
+    </li>
+
+
+    <!-- WEBSITE MANAGEMENT -->
+    <li class="treeview <?php
+        if(
+            $cur_page == 'settings.php' ||
+            $cur_page == 'page.php' ||
+            $cur_page == 'social-media.php' ||
+            $cur_page == 'subscriber.php'
+        ) {
+            echo 'active';
+        }
+    ?>">
+        <a href="#">
+            <i class="fa fa-globe"></i>
+            <span>Website Management</span>
+            <span class="pull-right-container">
+                <i class="fa fa-angle-left pull-right"></i>
+            </span>
+        </a>
+
+        <ul class="treeview-menu">
+
+            <li class="<?php if($cur_page == 'settings.php') { echo 'active'; } ?>">
+                <a href="settings.php">
+                    <i class="fa fa-sliders"></i>
+                    Website Settings
+                </a>
+            </li>
+
+            <li class="<?php if($cur_page == 'page.php') { echo 'active'; } ?>">
+                <a href="page.php">
+                    <i class="fa fa-file-text-o"></i>
+                    Page Settings
+                </a>
+            </li>
+
+            <li class="<?php if($cur_page == 'social-media.php') { echo 'active'; } ?>">
+                <a href="social-media.php">
+                    <i class="fa fa-share-alt"></i>
+                    Social Media
+                </a>
+            </li>
+
+            <li class="<?php if($cur_page == 'subscriber.php') { echo 'active'; } ?>">
+                <a href="subscriber.php">
+                    <i class="fa fa-envelope-o"></i>
+                    Subscribers
+                </a>
+            </li>
+
+        </ul>
+    </li>
+
+
+    <!-- ACCOUNT -->
+    <li class="treeview">
+        <a href="#">
+            <i class="fa fa-user-circle"></i>
+            <span>Account</span>
+            <span class="pull-right-container">
+                <i class="fa fa-angle-left pull-right"></i>
+            </span>
+        </a>
+
+        <ul class="treeview-menu">
+
+            <li>
+                <a href="profile-edit.php">
+                    <i class="fa fa-user"></i>
+                    My Profile
+                </a>
+            </li>
+
+            <li>
+                <a href="logout.php">
+                    <i class="fa fa-sign-out"></i>
+                    Log Out
+                </a>
+            </li>
+
+        </ul>
+    </li>
+
+</ul>
     		</section>
   		</aside>
 

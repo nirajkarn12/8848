@@ -9,7 +9,7 @@ date_default_timezone_set('Pacific/auckland');
 $dbhost = getenv('DB_HOST') ?: 'localhost';
 
 // Database Name
-$dbname   = getenv('DB_NAME') ?: 'resinnep_ecommerceweb';
+$dbname   = getenv('DB_NAME') ?: '8848';
 
 // Database Username
 $dbuser = getenv('DB_USER') ?: 'root';

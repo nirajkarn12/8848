@@ -97,7 +97,7 @@ function columnExists($pdo, $table, $column) {
                                         if($discountType == 'percent') {
                                             echo $discountValue . '%';
                                         } elseif($discountType == 'amount') {
-                                            echo 'Rs.' . number_format($discountValue, 2);
+                                            echo 'NZ$' . number_format($discountValue, 2);
                                         } else {
                                             echo 'None';
                                         }
@@ -154,7 +154,7 @@ function columnExists($pdo, $table, $column) {
                                     <td><?php echo htmlspecialchars($aRow['staff_name']); ?> (<?php echo htmlspecialchars($aRow['staff_phone']); ?>)</td>
                                     <td><?php echo htmlspecialchars($aRow['job_status']); ?></td>
                                     <td><?php echo number_format((float)($aRow['commission_share_percent'] ?? 100), 0); ?>%</td>
-                                    <td>Rs. <?php echo number_format((float)$aRow['commission_amount'], 2); ?> (<?php echo htmlspecialchars($aRow['commission_status']); ?>)</td>
+                                    <td>NZ$ <?php echo number_format((float)$aRow['commission_amount'], 2); ?> (<?php echo htmlspecialchars($aRow['commission_status']); ?>)</td>
                                     <td>
                                         <?php echo htmlspecialchars($aRow['arrived_at'] ?? '—'); ?>
                                         <?php if (!empty($aRow['checkin_lat']) && !empty($aRow['checkin_lng'])) { ?>
@@ -199,8 +199,8 @@ function columnExists($pdo, $table, $column) {
                                     echo '<tr>';
                                     echo '<td>' . $counter . '</td>';
                                     echo '<td>' . htmlspecialchars($item['product_name']) . '</td>';
-                                    echo '<td>Rs. ' . number_format((float)$item['unit_price'], 2) . '</td>';
-                                    echo '<td>Rs. ' . number_format($lineTotal, 2) . '</td>';
+                                    echo '<td>NZ$ ' . number_format((float)$item['unit_price'], 2) . '</td>';
+                                    echo '<td>NZ$ ' . number_format($lineTotal, 2) . '</td>';
                                     echo '</tr>';
                                 }
                                 if($counter == 0) {
@@ -211,31 +211,31 @@ function columnExists($pdo, $table, $column) {
                             <tfoot>
                                 <tr>
                                     <th colspan="3" class="text-right">Subtotal (from items)</th>
-                                    <th>Rs. <?php echo number_format($subtotalCheck, 2); ?></th>
+                                    <th>NZ$ <?php echo number_format($subtotalCheck, 2); ?></th>
                                 </tr>
                                 <?php if(!empty($payment['discount_amount']) && (float)$payment['discount_amount'] > 0): ?>
                                 <tr>
                                     <th colspan="3" class="text-right">Discount</th>
-                                    <th>- Rs. <?php echo number_format((float)$payment['discount_amount'], 2); ?></th>
+                                    <th>- NZ$ <?php echo number_format((float)$payment['discount_amount'], 2); ?></th>
                                 </tr>
                                 <?php endif; ?>
                                 <?php if(!empty($payment['vat_amount']) && (float)$payment['vat_amount'] > 0): ?>
                                 <tr>
                                     <th colspan="3" class="text-right">VAT</th>
-                                    <th>+ Rs. <?php echo number_format((float)$payment['vat_amount'], 2); ?></th>
+                                    <th>+ NZ$ <?php echo number_format((float)$payment['vat_amount'], 2); ?></th>
                                 </tr>
                                 <?php endif; ?>
                                 <tr>
                                     <th colspan="3" class="text-right">Grand Total</th>
-                                    <th><strong>Rs. <?php echo number_format((float)$payment['grand_total'], 2); ?></strong></th>
+                                    <th><strong>NZ$ <?php echo number_format((float)$payment['grand_total'], 2); ?></strong></th>
                                 </tr>
                                 <tr>
                                     <th colspan="3" class="text-right">Paid</th>
-                                    <th>Rs. <?php echo number_format((float)$payment['paid_amount'], 2); ?></th>
+                                    <th>NZ$ <?php echo number_format((float)$payment['paid_amount'], 2); ?></th>
                                 </tr>
                                 <tr>
                                     <th colspan="3" class="text-right">Due</th>
-                                    <th>Rs. <?php echo number_format((float)$payment['due_amount'], 2); ?></th>
+                                    <th>NZ$ <?php echo number_format((float)$payment['due_amount'], 2); ?></th>
                                 </tr>
                             </tfoot>
                         </table>

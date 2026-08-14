@@ -116,8 +116,8 @@ $qrPayload = rawurlencode('Invoice ' . $order['payment_id'] . ' | ' . $company['
                                 <tr>
                                     <td><?php echo $i++; ?></td>
                                     <td><?php echo htmlspecialchars($item['product_name']); ?></td>
-                                    <td>Rs. <?php echo number_format((float)$item['unit_price'], 2); ?></td>
-                                    <td>Rs. <?php echo number_format($lineTotal, 2); ?></td>
+                                    <td>NZ$ <?php echo number_format((float)$item['unit_price'], 2); ?></td>
+                                    <td>NZ$ <?php echo number_format($lineTotal, 2); ?></td>
                                 </tr>
                                 <?php endforeach; ?>
                                 <?php if (!$items): ?>
@@ -136,12 +136,12 @@ $qrPayload = rawurlencode('Invoice ' . $order['payment_id'] . ' | ' . $company['
                         </div>
                         <div class="totals-box">
                             <table class="table table-bordered totals-table">
-                                <tr><th>Subtotal</th><td>Rs. <?php echo number_format((float)($order['subtotal'] ?? 0), 2); ?></td></tr>
-                                <tr><th>Discount</th><td>Rs. <?php echo number_format((float)($order['discount_amount'] ?? 0), 2); ?></td></tr>
-                                <tr><th>VAT</th><td>Rs. <?php echo number_format((float)($order['vat_amount'] ?? 0), 2); ?></td></tr>
-                                <tr class="grand-total"><th>Grand Total</th><td>Rs. <?php echo number_format((float)($order['grand_total'] ?? 0), 2); ?></td></tr>
-                                <tr><th>Paid</th><td>Rs. <?php echo number_format((float)($order['paid_amount'] ?? 0), 2); ?></td></tr>
-                                <tr><th>Due</th><td>Rs. <?php echo number_format((float)($order['due_amount'] ?? 0), 2); ?></td></tr>
+                                <tr><th>Subtotal</th><td>NZ$ <?php echo number_format((float)($order['subtotal'] ?? 0), 2); ?></td></tr>
+                                <tr><th>Discount</th><td>NZ$ <?php echo number_format((float)($order['discount_amount'] ?? 0), 2); ?></td></tr>
+                                <tr><th>VAT</th><td>NZ$ <?php echo number_format((float)($order['vat_amount'] ?? 0), 2); ?></td></tr>
+                                <tr class="grand-total"><th>Grand Total</th><td>NZ$ <?php echo number_format((float)($order['grand_total'] ?? 0), 2); ?></td></tr>
+                                <tr><th>Paid</th><td>NZ$ <?php echo number_format((float)($order['paid_amount'] ?? 0), 2); ?></td></tr>
+                                <tr><th>Due</th><td>NZ$ <?php echo number_format((float)($order['due_amount'] ?? 0), 2); ?></td></tr>
                             </table>
                         </div>
                     </div>

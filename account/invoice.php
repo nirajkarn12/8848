@@ -137,8 +137,8 @@ echo renderBreadcrumbs($breadcrumbs);
                 <td class="text-center" style="width:90px;">
                   <img src="<?php echo e(getProductImage($item['p_featured_photo'])); ?>" alt="<?php echo e($item['product_name']); ?>" class="img-fluid rounded-3" style="height:60px; object-fit:cover; width:60px;">
                 </td>
-                <td>Rs. <?php echo number_format((float)$item['unit_price'], 2); ?></td>
-                <td>Rs. <?php echo number_format($lineTotal, 2); ?></td>
+                <td>NZ$ <?php echo number_format((float)$item['unit_price'], 2); ?></td>
+                <td>NZ$ <?php echo number_format($lineTotal, 2); ?></td>
               </tr>
             <?php }
             } else { ?>
@@ -155,12 +155,12 @@ echo renderBreadcrumbs($breadcrumbs);
           <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=<?php echo $qrPayload; ?>" alt="QR" class="qr-code">
         </div>
         <div class="totals-box">
-          <div class="d-flex justify-content-between mb-2"><span><?php echo t('subtotal'); ?></span><strong>Rs. <?php echo number_format((float)($payment['subtotal'] ?? 0), 2); ?></strong></div>
-          <div class="d-flex justify-content-between mb-2"><span><?php echo t('discount'); ?></span><strong>Rs. <?php echo number_format((float)($payment['discount_amount'] ?? 0), 2); ?></strong></div>
-          <div class="d-flex justify-content-between mb-2"><span><?php echo t('vat'); ?></span><strong>Rs. <?php echo number_format((float)($payment['vat_amount'] ?? 0), 2); ?></strong></div>
-          <div class="d-flex justify-content-between mb-2"><span><?php echo t('paid'); ?></span><strong>Rs. <?php echo number_format((float)($payment['paid_amount'] ?? 0), 2); ?></strong></div>
-          <div class="d-flex justify-content-between border-top pt-2"><span class="fw-semibold"><?php echo t('grand_total'); ?></span><strong>Rs. <?php echo number_format((float)($payment['grand_total'] ?? 0), 2); ?></strong></div>
-          <div class="d-flex justify-content-between mt-2"><span><?php echo t('due'); ?></span><strong>Rs. <?php echo number_format((float)($payment['due_amount'] ?? 0), 2); ?></strong></div>
+          <div class="d-flex justify-content-between mb-2"><span><?php echo t('subtotal'); ?></span><strong>NZ$ <?php echo number_format((float)($payment['subtotal'] ?? 0), 2); ?></strong></div>
+          <div class="d-flex justify-content-between mb-2"><span><?php echo t('discount'); ?></span><strong>NZ$ <?php echo number_format((float)($payment['discount_amount'] ?? 0), 2); ?></strong></div>
+          <div class="d-flex justify-content-between mb-2"><span><?php echo t('vat'); ?></span><strong>NZ$ <?php echo number_format((float)($payment['vat_amount'] ?? 0), 2); ?></strong></div>
+          <div class="d-flex justify-content-between mb-2"><span><?php echo t('paid'); ?></span><strong>NZ$ <?php echo number_format((float)($payment['paid_amount'] ?? 0), 2); ?></strong></div>
+          <div class="d-flex justify-content-between border-top pt-2"><span class="fw-semibold"><?php echo t('grand_total'); ?></span><strong>NZ$ <?php echo number_format((float)($payment['grand_total'] ?? 0), 2); ?></strong></div>
+          <div class="d-flex justify-content-between mt-2"><span><?php echo t('due'); ?></span><strong>NZ$ <?php echo number_format((float)($payment['due_amount'] ?? 0), 2); ?></strong></div>
         </div>
       </div>
 

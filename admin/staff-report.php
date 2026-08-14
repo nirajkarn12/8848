@@ -98,10 +98,10 @@ $staffList = $pdo->query("SELECT staff_id, full_name FROM tbl_staff ORDER BY ful
                                         <td><?php echo htmlspecialchars($row['status']); ?></td>
                                         <td><?php echo (int)$row['total_jobs']; ?></td>
                                         <td><?php echo (int)$row['jobs_completed']; ?></td>
-                                        <td>Rs. <?php echo number_format((float)$row['commission_total'], 2); ?></td>
-                                        <td>Rs. <?php echo number_format((float)$row['commission_pending'], 2); ?></td>
-                                        <td><strong>Rs. <?php echo number_format($balanceDue, 2); ?></strong></td>
-                                        <td>Rs. <?php echo number_format((float)$row['commission_paid'], 2); ?></td>
+                                        <td>NZ$ <?php echo number_format((float)$row['commission_total'], 2); ?></td>
+                                        <td>NZ$ <?php echo number_format((float)$row['commission_pending'], 2); ?></td>
+                                        <td><strong>NZ$ <?php echo number_format($balanceDue, 2); ?></strong></td>
+                                        <td>NZ$ <?php echo number_format((float)$row['commission_paid'], 2); ?></td>
                                         <td>
                                             <a href="commission.php?staff_id=<?php echo (int)$row['staff_id']; ?>" class="btn btn-xs btn-info">View</a>
                                             <?php if ($balanceDue > 0) { ?>

@@ -124,7 +124,7 @@ function formatCommissionRuleLabel($rule) {
     $source = $rule['source'] ?? 'global';
 
     if ($type === 'fixed' || $type === 'custom') {
-        $valueLabel = 'Rs. ' . number_format($value, 2);
+        $valueLabel = 'NZ$ ' . number_format($value, 2);
     } else {
         $valueLabel = number_format($value, 2) . '%';
     }
@@ -311,7 +311,7 @@ function sendStaffAssignmentEmail($pdo, $staff, $assignment, $payment) {
 <li><strong>Phone:</strong> ' . htmlspecialchars($assignment['client_phone']) . '</li>
 <li><strong>Address:</strong> ' . nl2br(htmlspecialchars($assignment['service_address'])) . '</li>
 <li><strong>Schedule:</strong> ' . htmlspecialchars($schedule) . '</li>
-<li><strong>Estimated commission:</strong> Rs. ' . number_format((float)$assignment['commission_amount'], 2) . '</li>
+<li><strong>Estimated commission:</strong> NZ$ ' . number_format((float)$assignment['commission_amount'], 2) . '</li>
 </ul>
 <p>Log in to the staff portal to view details and update job status.</p>
 </body></html>

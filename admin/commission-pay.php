@@ -113,7 +113,7 @@ $staffList = $pdo->query("SELECT staff_id, full_name FROM tbl_staff ORDER BY ful
 
                     <p>
                         Approved balance ready to pay:
-                        <strong>Rs. <?php echo number_format($approvedTotal, 2); ?></strong>
+                        <strong>NZ$ <?php echo number_format($approvedTotal, 2); ?></strong>
                         (<?php echo count($rows); ?> job<?php echo count($rows) === 1 ? '' : 's'; ?>)
                     </p>
 
@@ -152,7 +152,7 @@ $staffList = $pdo->query("SELECT staff_id, full_name FROM tbl_staff ORDER BY ful
                                         <td><?php echo htmlspecialchars($row['staff_name'] ?? '—'); ?></td>
                                         <td><?php echo htmlspecialchars($row['service_name']); ?></td>
                                         <td><?php echo htmlspecialchars($row['client_name']); ?></td>
-                                        <td><strong>Rs. <?php echo number_format((float)$row['commission_amount'], 2); ?></strong></td>
+                                        <td><strong>NZ$ <?php echo number_format((float)$row['commission_amount'], 2); ?></strong></td>
                                     </tr>
                                     <?php } ?>
                                 </tbody>

@@ -6,7 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
 date_default_timezone_set('Pacific/auckland');
 
 $dbhost = getenv('DB_HOST') ?: 'localhost';
-$dbname = getenv('DB_NAME') ?: 'resinnep_ecommerceweb';
+$dbname = getenv('DB_NAME') ?: '8848';
 $dbuser = getenv('DB_USER') ?: 'root';
 $dbpass = getenv('DB_PASS') ?: '';
 

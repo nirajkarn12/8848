@@ -177,7 +177,7 @@ if (isset($_POST['form1'])) {
                             <label class="col-sm-2 control-label">Default Commission Value</label>
                             <div class="col-sm-4">
                                 <input type="number" step="0.01" min="0" class="form-control" name="default_commission_value" value="<?php echo htmlspecialchars($_POST['default_commission_value'] ?? '35'); ?>">
-                                <p class="help-block">Use % for percentage or fixed amount in Rs.</p>
+                                <p class="help-block">Use % for percentage or fixed amount in NZ$</p>
                             </div>
                         </div>
                         <div class="form-group">

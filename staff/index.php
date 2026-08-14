@@ -68,7 +68,7 @@ include __DIR__ . '/inc/header.php';
 				<span class="info-box-icon bg-yellow"><i class="fa fa-money"></i></span>
 				<div class="info-box-content">
 					<span class="info-box-text">Pending Earnings</span>
-					<span class="info-box-number">Rs. <?php echo number_format($pendingCommission, 0); ?></span>
+					<span class="info-box-number">NZ$ <?php echo number_format($pendingCommission, 0); ?></span>
 				</div>
 			</div>
 		</div>
@@ -116,7 +116,7 @@ include __DIR__ . '/inc/header.php';
 									<td><?php echo htmlspecialchars($job['service_address']); ?></td>
 									<td><?php echo htmlspecialchars(trim(($job['preferred_date'] ?? '') . ' ' . ($job['preferred_time'] ?? ''))); ?></td>
 									<td><span class="label label-primary"><?php echo htmlspecialchars($job['job_status']); ?></span></td>
-									<td>Rs. <?php echo number_format((float)$job['commission_amount'], 2); ?></td>
+									<td>NZ$ <?php echo number_format((float)$job['commission_amount'], 2); ?></td>
 									<td>
 										<a href="job.php?id=<?php echo (int)$job['assignment_id']; ?>" class="btn btn-primary btn-xs">View</a>
 										<a href="<?php echo htmlspecialchars(mapsUrlForAddress($job['service_address'])); ?>" target="_blank" rel="noopener" class="btn btn-success btn-xs">Map</a>

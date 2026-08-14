@@ -258,7 +258,7 @@ if (isset($_POST['form1'])) {
         }
 
         $shareNote = $hasShareCol ? (' Share: ' . number_format($sharePercent, 0) . '%.') : '';
-        $success_message = 'Staff assigned successfully. Commission: Rs. ' . number_format($commissionAmount, 2)
+        $success_message = 'Staff assigned successfully. Commission: NZ$ ' . number_format($commissionAmount, 2)
             . ' via ' . formatCommissionRuleLabel($rule) . '.' . $shareNote . $emailNotice;
     }
 }
@@ -301,7 +301,7 @@ $serviceRule = getServiceCommissionRule($pdo, $productId);
                         <tr><th width="30%">Order ID</th><td><?php echo htmlspecialchars($payment['payment_id']); ?></td></tr>
                         <tr><th>Client</th><td><?php echo htmlspecialchars($payment['customer_name']); ?> | <?php echo htmlspecialchars($payment['customer_phone'] ?? ''); ?></td></tr>
                         <tr><th>Service</th><td><?php echo htmlspecialchars($serviceName); ?></td></tr>
-                        <tr><th>Booking Amount (commission base)</th><td><strong>Rs. <?php echo number_format($baseAmount, 2); ?></strong></td></tr>
+                        <tr><th>Booking Amount (commission base)</th><td><strong>NZ$ <?php echo number_format($baseAmount, 2); ?></strong></td></tr>
                         <tr>
                             <th>Service commission rule</th>
                             <td>
@@ -336,7 +336,7 @@ $serviceRule = getServiceCommissionRule($pdo, $productId);
                                 <td><?php echo htmlspecialchars($row['staff_name']); ?> (<?php echo htmlspecialchars($row['staff_phone']); ?>)</td>
                                 <td><?php echo htmlspecialchars($row['job_status']); ?></td>
                                 <td><?php echo number_format((float)($row['commission_share_percent'] ?? 100), 0); ?>%</td>
-                                <td>Rs. <?php echo number_format((float)$row['commission_amount'], 2); ?> (<?php echo htmlspecialchars($row['commission_status']); ?>)</td>
+                                <td>NZ$ <?php echo number_format((float)$row['commission_amount'], 2); ?> (<?php echo htmlspecialchars($row['commission_status']); ?>)</td>
                                 <td><?php echo htmlspecialchars($row['arrived_at'] ?? '—'); ?></td>
                             </tr>
                             <?php } ?>
@@ -395,7 +395,7 @@ $serviceRule = getServiceCommissionRule($pdo, $productId);
                                 <select name="commission_type" id="commission_type" class="form-control">
                                     <option value="inherit" <?php echo ($selectedOverrideType === 'inherit') ? 'selected' : ''; ?>>Auto (service → staff → global)</option>
                                     <option value="percent" <?php echo ($selectedOverrideType === 'percent') ? 'selected' : ''; ?>>Owner override %</option>
-                                    <option value="fixed" <?php echo ($selectedOverrideType === 'fixed') ? 'selected' : ''; ?>>Owner fixed Rs.</option>
+                                    <option value="fixed" <?php echo ($selectedOverrideType === 'fixed') ? 'selected' : ''; ?>>Owner fixed NZ$</option>
                                     <option value="custom" <?php echo ($selectedOverrideType === 'custom') ? 'selected' : ''; ?>>Owner custom amount</option>
                                 </select>
                             </div>
@@ -418,7 +418,7 @@ $serviceRule = getServiceCommissionRule($pdo, $productId);
                             <label class="col-sm-2 control-label">Preview</label>
                             <div class="col-sm-6">
                                 <p class="help-block" id="commission-preview">
-                                    Estimated commission: <strong>Rs. <?php echo number_format($previewAmount, 2); ?></strong><br>
+                                    Estimated commission: <strong>NZ$ <?php echo number_format($previewAmount, 2); ?></strong><br>
                                     <span class="text-muted"><?php echo htmlspecialchars(formatCommissionRuleLabel($previewRule)); ?></span>
                                 </p>
                             </div>
@@ -500,11 +500,11 @@ $serviceRule = getServiceCommissionRule($pdo, $productId);
         var share = shareEl ? (parseFloat(shareEl.value) || 100) : 100;
         var finalAmount = Math.round((amount * share / 100) * 100) / 100;
         var valueLabel = (rule.commission_type === 'fixed' || rule.commission_type === 'custom')
-            ? ('Rs. ' + amount.toFixed(2))
+            ? ('NZ$ ' + amount.toFixed(2))
             : ((parseFloat(rule.commission_value) || 0).toFixed(2) + '%');
         document.getElementById('commission-preview').innerHTML =
-            'Estimated commission: <strong>Rs. ' + finalAmount.toFixed(2) + '</strong>' +
-            (share < 100 ? (' <span class="text-muted">(' + share + '% of Rs. ' + amount.toFixed(2) + ')</span>') : '') +
+            'Estimated commission: <strong>NZ$ ' + finalAmount.toFixed(2) + '</strong>' +
+            (share < 100 ? (' <span class="text-muted">(' + share + '% of NZ$ ' + amount.toFixed(2) + ')</span>') : '') +
             '<br><span class="text-muted">' + valueLabel + ' (' + sourceLabel(rule.source) + ')</span>';
     }
 

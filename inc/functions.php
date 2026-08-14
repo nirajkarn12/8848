@@ -103,6 +103,23 @@ function getSiteSetting($field, $default = '') {
     return array_key_exists($fieldName, $settings) && $settings[$fieldName] !== null ? $settings[$fieldName] : $default;
 }
 
+function getAdminContactEmail() {
+    global $pdo;
+
+    try {
+        $row = $pdo->query('SELECT contact_email FROM tbl_settings LIMIT 1')->fetch(PDO::FETCH_ASSOC);
+    } catch (Throwable $e) {
+        $row = false;
+    }
+
+    $email = trim((string) ($row['contact_email'] ?? ''));
+    if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        return $email;
+    }
+
+    return trim((string) (defined('SMTP_FROM_EMAIL') ? SMTP_FROM_EMAIL : ''));
+}
+
 function refreshSiteSettingsCache() {
     getSiteSetting('__refresh__');
 }
@@ -507,7 +524,7 @@ function getDefaultSeoJsonLd() {
         'url' => $siteUrl,
         'name' => $siteName,
         'description' => $homeSeo['description'],
-        'inLanguage' => ['en', 'ne', 'hi'],
+        'inLanguage' => 'en',
         'publisher' => [
             '@id' => $siteUrl . '/#business'
         ],
@@ -1122,7 +1139,7 @@ function handleContactFormSubmission($redirectUrl = '') {
         }
     }
 
-    $to = trim((string) getSiteSetting('contact_email', SMTP_FROM_EMAIL));
+    $to = getAdminContactEmail();
     $siteName = (string) getSiteSetting('site_name', SITE_NAME);
     $body = '<p><strong>New contact message from the website</strong></p>';
     $body .= '<p><strong>Name:</strong> ' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '<br>';
@@ -1133,7 +1150,16 @@ function handleContactFormSubmission($redirectUrl = '') {
     $body .= '<strong>Subject:</strong> ' . htmlspecialchars($subject, ENT_QUOTES, 'UTF-8') . '</p>';
     $body .= '<p>' . nl2br(htmlspecialchars($message, ENT_QUOTES, 'UTF-8')) . '</p>';
 
-    sendCustomerEmail($to, $siteName, $siteName . ' - ' . $subject, $body);
+    $sent = sendCustomerEmail($to, $siteName, $siteName . ' - ' . $subject, $body);
+    if (!$sent) {
+        $msg = 'Your message could not be sent right now. Please try again later or contact us directly.';
+        setFlash('danger', $msg);
+        if ($redirectUrl !== '') {
+            header('Location: ' . $redirectUrl . '#contact');
+            exit;
+        }
+        return ['type' => 'danger', 'message' => $msg];
+    }
 
     $ok = loadLang('contact_form_success');
     setFlash('success', $ok);
@@ -1147,6 +1173,7 @@ function handleContactFormSubmission($redirectUrl = '') {
 function sendCustomerEmail($toEmail, $toName, $subject, $htmlBody) {
     $toEmail = trim((string) $toEmail);
     if ($toEmail === '' || !filter_var($toEmail, FILTER_VALIDATE_EMAIL)) {
+        error_log('Contact email failed: invalid recipient email - ' . $toEmail);
         return false;
     }
 
@@ -1180,6 +1207,7 @@ function sendCustomerEmail($toEmail, $toName, $subject, $htmlBody) {
         $mail->send();
         return true;
     } catch (Throwable $e) {
+        error_log('Contact email failed: ' . $e->getMessage());
         return false;
     }
 }
