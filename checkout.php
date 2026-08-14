@@ -218,6 +218,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         unset($_SESSION['cart'], $_SESSION['booking_pref']);
         setFlash('success', loadLang('booking_submitted'));
 
+        notifyAdminBooking($paymentId, $customerName, $email, $phone, $lineItems, $grandTotal, $serviceAddress, $preferredDate, $preferredTime, $remarks, $notes);
+
         if (isLoggedIn()) {
             header('Location: account/order-history.php');
         } else {

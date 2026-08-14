@@ -22,6 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['newsletter_email']))
             $now = date('Y-m-d');
             $stmt = $pdo->prepare('INSERT INTO tbl_subscriber (subs_email, subs_date, subs_date_time, subs_hash, subs_active) VALUES (?, ?, ?, ?, 1)');
             $stmt->execute([$email, $now, date('Y-m-d H:i:s'), bin2hex(random_bytes(8))]);
+            notifyAdminNewsletter($email);
         }
         $newsletterMessage = t('newsletter_success');
         $newsletterType = 'success';

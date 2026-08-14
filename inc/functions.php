@@ -141,6 +141,12 @@ function ensureAuthIntegrations() {
             $altered = true;
         }
 
+        $tokenTimeCol = $pdo->query("SHOW COLUMNS FROM `tbl_customer` LIKE 'cust_token_time'");
+        if ($tokenTimeCol && $tokenTimeCol->rowCount() === 0) {
+            $pdo->exec("ALTER TABLE `tbl_customer` ADD COLUMN `cust_token_time` bigint NOT NULL DEFAULT 0 AFTER `cust_token`");
+            $altered = true;
+        }
+
         $settingCols = [
             'google_client_id' => "varchar(255) NOT NULL DEFAULT ''",
             'google_client_secret' => "varchar(255) NOT NULL DEFAULT ''",
@@ -466,11 +472,11 @@ function getHomeSeo() {
     return [
         'title' => seoPick(
             getSiteSetting('meta_title_home', ''),
-            $siteName . ' | Home & Office Cleaning in Auckland, New Zealand'
+            'Professional Cleaning Services in Auckland | 8848 Cleaning Service'
         ),
         'keywords' => seoPick(
             getSiteSetting('meta_keyword_home', ''),
-            '8848 Cleaning Service, 8848 Cleaning Service New Zealand, cleaning service Auckland, home cleaning Auckland, office cleaning Auckland, deep cleaning Auckland, professional cleaning Auckland, commercial cleaning Auckland'
+            'cleaning service Auckland, professional cleaning Auckland, home cleaning Auckland, office cleaning Auckland, commercial cleaning Auckland, deep cleaning Auckland, carpet cleaning Auckland, end of lease cleaning Auckland, move out cleaning Auckland, spring cleaning Auckland, house cleaning Auckland, business cleaning Auckland, building cleaning Auckland, professional cleaner Auckland, cleaning company Auckland, trusted cleaning service, affordable cleaning Auckland, insured cleaning, experienced cleaners Auckland'
         ),
         'description' => seoPick(
             getSiteSetting('meta_description_home', ''),
@@ -635,17 +641,27 @@ function getStaticPageSeo($prefix) {
     $prefix = preg_replace('/[^a-z_]/', '', strtolower((string) $prefix));
     $home = getHomeSeo();
     $defaultTitles = [
-        'about' => loadLang('about'),
-        'contact' => loadLang('contact'),
-        'faq' => loadLang('faqs'),
+        'about' => 'About 8848 Cleaning Service | Professional Cleaners Auckland',
+        'contact' => 'Contact Professional Cleaning Service in Auckland | 8848',
+        'faq' => 'FAQ | Professional Cleaning Services in Auckland - 8848',
+    ];
+    $defaultKeywords = [
+        'about' => 'professional cleaning service Auckland, trusted cleaner, experienced cleaning company, cleaning services New Zealand, about 8848, cleaning team, professional cleaners',
+        'contact' => 'contact cleaning service, book cleaning Auckland, professional cleaner contact, cleaning company, call professional cleaner, cleaning quote',
+        'faq' => 'cleaning service FAQ, how cleaning works, cleaning questions, professional cleaning help, booking cleaning, cleaning process',
+    ];
+    $defaultDescriptions = [
+        'about' => 'Learn about 8848 Cleaning Service - trusted professional cleaners in Auckland providing home and office cleaning with police-checked, insured staff.',
+        'contact' => 'Contact 8848 Cleaning Service in Auckland. Book your professional home or office cleaning. Get a free quote. Phone, email, online form available.',
+        'faq' => 'Frequently asked questions about our professional cleaning services in Auckland. Learn about our process, pricing, and how to book.',
     ];
 
     return [
         'title' => seoPick($pageRow[$prefix . '_meta_title'] ?? '', $defaultTitles[$prefix] ?? $home['title']),
-        'keywords' => seoPick($pageRow[$prefix . '_meta_keyword'] ?? '', $home['keywords']),
+        'keywords' => seoPick($pageRow[$prefix . '_meta_keyword'] ?? '', $defaultKeywords[$prefix] ?? $home['keywords']),
         'description' => seoPick(
             $pageRow[$prefix . '_meta_description'] ?? '',
-            seoPick($pageRow[$prefix . '_content'] ?? '', $home['description'], 160),
+            seoPick($pageRow[$prefix . '_content'] ?? '', $defaultDescriptions[$prefix] ?? $home['description'], 160),
             160
         ),
     ];
@@ -1177,9 +1193,15 @@ function sendCustomerEmail($toEmail, $toName, $subject, $htmlBody) {
         return false;
     }
 
+    // Get admin email from settings, fall back to SMTP_FROM_EMAIL if not set
+    $adminEmail = getSiteSetting('contact_email', SMTP_FROM_EMAIL);
+    if ($adminEmail === '' || !filter_var($adminEmail, FILTER_VALIDATE_EMAIL)) {
+        $adminEmail = SMTP_FROM_EMAIL;
+    }
+
     $phpMailerPath = __DIR__ . '/../PHPMailer/src/PHPMailer.php';
     if (!is_file($phpMailerPath)) {
-        $headers = "MIME-Version: 1.0\r\nContent-type: text/html; charset=UTF-8\r\nFrom: " . SMTP_FROM_NAME . " <" . SMTP_FROM_EMAIL . ">\r\n";
+        $headers = "MIME-Version: 1.0\r\nContent-type: text/html; charset=UTF-8\r\nFrom: " . SMTP_FROM_NAME . " <" . $adminEmail . ">\r\n";
         return @mail($toEmail, $subject, $htmlBody, $headers);
     }
 
@@ -1197,7 +1219,7 @@ function sendCustomerEmail($toEmail, $toName, $subject, $htmlBody) {
         $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
         $mail->Port = SMTP_PORT;
         $mail->CharSet = 'UTF-8';
-        $mail->setFrom(SMTP_FROM_EMAIL, SMTP_FROM_NAME);
+        $mail->setFrom($adminEmail, SMTP_FROM_NAME);
         $mail->addReplyTo(SMTP_REPLYTO_EMAIL, SMTP_REPLYTO_NAME);
         $mail->addAddress($toEmail, $toName ?: $toEmail);
         $mail->isHTML(true);
@@ -1210,6 +1232,63 @@ function sendCustomerEmail($toEmail, $toName, $subject, $htmlBody) {
         error_log('Contact email failed: ' . $e->getMessage());
         return false;
     }
+}
+
+function sendAdminEmail($subject, $htmlBody) {
+    $adminEmail = getAdminContactEmail();
+    if ($adminEmail === '' || !filter_var($adminEmail, FILTER_VALIDATE_EMAIL)) {
+        error_log('Admin email failed: invalid admin email - ' . $adminEmail);
+        return false;
+    }
+    $siteName = (string) getSiteSetting('site_name', SITE_NAME);
+    return sendCustomerEmail($adminEmail, $siteName, $subject, $htmlBody);
+}
+
+function notifyAdminNewsletter($subscriberEmail) {
+    $subscriberEmail = trim((string) $subscriberEmail);
+    if (!filter_var($subscriberEmail, FILTER_VALIDATE_EMAIL)) {
+        return false;
+    }
+    $siteName = (string) getSiteSetting('site_name', SITE_NAME);
+    $htmlBody = '<h3>New Newsletter Subscriber</h3>';
+    $htmlBody .= '<p><strong>Email:</strong> ' . htmlspecialchars($subscriberEmail) . '</p>';
+    $htmlBody .= '<p><strong>Date:</strong> ' . date('Y-m-d H:i:s') . '</p>';
+    $htmlBody .= '<p>A new user has subscribed to your newsletter.</p>';
+    return sendAdminEmail('New Newsletter Subscriber - ' . $siteName, $htmlBody);
+}
+
+function notifyAdminBooking($paymentId, $customerName, $customerEmail, $customerPhone, $lineItems, $grandTotal, $serviceAddress, $preferredDate, $preferredTime, $remarks = '', $notes = '') {
+    $siteName = (string) getSiteSetting('site_name', SITE_NAME);
+    $lineItemsHtml = '<table style="width:100%; border-collapse:collapse; margin-bottom:20px;">';
+    $lineItemsHtml .= '<tr style="background:#f0f0f0; border-bottom:1px solid #ddd;"><th style="padding:10px; text-align:left;">Service</th><th style="padding:10px; text-align:right;">Price</th></tr>';
+    foreach ($lineItems as $item) {
+        $lineItemsHtml .= '<tr style="border-bottom:1px solid #ddd;"><td style="padding:10px;">' . htmlspecialchars($item['product_name'] ?? '') . '</td><td style="padding:10px; text-align:right;">NZ$' . number_format($item['line_total'] ?? 0, 2) . '</td></tr>';
+    }
+    $lineItemsHtml .= '<tr style="background:#f0f0f0; font-weight:bold;"><td style="padding:10px;">Total</td><td style="padding:10px; text-align:right;">NZ$' . number_format($grandTotal, 2) . '</td></tr>';
+    $lineItemsHtml .= '</table>';
+    
+    $htmlBody = '<h3>New Booking Request</h3>';
+    $htmlBody .= '<p><strong>Booking ID:</strong> ' . htmlspecialchars($paymentId) . '</p>';
+    $htmlBody .= '<h4>Customer Details</h4>';
+    $htmlBody .= '<p><strong>Name:</strong> ' . htmlspecialchars($customerName) . '</p>';
+    $htmlBody .= '<p><strong>Email:</strong> ' . htmlspecialchars($customerEmail) . '</p>';
+    $htmlBody .= '<p><strong>Phone:</strong> ' . htmlspecialchars($customerPhone) . '</p>';
+    $htmlBody .= '<h4>Service Details</h4>';
+    $htmlBody .= '<p><strong>Address:</strong> ' . htmlspecialchars($serviceAddress) . '</p>';
+    if ($preferredDate !== '' && $preferredDate !== null) {
+        $htmlBody .= '<p><strong>Preferred Date:</strong> ' . htmlspecialchars($preferredDate) . '</p>';
+    }
+    if ($preferredTime !== '' && $preferredTime !== null) {
+        $htmlBody .= '<p><strong>Preferred Time:</strong> ' . htmlspecialchars($preferredTime) . '</p>';
+    }
+    $htmlBody .= '<h4>Services Requested</h4>';
+    $htmlBody .= $lineItemsHtml;
+    if ($remarks !== '' || $notes !== '') {
+        $htmlBody .= '<h4>Additional Notes</h4>';
+        $htmlBody .= '<p>' . nl2br(htmlspecialchars($remarks . ' ' . $notes)) . '</p>';
+    }
+    $htmlBody .= '<p><a href="' . BASE_URL . 'admin/order-show.php?id=' . htmlspecialchars($paymentId) . '">View Full Booking in Admin Panel</a></p>';
+    return sendAdminEmail('New Booking Request - ' . $siteName, $htmlBody);
 }
 
 function buildProductUrl($productId) {

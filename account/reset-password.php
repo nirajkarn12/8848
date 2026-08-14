@@ -11,13 +11,25 @@ $token = trim($_GET['token'] ?? $_POST['token'] ?? '');
 $email = trim($_GET['email'] ?? $_POST['email'] ?? '');
 
 $customer = null;
+$tokenExpired = false;
 if ($token !== '' && $email !== '') {
-    $stmt = $pdo->prepare('SELECT cust_id, cust_email, cust_token, cust_status FROM tbl_customer WHERE cust_email = ? AND cust_token = ? LIMIT 1');
+    $stmt = $pdo->prepare('SELECT cust_id, cust_email, cust_token, cust_status, cust_token_time FROM tbl_customer WHERE cust_email = ? AND cust_token = ? LIMIT 1');
     $stmt->execute([$email, $token]);
     $customer = $stmt->fetch();
+    
+    if ($customer) {
+        $tokenTime = (int) ($customer['cust_token_time'] ?? 0);
+        $now = time();
+        $expirationHours = 24;
+        $expirationSeconds = $expirationHours * 3600;
+        
+        if ($tokenTime > 0 && ($now - $tokenTime) > $expirationSeconds) {
+            $tokenExpired = true;
+        }
+    }
 }
 
-if (!$customer || (string) ($customer['cust_status'] ?? '1') !== '1' || empty($customer['cust_token'])) {
+if (!$customer || (string) ($customer['cust_status'] ?? '1') !== '1' || empty($customer['cust_token']) || $tokenExpired) {
     setFlash('danger', loadLang('reset_link_invalid'));
     header('Location: ' . BASE_URL . 'account/forgot-password.php');
     exit;
@@ -51,8 +63,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    $pdo->prepare('UPDATE tbl_customer SET cust_password = ?, cust_token = ? WHERE cust_id = ?')
-        ->execute([hashCustomerPassword($password), '', $customer['cust_id']]);
+    $pdo->prepare('UPDATE tbl_customer SET cust_password = ?, cust_token = ?, cust_token_time = ? WHERE cust_id = ?')
+        ->execute([hashCustomerPassword($password), '', 0, $customer['cust_id']]);
 
     setFlash('success', loadLang('password_reset_success'));
     header('Location: ' . BASE_URL . 'account/login.php');

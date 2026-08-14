@@ -30,7 +30,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($customer && (string) ($customer['cust_status'] ?? '1') === '1') {
         $token = bin2hex(random_bytes(32));
-        $pdo->prepare('UPDATE tbl_customer SET cust_token = ? WHERE cust_id = ?')->execute([$token, $customer['cust_id']]);
+        $tokenTime = time();
+        $pdo->prepare('UPDATE tbl_customer SET cust_token = ?, cust_token_time = ? WHERE cust_id = ?')->execute([$token, $tokenTime, $customer['cust_id']]);
 
         $resetUrl = BASE_URL . 'account/reset-password.php?token=' . urlencode($token) . '&email=' . urlencode($customer['cust_email']);
         $customMessage = trim((string) getSiteSetting('forget_password_message', ''));

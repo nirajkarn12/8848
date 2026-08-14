@@ -67,7 +67,7 @@ return [
     'look_at_us_p1' => 'We started as a small local team helping busy homes in auckland stay fresh after long work weeks.',
     'look_at_us_p2' => 'These days, 8848 Cleaning Service handles homes, offices, and deep cleans — booked online, done on time, and finished to a high standard.',
     'look_at_us_p3' => 'From regular housekeeping to move-in resets and commercial spaces, we bring trained staff, reliable schedules, and a spotless finish.',
-    'look_at_us_p4' => 'Check out our numbeNZ$ They’re tidy.',
+    'look_at_us_p4' => 'Check out our numbers - they\'re looking tidy.',
     'explore_services' => 'Explore services',
     'stat_homes_label' => 'Homes cleaned every month',
     'stat_accounts_label' => 'Offices & commercial jobs',

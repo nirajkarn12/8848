@@ -348,8 +348,8 @@ $ogLocale = $ogLocaleMap[$currentHtmlLang] ?? 'en_US';
 <div class="topbar">
     <div class="container topbar-inner small">
         <div class="topbar-contact">
-            <span class="topbar-contact-item"><i class="fa fa-phone"></i><?php echo e(getSiteSetting('contact_phone', '+977 9869224134')); ?></span>
-            <span class="topbar-contact-item"><i class="fa fa-envelope"></i><?php echo e(getSiteSetting('contact_email', 'contact@sastikatrading.com.np')); ?></span>
+            <span class="topbar-contact-item"><i class="fa fa-phone"></i><?php echo e(getSiteSetting('contact_phone', '+64 9 000 0000')); ?></span>
+            <span class="topbar-contact-item"><i class="fa fa-envelope"></i><?php echo e(getSiteSetting('contact_email', 'info@8848cleaningservice.com')); ?></span>
         </div>
         <div class="topbar-social social-links">
             <?php foreach (getSocialLinks() as $social) { ?>

@@ -20,7 +20,7 @@ define('SITE_NAME', '8848 Cleaning Service');
 if (!defined('SMTP_HOST')) {
     define('SMTP_HOST', getenv('SMTP_HOST') ?: 'smtp.gmail.com');
     define('SMTP_USER', getenv('SMTP_USER') ?: 'nirajkarna66@gmail.com');
-    define('SMTP_PASS', getenv('SMTP_PASS') ?: 'eptg ikjc lbbd yosq');
+    define('SMTP_PASS', getenv('SMTP_PASS') ?: 'sqrm hkcj ptfx rrnd');
     define('SMTP_PORT', (int)(getenv('SMTP_PORT') ?: 465));
     define('SMTP_FROM_EMAIL', getenv('SMTP_FROM_EMAIL') ?: 'nirajkarna66@gmail.com');
     define('SMTP_FROM_NAME', getenv('SMTP_FROM_NAME') ?: '8848 Cleaning Service');
