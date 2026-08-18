@@ -27,7 +27,7 @@ if ($postId) {
     $metaKeywords = seoPick($post['meta_keyword'] ?? '', 'blog, cleaning tips, ' . $siteName);
     $ogImage = $post['photo'] ?? '';
     $ogImageAlt = $post['post_title'];
-    $canonicalUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+   $canonicalUrl = rtrim(BASE_URL, '/') . '/blog.php?id=' . (int)$postId;
     $ogType = 'article';
     $published = DateTime::createFromFormat('d-m-Y', trim($post['post_date']));
     if ($published !== false) {
@@ -44,7 +44,7 @@ $breadcrumbs = [
 echo renderBreadcrumbs($breadcrumbs);
 
 if ($postId) {
-    $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+   $currentUrl = rtrim(BASE_URL, '/') . '/blog.php?id=' . (int)$postId;
     $shareUrl = urlencode($currentUrl);
     $shareTitle = urlencode($post['post_title']);
     $facebookShare = "https://www.facebook.com/sharer/sharer.php?u={$shareUrl}";

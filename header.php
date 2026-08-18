@@ -16,7 +16,7 @@ require_once __DIR__ . '/breadcrumbs.php';
     $pageDescription = e($metaDescription ?? $defaultDescription);
     $pageKeywords = e($metaKeywords ?? $defaultKeywords);
     $pageAuthor = e($metaAuthor ?? $defaultAuthor);
-    $canonicalUrl = e($canonicalUrl ?? ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']));
+    $canonicalUrl = 'https://8848cleaningservice.com' . $_SERVER['REQUEST_URI'];
     $robotsContent = e($robots ?? 'index,follow');
     $ogType = e($ogType ?? 'website');
     $ogImageValue = $ogImage ?? getSiteSetting('og_image', 'assets/images/og-default.png');
