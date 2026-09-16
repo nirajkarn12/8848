@@ -313,7 +313,7 @@ $defaultLng = $pref['service_lng'] ?? '';
         <div class="col-md-6"><label class="form-label"><?php echo t('company_optional'); ?></label><input class="form-control" name="company"></div>
         <div class="col-md-6"><label class="form-label"><?php echo t('phone'); ?></label><input class="form-control" name="phone" value="<?php echo e($defaultPhone); ?>" required></div>
         <div class="col-md-6"><label class="form-label"><?php echo t('email_address'); ?></label><input class="form-control" type="email" name="email" value="<?php echo e($defaultEmail); ?>" required></div>
-        <div class="col-md-6"><label class="form-label">Referral code <span class="text-muted">(optional)</span></label><input class="form-control text-uppercase" name="referral_code" value="<?php echo e($_POST['referral_code'] ?? ($_GET['referral'] ?? '')); ?>" placeholder="8848-XXXXXXXX"></div>
+        <div class="col-md-6"><label class="form-label"><?php echo t('referral_code'); ?> <span class="text-muted">(optional)</span></label><input class="form-control text-uppercase" name="referral_code" value="<?php echo e($_POST['referral_code'] ?? ($_GET['referral'] ?? '')); ?>" placeholder="8848-XXXXXXXX"></div>
         <div class="col-md-4"><label class="form-label"><?php echo t('province'); ?></label><input class="form-control" name="province"></div>
         <div class="col-md-4"><label class="form-label"><?php echo t('district'); ?></label><input class="form-control" name="district"></div>
         <div class="col-md-4"><label class="form-label"><?php echo t('municipality'); ?></label><input class="form-control" name="municipality"></div>
@@ -363,7 +363,7 @@ $defaultLng = $pref['service_lng'] ?? '';
         <span>NZ$ <?php echo number_format($summaryTotal, 2); ?></span>
       </div>
             <?php if (!empty($_POST['referral_code']) || !empty($_GET['referral'])): ?>
-                <div class="small text-muted mt-2">Referral discount is checked when you submit the booking.</div>
+                <div class="small text-muted mt-2"><?php echo t('referral_discount_pending'); ?></div>
             <?php endif; ?>
     </div>
   </div>

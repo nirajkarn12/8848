@@ -1,0 +1,1 @@
+ALTER TABLE tbl_customer ADD COLUMN IF NOT EXISTS cust_photo VARCHAR(255) NOT NULL DEFAULT '' AFTER cust_email;

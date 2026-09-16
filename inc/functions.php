@@ -1023,6 +1023,34 @@ function currentCustomer() {
     return $stmt->fetch();
 }
 
+function ensureCustomerProfileColumns() {
+    global $pdo;
+    static $ready = null;
+    if ($ready !== null) {
+        return $ready;
+    }
+
+    try {
+        $photoColumn = $pdo->query("SHOW COLUMNS FROM `tbl_customer` LIKE 'cust_photo'");
+        if ($photoColumn && $photoColumn->rowCount() === 0) {
+            $pdo->exec("ALTER TABLE `tbl_customer` ADD COLUMN `cust_photo` varchar(255) NOT NULL DEFAULT '' AFTER `cust_email`");
+        }
+        $ready = true;
+    } catch (Throwable $e) {
+        $ready = false;
+    }
+
+    return $ready;
+}
+
+function customerProfileImageUrl($filename = '') {
+    $filename = basename(trim((string) $filename));
+    if ($filename !== '' && is_file(__DIR__ . '/../assets/uploads/' . $filename)) {
+        return UPLOAD_URL . rawurlencode($filename);
+    }
+    return ASSET_URL . 'images/og-default.png';
+}
+
 function ensureReferralTables() {
     global $pdo;
     static $ready = null;
