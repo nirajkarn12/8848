@@ -46,6 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $preferredTime = trim($_POST['preferred_time'] ?? '');
     $remarks = trim($_POST['remarks'] ?? '');
     $accessNotes = trim($_POST['access_notes'] ?? '');
+    $referralCode = strtoupper(trim($_POST['referral_code'] ?? ''));
 
     if ($customerName === '' || $phone === '' || $email === '' || $serviceAddress === '') {
         setFlash('danger', loadLang('booking_fields_required'));
@@ -129,11 +130,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ];
     }
     $grandTotal = $subtotal;
+    $discountType = 'percent';
+    $discountValue = 0.0;
+    $discountAmount = 0.0;
     $dueAmount = $grandTotal;
 
     try {
         ensureServiceLocationColumns($pdo);
+        ensureReferralTables();
         $pdo->beginTransaction();
+
+        $referral = null;
+        if ($referralCode !== '') {
+            $referralStmt = $pdo->prepare("SELECT * FROM tbl_referral WHERE referral_code = ? AND status = 'Pending' LIMIT 1 FOR UPDATE");
+            $referralStmt->execute([$referralCode]);
+            $referral = $referralStmt->fetch(PDO::FETCH_ASSOC);
+            $matchesReferee = $referral && strcasecmp(trim((string) $referral['referee_email']), $email) === 0;
+            if ($referral && !$matchesReferee) {
+                $matchesReferee = preg_replace('/\D+/', '', (string) $referral['referee_phone']) === preg_replace('/\D+/', '', $phone);
+            }
+            if (!$referral || !$matchesReferee) {
+                throw new RuntimeException('invalid_referral_code');
+            }
+
+            $referralSettings = getReferralSettings();
+            if (!$referralSettings || (int) $referralSettings['is_active'] !== 1) {
+                throw new RuntimeException('invalid_referral_code');
+            }
+            $discountType = $referral['discount_type'];
+            $discountValue = (float) $referral['discount_value'];
+            $discountAmount = referralDiscountAmount($subtotal, [
+                'discount_type' => $discountType,
+                'discount_value' => $discountValue,
+                'minimum_order_amount' => $referralSettings['minimum_order_amount'],
+            ]);
+            if ($discountAmount <= 0) {
+                throw new RuntimeException('referral_minimum_not_met');
+            }
+            $grandTotal = round($subtotal - $discountAmount, 2);
+            $dueAmount = $grandTotal;
+            $notesParts[] = 'Referral code: ' . $referralCode;
+        }
 
         $stmt = $pdo->prepare('INSERT INTO tbl_payment (customer_id, customer_name, customer_email, payment_date, txnid, paid_amount, card_number, card_cvv, card_month, card_year, bank_transaction_info, payment_method, payment_status, shipping_status, payment_id, subtotal, discount_type, discount_value, discount_amount, vat_percent, vat_amount, grand_total, due_amount, notes, created_at, updated_at, customer_phone) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
         $stmt->execute([
@@ -153,9 +190,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'Pending',
             $paymentId,
             $subtotal,
-            'percent',
-            0,
-            0,
+            $discountType,
+            $discountValue,
+            $discountAmount,
             0,
             0,
             $grandTotal,
@@ -214,6 +251,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
         }
 
+        if ($referral) {
+            $pdo->prepare("UPDATE tbl_referral SET status = 'Converted', discount_amount = ?, referee_customer_id = ?, payment_id = ?, converted_at = NOW() WHERE id = ? AND status = 'Pending'")
+                ->execute([$discountAmount, $customerId ?: null, $paymentIdDb, $referral['id']]);
+        }
+
         $pdo->commit();
         unset($_SESSION['cart'], $_SESSION['booking_pref']);
         setFlash('success', loadLang('booking_submitted'));
@@ -230,7 +272,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
         }
-        setFlash('danger', loadLang('booking_save_failed'));
+        if ($e instanceof RuntimeException && in_array($e->getMessage(), ['invalid_referral_code', 'referral_minimum_not_met'], true)) {
+            setFlash('danger', $e->getMessage() === 'referral_minimum_not_met' ? 'This referral code requires a higher booking total.' : 'That referral code is invalid, already used, or does not match this customer.');
+        } else {
+            setFlash('danger', loadLang('booking_save_failed'));
+        }
         header('Location: checkout.php');
         exit;
     }
@@ -267,6 +313,7 @@ $defaultLng = $pref['service_lng'] ?? '';
         <div class="col-md-6"><label class="form-label"><?php echo t('company_optional'); ?></label><input class="form-control" name="company"></div>
         <div class="col-md-6"><label class="form-label"><?php echo t('phone'); ?></label><input class="form-control" name="phone" value="<?php echo e($defaultPhone); ?>" required></div>
         <div class="col-md-6"><label class="form-label"><?php echo t('email_address'); ?></label><input class="form-control" type="email" name="email" value="<?php echo e($defaultEmail); ?>" required></div>
+        <div class="col-md-6"><label class="form-label">Referral code <span class="text-muted">(optional)</span></label><input class="form-control text-uppercase" name="referral_code" value="<?php echo e($_POST['referral_code'] ?? ($_GET['referral'] ?? '')); ?>" placeholder="8848-XXXXXXXX"></div>
         <div class="col-md-4"><label class="form-label"><?php echo t('province'); ?></label><input class="form-control" name="province"></div>
         <div class="col-md-4"><label class="form-label"><?php echo t('district'); ?></label><input class="form-control" name="district"></div>
         <div class="col-md-4"><label class="form-label"><?php echo t('municipality'); ?></label><input class="form-control" name="municipality"></div>
@@ -315,6 +362,9 @@ $defaultLng = $pref['service_lng'] ?? '';
         <span><?php echo t('total'); ?></span>
         <span>NZ$ <?php echo number_format($summaryTotal, 2); ?></span>
       </div>
+            <?php if (!empty($_POST['referral_code']) || !empty($_GET['referral'])): ?>
+                <div class="small text-muted mt-2">Referral discount is checked when you submit the booking.</div>
+            <?php endif; ?>
     </div>
   </div>
 </div>

@@ -135,9 +135,11 @@ $qrPayload = rawurlencode('Invoice ' . $order['payment_id'] . ' | ' . $company['
                             </div>
                         </div>
                         <div class="totals-box">
+                            <?php $referralCodeUsed = ''; if (preg_match('/Referral code:\s*([^\s]+)/i', (string)($order['notes'] ?? ''), $referralMatch)) { $referralCodeUsed = $referralMatch[1]; } ?>
                             <table class="table table-bordered totals-table">
                                 <tr><th>Subtotal</th><td>NZ$ <?php echo number_format((float)($order['subtotal'] ?? 0), 2); ?></td></tr>
-                                <tr><th>Discount</th><td>NZ$ <?php echo number_format((float)($order['discount_amount'] ?? 0), 2); ?></td></tr>
+                                <tr><th><?php echo $referralCodeUsed !== '' ? 'Referral discount' : 'Discount'; ?></th><td>NZ$ <?php echo number_format((float)($order['discount_amount'] ?? 0), 2); ?></td></tr>
+                                <?php if ($referralCodeUsed !== ''): ?><tr><th>Referral code</th><td><?php echo htmlspecialchars($referralCodeUsed, ENT_QUOTES, 'UTF-8'); ?></td></tr><?php endif; ?>
                                 <tr><th>VAT</th><td>NZ$ <?php echo number_format((float)($order['vat_amount'] ?? 0), 2); ?></td></tr>
                                 <tr class="grand-total"><th>Grand Total</th><td>NZ$ <?php echo number_format((float)($order['grand_total'] ?? 0), 2); ?></td></tr>
                                 <tr><th>Paid</th><td>NZ$ <?php echo number_format((float)($order['paid_amount'] ?? 0), 2); ?></td></tr>

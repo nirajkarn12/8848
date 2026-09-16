@@ -155,8 +155,10 @@ echo renderBreadcrumbs($breadcrumbs);
           <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=<?php echo $qrPayload; ?>" alt="QR" class="qr-code">
         </div>
         <div class="totals-box">
+          <?php $referralCodeUsed = ''; if (preg_match('/Referral code:\s*([^\s]+)/i', (string)($payment['notes'] ?? ''), $referralMatch)) { $referralCodeUsed = $referralMatch[1]; } ?>
           <div class="d-flex justify-content-between mb-2"><span><?php echo t('subtotal'); ?></span><strong>NZ$ <?php echo number_format((float)($payment['subtotal'] ?? 0), 2); ?></strong></div>
-          <div class="d-flex justify-content-between mb-2"><span><?php echo t('discount'); ?></span><strong>NZ$ <?php echo number_format((float)($payment['discount_amount'] ?? 0), 2); ?></strong></div>
+          <div class="d-flex justify-content-between mb-2"><span><?php echo $referralCodeUsed !== '' ? 'Referral discount' : t('discount'); ?></span><strong>NZ$ <?php echo number_format((float)($payment['discount_amount'] ?? 0), 2); ?></strong></div>
+          <?php if ($referralCodeUsed !== ''): ?><div class="small text-muted mb-2">Referral code: <?php echo e($referralCodeUsed); ?></div><?php endif; ?>
           <div class="d-flex justify-content-between mb-2"><span><?php echo t('vat'); ?></span><strong>NZ$ <?php echo number_format((float)($payment['vat_amount'] ?? 0), 2); ?></strong></div>
           <div class="d-flex justify-content-between mb-2"><span><?php echo t('paid'); ?></span><strong>NZ$ <?php echo number_format((float)($payment['paid_amount'] ?? 0), 2); ?></strong></div>
           <div class="d-flex justify-content-between border-top pt-2"><span class="fw-semibold"><?php echo t('grand_total'); ?></span><strong>NZ$ <?php echo number_format((float)($payment['grand_total'] ?? 0), 2); ?></strong></div>

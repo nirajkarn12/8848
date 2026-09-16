@@ -397,6 +397,7 @@ $ogLocale = $ogLocaleMap[$currentHtmlLang] ?? 'en_US';
                 <li class="nav-item"><a class="nav-link" href="<?php echo BASE_URL; ?>about.php"><?php echo t('about'); ?></a></li>
                 <li class="nav-item"><a class="nav-link" href="<?php echo BASE_URL; ?>gallery.php"><?php echo t('gallery'); ?></a></li>
                 <li class="nav-item"><a class="nav-link" href="<?php echo BASE_URL; ?>blog.php"><?php echo t('blog'); ?></a></li>
+                <li class="nav-item"><a class="nav-link" href="<?php echo BASE_URL; ?>referral-offer.php">Refer &amp; save</a></li>
                 <li class="nav-item"><a class="nav-link" href="<?php echo BASE_URL; ?>contact.php"><?php echo t('contact'); ?></a></li>
             </ul>
             <div class="header-controls d-flex align-items-center gap-2 flex-nowrap ms-auto">

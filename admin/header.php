@@ -194,6 +194,15 @@ if(!isset($_SESSION['user'])) {
     </li>
 
 
+    <!-- REFERRALS -->
+    <li class="<?php if($cur_page == 'referral.php' || $cur_page == 'referral-edit.php' || $cur_page == 'referral-delete.php') { echo 'active'; } ?>">
+        <a href="referral.php">
+            <i class="fa fa-share-alt"></i>
+            <span>Referral Offer</span>
+        </a>
+    </li>
+
+
     <!-- SERVICES -->
     <li class="treeview <?php
         if(
