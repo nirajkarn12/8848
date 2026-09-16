@@ -26,12 +26,27 @@ CREATE TABLE IF NOT EXISTS tbl_referral (
     discount_type ENUM('percent','amount') NOT NULL DEFAULT 'percent',
     discount_value DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     discount_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    awarded_points INT UNSIGNED NOT NULL DEFAULT 0,
     referee_customer_id INT UNSIGNED NULL,
     payment_id INT UNSIGNED NULL,
     created_at DATETIME NOT NULL,
     converted_at DATETIME NULL,
     PRIMARY KEY (id),
-    UNIQUE KEY uq_referral_code (referral_code),
     KEY idx_referral_referrer (referrer_customer_id),
     KEY idx_referral_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+ALTER TABLE tbl_referral DROP INDEX IF EXISTS uq_referral_code;
+
+ALTER TABLE tbl_referral_settings ADD COLUMN IF NOT EXISTS bonus_points INT UNSIGNED NOT NULL DEFAULT 100 AFTER discount_value;
+CREATE TABLE IF NOT EXISTS tbl_referral_points (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    customer_id INT UNSIGNED NOT NULL,
+    referral_id INT UNSIGNED NOT NULL,
+    points INT UNSIGNED NOT NULL DEFAULT 0,
+    reason VARCHAR(255) NOT NULL DEFAULT 'Successful referral',
+    created_at DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_referral_points_referral (referral_id),
+    KEY idx_referral_points_customer (customer_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

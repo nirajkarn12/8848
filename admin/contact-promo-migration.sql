@@ -1,0 +1,1 @@
+ALTER TABLE tbl_contact_inquiry ADD COLUMN IF NOT EXISTS promo_code VARCHAR(100) NOT NULL DEFAULT '' AFTER message;

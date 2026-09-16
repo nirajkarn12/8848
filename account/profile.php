@@ -113,6 +113,7 @@ ensureReferralTables();
 $referralsStmt = $pdo->prepare('SELECT referral_code, referee_name, referee_email, status, created_at FROM tbl_referral WHERE referrer_customer_id = ? ORDER BY id DESC LIMIT 8');
 $referralsStmt->execute([$customerId]);
 $referrals = $referralsStmt->fetchAll();
+$earnedReferralPoints = getReferralPoints($customerId);
 include __DIR__ . '/../inc/header.php';
 $breadcrumbs = [
     ['label' => t('home'), 'url' => BASE_URL],
@@ -270,19 +271,21 @@ echo renderBreadcrumbs($breadcrumbs);
         </div>
         <a href="<?php echo BASE_URL; ?>referral-offer.php" class="btn btn-outline-primary btn-sm"><i class="fa fa-plus me-1"></i>New referral</a>
       </div>
+      <div class="alert alert-primary border-0 rounded-4 d-flex justify-content-between align-items-center"><span><strong><?php echo t('bonus_points'); ?></strong><br><small><?php echo t('bonus_points_after_conversion'); ?></small></span><strong class="fs-4"><?php echo number_format($earnedReferralPoints); ?></strong></div>
       <div class="table-responsive">
         <table class="table align-middle mb-0">
-          <thead><tr><th>Referred person</th><th>Code</th><th>Status</th><th>Date</th></tr></thead>
+          <thead><tr><th>Referred person</th><th>Code</th><th>Status</th><th>Points</th><th>Date</th></tr></thead>
           <tbody>
           <?php foreach ($referrals as $referral): ?>
             <tr>
               <td><?php echo e($referral['referee_name']); ?><div class="small text-muted"><?php echo e($referral['referee_email']); ?></div></td>
               <td><code><?php echo e($referral['referral_code']); ?></code></td>
               <td><span class="badge text-bg-<?php echo $referral['status'] === 'Converted' ? 'success' : ($referral['status'] === 'Cancelled' ? 'secondary' : 'warning'); ?>"><?php echo e($referral['status']); ?></span></td>
+              <td><?php echo number_format((int) ($referral['awarded_points'] ?? 0)); ?></td>
               <td><?php echo e(date('M j, Y', strtotime($referral['created_at']))); ?></td>
             </tr>
           <?php endforeach; ?>
-          <?php if (!$referrals): ?><tr><td colspan="4" class="text-muted">No referrals yet.</td></tr><?php endif; ?>
+          <?php if (!$referrals): ?><tr><td colspan="5" class="text-muted">No referrals yet.</td></tr><?php endif; ?>
           </tbody>
         </table>
       </div>

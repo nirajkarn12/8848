@@ -23,6 +23,7 @@ function paymentHasColumn(PDO $pdo, string $column): bool
 }
 
 $loggedCustomer = currentCustomer();
+$useBonusPoints = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verifyCsrf($_POST['csrf_token'] ?? '')) {
@@ -47,6 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $remarks = trim($_POST['remarks'] ?? '');
     $accessNotes = trim($_POST['access_notes'] ?? '');
     $referralCode = strtoupper(trim($_POST['referral_code'] ?? ''));
+    $useBonusPoints = !empty($_POST['use_bonus_points']) && isLoggedIn();
 
     if ($customerName === '' || $phone === '' || $email === '' || $serviceAddress === '') {
         setFlash('danger', loadLang('booking_fields_required'));
@@ -133,6 +135,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $discountType = 'percent';
     $discountValue = 0.0;
     $discountAmount = 0.0;
+    $bonusPoints = 0;
+    $pointsDiscount = 0.0;
+    $pointsSpent = 0;
     $dueAmount = $grandTotal;
 
     try {
@@ -142,8 +147,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $referral = null;
         if ($referralCode !== '') {
-            $referralStmt = $pdo->prepare("SELECT * FROM tbl_referral WHERE referral_code = ? AND status = 'Pending' LIMIT 1 FOR UPDATE");
-            $referralStmt->execute([$referralCode]);
+            $referralStmt = $pdo->prepare("SELECT * FROM tbl_referral WHERE referral_code = ? AND status = 'Pending' AND (LOWER(referee_email) = LOWER(?) OR REPLACE(REPLACE(REPLACE(referee_phone, ' ', ''), '-', ''), '+', '') = REPLACE(REPLACE(REPLACE(?, ' ', ''), '-', ''), '+', '')) ORDER BY id ASC LIMIT 1 FOR UPDATE");
+            $referralStmt->execute([$referralCode, $email, $phone]);
             $referral = $referralStmt->fetch(PDO::FETCH_ASSOC);
             $matchesReferee = $referral && strcasecmp(trim((string) $referral['referee_email']), $email) === 0;
             if ($referral && !$matchesReferee) {
@@ -167,9 +172,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($discountAmount <= 0) {
                 throw new RuntimeException('referral_minimum_not_met');
             }
+            $bonusPoints = max(0, (int) ($referralSettings['bonus_points'] ?? 0));
             $grandTotal = round($subtotal - $discountAmount, 2);
             $dueAmount = $grandTotal;
             $notesParts[] = 'Referral code: ' . $referralCode;
+        }
+
+        if ($useBonusPoints) {
+            $pointsSettings = getReferralSettings();
+            $pointsRate = max(1, (int) ($pointsSettings['points_per_dollar'] ?? 100));
+            $availablePoints = getReferralPoints($customerId);
+            $pointsSpent = min($availablePoints, (int) floor($subtotal * $pointsRate));
+            $pointsDiscount = round($pointsSpent / $pointsRate, 2);
+            if ($pointsDiscount > 0) {
+                $discountAmount = round($discountAmount + $pointsDiscount, 2);
+                $grandTotal = round(max(0, $subtotal - $discountAmount), 2);
+                $dueAmount = $grandTotal;
+                $notesParts[] = 'Bonus points used: ' . $pointsSpent;
+            }
         }
 
         $stmt = $pdo->prepare('INSERT INTO tbl_payment (customer_id, customer_name, customer_email, payment_date, txnid, paid_amount, card_number, card_cvv, card_month, card_year, bank_transaction_info, payment_method, payment_status, shipping_status, payment_id, subtotal, discount_type, discount_value, discount_amount, vat_percent, vat_amount, grand_total, due_amount, notes, created_at, updated_at, customer_phone) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
@@ -252,8 +272,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($referral) {
-            $pdo->prepare("UPDATE tbl_referral SET status = 'Converted', discount_amount = ?, referee_customer_id = ?, payment_id = ?, converted_at = NOW() WHERE id = ? AND status = 'Pending'")
-                ->execute([$discountAmount, $customerId ?: null, $paymentIdDb, $referral['id']]);
+            $pdo->prepare("UPDATE tbl_referral SET status = 'Converted', discount_amount = ?, awarded_points = ?, referee_customer_id = ?, payment_id = ?, converted_at = NOW() WHERE id = ? AND status = 'Pending'")
+                ->execute([$discountAmount, $bonusPoints, $customerId ?: null, $paymentIdDb, $referral['id']]);
+            if ($bonusPoints > 0) {
+                $pdo->prepare("INSERT IGNORE INTO tbl_referral_points (customer_id, referral_id, points, reason, created_at) VALUES (?, ?, ?, 'Successful referral', NOW())")
+                    ->execute([(int) $referral['referrer_customer_id'], (int) $referral['id'], $bonusPoints]);
+            }
+        }
+        if ($pointsSpent > 0) {
+            $pdo->prepare("INSERT INTO tbl_referral_points (customer_id, referral_id, points, reason, created_at) VALUES (?, NULL, ?, 'Points redeemed on service booking', NOW())")
+                ->execute([$customerId, -$pointsSpent]);
         }
 
         $pdo->commit();
@@ -314,6 +342,7 @@ $defaultLng = $pref['service_lng'] ?? '';
         <div class="col-md-6"><label class="form-label"><?php echo t('phone'); ?></label><input class="form-control" name="phone" value="<?php echo e($defaultPhone); ?>" required></div>
         <div class="col-md-6"><label class="form-label"><?php echo t('email_address'); ?></label><input class="form-control" type="email" name="email" value="<?php echo e($defaultEmail); ?>" required></div>
         <div class="col-md-6"><label class="form-label"><?php echo t('referral_code'); ?> <span class="text-muted">(optional)</span></label><input class="form-control text-uppercase" name="referral_code" value="<?php echo e($_POST['referral_code'] ?? ($_GET['referral'] ?? '')); ?>" placeholder="8848-XXXXXXXX"></div>
+        <?php if (isLoggedIn()): ?><div class="col-md-6 d-flex align-items-end"><div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="use_bonus_points" id="useBonusPoints" <?php echo $useBonusPoints ? 'checked' : ''; ?>><label class="form-check-label" for="useBonusPoints"><?php echo tf('use_bonus_points', number_format(getReferralPoints((int) $loggedCustomer['cust_id']))); ?></label></div></div><?php endif; ?>
         <div class="col-md-4"><label class="form-label"><?php echo t('province'); ?></label><input class="form-control" name="province"></div>
         <div class="col-md-4"><label class="form-label"><?php echo t('district'); ?></label><input class="form-control" name="district"></div>
         <div class="col-md-4"><label class="form-label"><?php echo t('municipality'); ?></label><input class="form-control" name="municipality"></div>

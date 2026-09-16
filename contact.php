@@ -40,6 +40,7 @@ echo renderFlash();
         <input class="form-control" name="contact_name" placeholder="<?php echo t('your_name'); ?>" required>
         <input class="form-control" type="email" name="contact_email" placeholder="<?php echo t('email_address'); ?>" required>
         <input class="form-control" name="contact_subject" placeholder="<?php echo t('subject'); ?>">
+        <input class="form-control" name="promo_code" value="<?php echo e($_GET['referral'] ?? ''); ?>" placeholder="<?php echo t('promo_code_optional'); ?>">
         <textarea class="form-control" name="contact_message" rows="4" placeholder="<?php echo t('message'); ?>" required></textarea>
         <button class="btn btn-dark" type="submit"><?php echo t('send_message'); ?></button>
       </form>

@@ -24,14 +24,14 @@ define("BASE_URL", getenv('BASE_URL') ?: 'http://localhost/8848/');
 define("ADMIN_URL", BASE_URL . "admin" . "/");
 // SMTP Settings
 define('SMTP_HOST', 'smtp.gmail.com');
-define('SMTP_USER', 'nirajkarna66@gmail.com');
-define('SMTP_PASS', 'eptg ikjc lbbd yosq');
+define('SMTP_USER', '8848cleaningservice@gmail.com');
+define('SMTP_PASS', 'qypf xgym tehk ptsu');
 define('SMTP_PORT', 465);
 
-define('SMTP_FROM_EMAIL', 'nirajkarna66@gmail.com');
+define('SMTP_FROM_EMAIL', '8848cleaningservice@gmail.com');
 define('SMTP_FROM_NAME', '8848 Cleaning Service');
 
-define('SMTP_REPLYTO_EMAIL', 'nirajkarna66@gmail.com');
+define('SMTP_REPLYTO_EMAIL', '8848cleaningservice@gmail.com');
 define('SMTP_REPLYTO_NAME', '8848 Cleaning Service');
 
 try {

@@ -19,6 +19,7 @@
 								<th width="150">Email Address</th>
 								<th width="100">Phone</th>
 								<th width="200">Subject</th>
+								<th width="130">Promo / Referral Code</th>
 								<th>Message</th>
 								<th width="150">Date</th>
 								<th width="80">Action</th>
@@ -58,6 +59,10 @@
 
 									<td>
 										<?php echo htmlspecialchars($row['subject'] ?? ''); ?>
+									</td>
+
+									<td>
+										<?php echo htmlspecialchars($row['promo_code'] ?? ''); ?>
 									</td>
 
 									<td>

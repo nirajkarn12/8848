@@ -7,6 +7,6 @@ Password: 123456
 
 **SMTP CREDENTIALS **
 SMTP_HOST=smtp.gmail.com
-SMTP_USER=nirajkarna66@gmail.com
-SMTP_PASS=eptg ikjc lbbd yosq
+SMTP_USER=8848cleaningservice@gmail.com
+SMTP_PASS=qypf xgym tehk ptsu
 SMTP_PORT=465 

@@ -17,6 +17,12 @@ $settings = getReferralSettings() ?: [
 ];
 $createdCode = '';
 $errorMessage = '';
+$codeStmt = $pdo->prepare('SELECT referral_code FROM tbl_referral WHERE referrer_customer_id = ? ORDER BY id ASC LIMIT 1');
+$codeStmt->execute([(int) $customer['cust_id']]);
+$referrerCode = (string) ($codeStmt->fetchColumn() ?: '');
+if ($referrerCode === '') {
+  $referrerCode = generateReferralCode();
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verifyCsrf($_POST['csrf_token'] ?? '')) {
@@ -32,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ((int) $settings['is_active'] !== 1) {
             $errorMessage = loadLang('referral_unavailable');
         } else {
-            $createdCode = generateReferralCode();
+            $createdCode = $referrerCode;
             $insert = $pdo->prepare('INSERT INTO tbl_referral (referral_code, referrer_customer_id, referrer_name, referrer_email, referee_name, referee_email, referee_phone, status, discount_type, discount_value, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, \'Pending\', ?, ?, NOW())');
             $insert->execute([
                 $createdCode,
@@ -52,6 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $referralsStmt = $pdo->prepare('SELECT * FROM tbl_referral WHERE referrer_customer_id = ? ORDER BY id DESC');
 $referralsStmt->execute([(int) $customer['cust_id']]);
 $referrals = $referralsStmt->fetchAll(PDO::FETCH_ASSOC);
+$earnedPoints = getReferralPoints((int) $customer['cust_id']);
 $pageTitle = loadLang('refer_a_friend');
 include __DIR__ . '/inc/header.php';
 echo renderBreadcrumbs([
@@ -66,14 +73,15 @@ echo renderFlash();
       <span class="text-uppercase small fw-bold text-primary"><?php echo t('referral_offer'); ?></span>
       <h1 class="display-6 fw-bold mt-2 mb-3"><?php echo t('share_a_cleaner_start'); ?></h1>
       <p class="text-muted mb-4"><?php echo tf('referral_intro', $settings['discount_type'] === 'amount' ? 'NZ$ ' . number_format((float) $settings['discount_value'], 2) : number_format((float) $settings['discount_value'], 2) . '%'); ?></p>
-      <?php if ($createdCode !== ''): ?>
+      <div class="alert alert-primary border-0 rounded-4 d-flex justify-content-between align-items-center gap-3"><span><strong><?php echo t('bonus_points'); ?></strong><br><small><?php echo t('bonus_points_after_conversion'); ?></small></span><strong class="fs-4"><?php echo number_format($earnedPoints); ?></strong></div>
+      <?php if ($referrerCode !== '' && $errorMessage === ''): ?>
         <div class="alert alert-success border-0 rounded-4">
           <strong><?php echo t('referral_code_ready'); ?></strong>
           <div class="d-flex gap-2 align-items-center mt-2">
-            <code class="fs-5 flex-grow-1" id="referralCode"><?php echo e($createdCode); ?></code>
+            <code class="fs-5 flex-grow-1" id="referralCode"><?php echo e($referrerCode); ?></code>
             <button type="button" class="btn btn-dark btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('referralCode').textContent)"><?php echo t('copy'); ?></button>
           </div>
-          <a class="btn btn-link px-0" href="mailto:?subject=Cleaning offer from 8848&body=Use referral code <?php echo rawurlencode($createdCode); ?> at <?php echo rawurlencode(BASE_URL . 'checkout.php?referral=' . $createdCode); ?>"><?php echo t('share_by_email'); ?></a>
+          <a class="btn btn-link px-0" href="mailto:?subject=Cleaning offer from 8848&body=Use referral code <?php echo rawurlencode($referrerCode); ?> at <?php echo rawurlencode(BASE_URL . 'checkout.php?referral=' . $referrerCode); ?>"><?php echo t('share_by_email'); ?></a>
         </div>
       <?php elseif ($errorMessage !== ''): ?>
         <div class="alert alert-danger rounded-4"><?php echo e($errorMessage); ?></div>
@@ -84,7 +92,7 @@ echo renderFlash();
         <div class="col-md-6"><label class="form-label"><?php echo t('full_name_required'); ?></label><input class="form-control" name="referee_name" required></div>
         <div class="col-md-6"><label class="form-label">Email *</label><input class="form-control" type="email" name="referee_email" required></div>
         <div class="col-md-6"><label class="form-label"><?php echo t('phone_required'); ?></label><input class="form-control" name="referee_phone" required></div>
-        <div class="col-12"><button class="btn btn-dark px-4" <?php echo (int) $settings['is_active'] !== 1 ? 'disabled' : ''; ?>><?php echo t('create_referral_code'); ?></button></div>
+        <div class="col-12"><button class="btn btn-dark px-4" <?php echo (int) $settings['is_active'] !== 1 ? 'disabled' : ''; ?>><?php echo t('add_person_to_referral'); ?></button></div>
       </form>
       <?php if (trim((string) $settings['terms']) !== ''): ?><p class="small text-muted border-top pt-3 mt-4 mb-0"><?php echo nl2br(e($settings['terms'])); ?></p><?php endif; ?>
     </div>
@@ -124,8 +132,8 @@ echo renderFlash();
 </div>
 <div class="card card-hover p-4 mt-4" id="referrals">
   <h4 class="fw-bold mb-3"><?php echo t('your_referrals'); ?></h4>
-  <div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th><?php echo t('person'); ?></th><th><?php echo t('referral_code'); ?></th><th><?php echo t('status'); ?></th><th><?php echo t('created'); ?></th></tr></thead><tbody>
-  <?php foreach ($referrals as $referral): ?><tr><td><?php echo e($referral['referee_name']); ?><br><small class="text-muted"><?php echo e($referral['referee_email']); ?></small></td><td><code><?php echo e($referral['referral_code']); ?></code></td><td><span class="badge text-bg-<?php echo $referral['status'] === 'Converted' ? 'success' : ($referral['status'] === 'Cancelled' ? 'secondary' : 'warning'); ?>"><?php echo e($referral['status']); ?></span></td><td><?php echo e(date('M j, Y', strtotime($referral['created_at']))); ?></td></tr><?php endforeach; ?>
+  <div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th><?php echo t('person'); ?></th><th><?php echo t('referral_code'); ?></th><th><?php echo t('status'); ?></th><th><?php echo t('bonus_points'); ?></th><th><?php echo t('created'); ?></th></tr></thead><tbody>
+  <?php foreach ($referrals as $referral): ?><tr><td><?php echo e($referral['referee_name']); ?><br><small class="text-muted"><?php echo e($referral['referee_email']); ?></small></td><td><code><?php echo e($referral['referral_code']); ?></code></td><td><span class="badge text-bg-<?php echo $referral['status'] === 'Converted' ? 'success' : ($referral['status'] === 'Cancelled' ? 'secondary' : 'warning'); ?>"><?php echo e($referral['status']); ?></span></td><td><?php echo number_format((int) ($referral['awarded_points'] ?? 0)); ?></td><td><?php echo e(date('M j, Y', strtotime($referral['created_at']))); ?></td></tr><?php endforeach; ?>
   <?php if (!$referrals): ?><tr><td colspan="4" class="text-muted"><?php echo t('referral_history_empty'); ?></td></tr><?php endif; ?>
   </tbody></table></div>
 </div>

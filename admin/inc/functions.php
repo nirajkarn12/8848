@@ -365,8 +365,25 @@ function ensureReferralTables() {
 		return $ready;
 	}
 	try {
-		$pdo->exec("CREATE TABLE IF NOT EXISTS tbl_referral_settings (id INT UNSIGNED NOT NULL AUTO_INCREMENT, is_active TINYINT(1) NOT NULL DEFAULT 1, discount_type ENUM('percent','amount') NOT NULL DEFAULT 'percent', discount_value DECIMAL(10,2) NOT NULL DEFAULT 10.00, minimum_order_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00, terms TEXT NULL, updated_at DATETIME NULL, PRIMARY KEY (id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-		$pdo->exec("CREATE TABLE IF NOT EXISTS tbl_referral (id INT UNSIGNED NOT NULL AUTO_INCREMENT, referral_code VARCHAR(32) NOT NULL, referrer_customer_id INT UNSIGNED NOT NULL, referrer_name VARCHAR(255) NOT NULL, referrer_email VARCHAR(255) NOT NULL, referee_name VARCHAR(255) NOT NULL, referee_email VARCHAR(255) NOT NULL, referee_phone VARCHAR(50) NOT NULL, status ENUM('Pending','Converted','Cancelled') NOT NULL DEFAULT 'Pending', discount_type ENUM('percent','amount') NOT NULL DEFAULT 'percent', discount_value DECIMAL(10,2) NOT NULL DEFAULT 0.00, discount_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00, referee_customer_id INT UNSIGNED NULL, payment_id INT UNSIGNED NULL, created_at DATETIME NOT NULL, converted_at DATETIME NULL, PRIMARY KEY (id), UNIQUE KEY uq_referral_code (referral_code), KEY idx_referral_referrer (referrer_customer_id), KEY idx_referral_status (status)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+				$pdo->exec("CREATE TABLE IF NOT EXISTS tbl_referral_settings (id INT UNSIGNED NOT NULL AUTO_INCREMENT, is_active TINYINT(1) NOT NULL DEFAULT 1, discount_type ENUM('percent','amount') NOT NULL DEFAULT 'percent', discount_value DECIMAL(10,2) NOT NULL DEFAULT 10.00, bonus_points INT UNSIGNED NOT NULL DEFAULT 100, points_per_dollar INT UNSIGNED NOT NULL DEFAULT 100, minimum_order_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00, terms TEXT NULL, updated_at DATETIME NULL, PRIMARY KEY (id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+				$pdo->exec("CREATE TABLE IF NOT EXISTS tbl_referral (id INT UNSIGNED NOT NULL AUTO_INCREMENT, referral_code VARCHAR(32) NOT NULL, referrer_customer_id INT UNSIGNED NOT NULL, referrer_name VARCHAR(255) NOT NULL, referrer_email VARCHAR(255) NOT NULL, referee_name VARCHAR(255) NOT NULL, referee_email VARCHAR(255) NOT NULL, referee_phone VARCHAR(50) NOT NULL, status ENUM('Pending','Converted','Cancelled') NOT NULL DEFAULT 'Pending', discount_type ENUM('percent','amount') NOT NULL DEFAULT 'percent', discount_value DECIMAL(10,2) NOT NULL DEFAULT 0.00, discount_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00, awarded_points INT UNSIGNED NOT NULL DEFAULT 0, referee_customer_id INT UNSIGNED NULL, payment_id INT UNSIGNED NULL, created_at DATETIME NOT NULL, converted_at DATETIME NULL, PRIMARY KEY (id), UNIQUE KEY uq_referral_code (referral_code), KEY idx_referral_referrer (referrer_customer_id), KEY idx_referral_status (status)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+				$settingsBonus = $pdo->query("SHOW COLUMNS FROM `tbl_referral_settings` LIKE 'bonus_points'");
+				if ($settingsBonus && $settingsBonus->rowCount() === 0) { $pdo->exec("ALTER TABLE `tbl_referral_settings` ADD COLUMN `bonus_points` INT UNSIGNED NOT NULL DEFAULT 100 AFTER `discount_value`"); }
+				$pointsRate = $pdo->query("SHOW COLUMNS FROM `tbl_referral_settings` LIKE 'points_per_dollar'");
+				if ($pointsRate && $pointsRate->rowCount() === 0) { $pdo->exec("ALTER TABLE `tbl_referral_settings` ADD COLUMN `points_per_dollar` INT UNSIGNED NOT NULL DEFAULT 100 AFTER `bonus_points`"); }
+				$awardedPoints = $pdo->query("SHOW COLUMNS FROM `tbl_referral` LIKE 'awarded_points'");
+				if ($awardedPoints && $awardedPoints->rowCount() === 0) { $pdo->exec("ALTER TABLE `tbl_referral` ADD COLUMN `awarded_points` INT UNSIGNED NOT NULL DEFAULT 0 AFTER `discount_amount`"); }
+				$pdo->exec("CREATE TABLE IF NOT EXISTS tbl_referral_points (id INT UNSIGNED NOT NULL AUTO_INCREMENT, customer_id INT UNSIGNED NOT NULL, referral_id INT UNSIGNED NULL, points INT NOT NULL DEFAULT 0, reason VARCHAR(255) NOT NULL DEFAULT 'Successful referral', created_at DATETIME NOT NULL, PRIMARY KEY (id), UNIQUE KEY uq_referral_points_referral (referral_id), KEY idx_referral_points_customer (customer_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+				$pointsColumn = $pdo->query("SHOW COLUMNS FROM `tbl_referral_points` LIKE 'points'");
+				$pointsDefinition = $pointsColumn ? $pointsColumn->fetch(PDO::FETCH_ASSOC) : null;
+				if ($pointsDefinition && stripos((string) $pointsDefinition['Type'], 'unsigned') !== false) { $pdo->exec("ALTER TABLE `tbl_referral_points` MODIFY COLUMN `points` INT NOT NULL DEFAULT 0"); }
+				$referralIdColumn = $pdo->query("SHOW COLUMNS FROM `tbl_referral_points` LIKE 'referral_id'");
+				$referralIdDefinition = $referralIdColumn ? $referralIdColumn->fetch(PDO::FETCH_ASSOC) : null;
+				if ($referralIdDefinition && stripos((string) $referralIdDefinition['Null'], 'NO') !== false) { $pdo->exec("ALTER TABLE `tbl_referral_points` MODIFY COLUMN `referral_id` INT UNSIGNED NULL"); }
+		$index = $pdo->query("SHOW INDEX FROM `tbl_referral` WHERE Key_name = 'uq_referral_code'");
+		if ($index && $index->rowCount() > 0) {
+			$pdo->exec('ALTER TABLE `tbl_referral` DROP INDEX `uq_referral_code`');
+		}
 		$pdo->exec("INSERT INTO tbl_referral_settings (id, is_active, discount_type, discount_value, minimum_order_amount, terms, updated_at) SELECT 1, 1, 'percent', 10.00, 0.00, 'Referral discount applies to the referred customer''s first eligible booking only.', NOW() WHERE NOT EXISTS (SELECT 1 FROM tbl_referral_settings WHERE id = 1)");
 		$ready = true;
 	} catch (Throwable $e) {
@@ -382,4 +399,12 @@ function getReferralSettings() {
 	}
 	$row = $pdo->query('SELECT * FROM tbl_referral_settings WHERE id = 1 LIMIT 1')->fetch(PDO::FETCH_ASSOC);
 	return $row ?: null;
+}
+
+function getReferralPoints($customerId) {
+	global $pdo;
+	ensureReferralTables();
+	$stmt = $pdo->prepare('SELECT COALESCE(SUM(points), 0) FROM tbl_referral_points WHERE customer_id = ?');
+	$stmt->execute([(int) $customerId]);
+	return (int) $stmt->fetchColumn();
 }
