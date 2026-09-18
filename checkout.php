@@ -48,6 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $remarks = trim($_POST['remarks'] ?? '');
     $accessNotes = trim($_POST['access_notes'] ?? '');
     $referralCode = strtoupper(trim($_POST['referral_code'] ?? ''));
+    $promoCode = strtoupper(trim($_POST['promo_code'] ?? ''));
     $useBonusPoints = !empty($_POST['use_bonus_points']) && isLoggedIn();
 
     if ($customerName === '' || $phone === '' || $email === '' || $serviceAddress === '') {
@@ -139,6 +140,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $pointsDiscount = 0.0;
     $pointsSpent = 0;
     $dueAmount = $grandTotal;
+    $promoCodeDetails = null;
+    $promoDiscountAmount = 0.0;
 
     try {
         ensureServiceLocationColumns($pdo);
@@ -173,10 +176,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new RuntimeException('referral_minimum_not_met');
             }
             $bonusPoints = max(0, (int) ($referralSettings['bonus_points'] ?? 0));
-            $grandTotal = round($subtotal - $discountAmount, 2);
-            $dueAmount = $grandTotal;
+            $discountType = $referral['discount_type'];
+            $discountValue = (float) $referral['discount_value'];
             $notesParts[] = 'Referral code: ' . $referralCode;
         }
+
+        if ($promoCode !== '') {
+            $promoCodeDetails = getPromoCodeDetails($promoCode);
+            if (!$promoCodeDetails) {
+                throw new RuntimeException('invalid_promo_code');
+            }
+            $promoDiscountAmount = promoDiscountAmount($subtotal, [
+                'discount_type' => $promoCodeDetails['discount_type'],
+                'discount_value' => $promoCodeDetails['discount_value'],
+                'minimum_order_amount' => $promoCodeDetails['minimum_order_amount'],
+            ]);
+            if ($promoDiscountAmount <= 0) {
+                throw new RuntimeException('promo_minimum_not_met');
+            }
+            $discountAmount = round($discountAmount + $promoDiscountAmount, 2);
+            if ($referralCode === '') {
+                $discountType = $promoCodeDetails['discount_type'];
+                $discountValue = (float) $promoCodeDetails['discount_value'];
+            }
+            $notesParts[] = 'Promo code: ' . $promoCode;
+            $pdo->prepare('UPDATE tbl_promo_code SET used_count = used_count + 1, updated_at = NOW() WHERE code = ? AND is_active = 1')->execute([$promoCode]);
+        }
+
+        $grandTotal = round(max(0, $subtotal - $discountAmount), 2);
+        $dueAmount = $grandTotal;
 
         if ($useBonusPoints) {
             $pointsSettings = getReferralSettings();
@@ -272,12 +300,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($referral) {
-            $pdo->prepare("UPDATE tbl_referral SET status = 'Converted', discount_amount = ?, awarded_points = ?, referee_customer_id = ?, payment_id = ?, converted_at = NOW() WHERE id = ? AND status = 'Pending'")
+            $pdo->prepare("UPDATE tbl_referral SET discount_amount = ?, awarded_points = ?, referee_customer_id = ?, payment_id = ? WHERE id = ? AND status = 'Pending'")
                 ->execute([$discountAmount, $bonusPoints, $customerId ?: null, $paymentIdDb, $referral['id']]);
-            if ($bonusPoints > 0) {
-                $pdo->prepare("INSERT IGNORE INTO tbl_referral_points (customer_id, referral_id, points, reason, created_at) VALUES (?, ?, ?, 'Successful referral', NOW())")
-                    ->execute([(int) $referral['referrer_customer_id'], (int) $referral['id'], $bonusPoints]);
-            }
         }
         if ($pointsSpent > 0) {
             $pdo->prepare("INSERT INTO tbl_referral_points (customer_id, referral_id, points, reason, created_at) VALUES (?, NULL, ?, 'Points redeemed on service booking', NOW())")
@@ -300,8 +324,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
         }
-        if ($e instanceof RuntimeException && in_array($e->getMessage(), ['invalid_referral_code', 'referral_minimum_not_met'], true)) {
-            setFlash('danger', $e->getMessage() === 'referral_minimum_not_met' ? 'This referral code requires a higher booking total.' : 'That referral code is invalid, already used, or does not match this customer.');
+        if ($e instanceof RuntimeException && in_array($e->getMessage(), ['invalid_referral_code', 'referral_minimum_not_met', 'invalid_promo_code', 'promo_minimum_not_met'], true)) {
+            $msg = 'This booking code is invalid, expired, already used, or does not meet the minimum total.';
+            if ($e->getMessage() === 'invalid_referral_code') {
+                $msg = 'That referral code is invalid, already used, or does not match this customer.';
+            } elseif ($e->getMessage() === 'referral_minimum_not_met') {
+                $msg = 'This referral code requires a higher booking total.';
+            } elseif ($e->getMessage() === 'invalid_promo_code') {
+                $msg = 'That promo code is invalid, expired, or no longer active.';
+            } elseif ($e->getMessage() === 'promo_minimum_not_met') {
+                $msg = 'This promo code requires a higher booking total.';
+            }
+            setFlash('danger', $msg);
         } else {
             setFlash('danger', loadLang('booking_save_failed'));
         }
@@ -342,6 +376,7 @@ $defaultLng = $pref['service_lng'] ?? '';
         <div class="col-md-6"><label class="form-label"><?php echo t('phone'); ?></label><input class="form-control" name="phone" value="<?php echo e($defaultPhone); ?>" required></div>
         <div class="col-md-6"><label class="form-label"><?php echo t('email_address'); ?></label><input class="form-control" type="email" name="email" value="<?php echo e($defaultEmail); ?>" required></div>
         <div class="col-md-6"><label class="form-label"><?php echo t('referral_code'); ?> <span class="text-muted">(optional)</span></label><input class="form-control text-uppercase" name="referral_code" value="<?php echo e($_POST['referral_code'] ?? ($_GET['referral'] ?? '')); ?>" placeholder="8848-XXXXXXXX"></div>
+        <div class="col-md-6"><label class="form-label">Promo code <span class="text-muted">(optional)</span></label><input class="form-control text-uppercase" name="promo_code" value="<?php echo e($_POST['promo_code'] ?? ($_GET['promo_code'] ?? '')); ?>" placeholder="SAVE15"></div>
         <?php if (isLoggedIn()): ?><div class="col-md-6 d-flex align-items-end"><div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="use_bonus_points" id="useBonusPoints" <?php echo $useBonusPoints ? 'checked' : ''; ?>><label class="form-check-label" for="useBonusPoints"><?php echo tf('use_bonus_points', number_format(getReferralPoints((int) $loggedCustomer['cust_id']))); ?></label></div></div><?php endif; ?>
         <div class="col-md-4"><label class="form-label"><?php echo t('province'); ?></label><input class="form-control" name="province"></div>
         <div class="col-md-4"><label class="form-label"><?php echo t('district'); ?></label><input class="form-control" name="district"></div>

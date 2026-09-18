@@ -1104,6 +1104,121 @@ function getReferralPoints($customerId) {
     return (int) $stmt->fetchColumn();
 }
 
+function completeReferralForPayment($paymentId) {
+    global $pdo;
+    $paymentId = (int) $paymentId;
+    if ($paymentId <= 0) {
+        return false;
+    }
+
+    ensureReferralTables();
+
+    $stmt = $pdo->prepare("SELECT id, referrer_customer_id, awarded_points FROM tbl_referral WHERE payment_id = ? AND status = 'Pending' ORDER BY id ASC");
+    $stmt->execute([$paymentId]);
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    if (empty($rows)) {
+        return false;
+    }
+
+    foreach ($rows as $referral) {
+        $referralId = (int) ($referral['id'] ?? 0);
+        $referrerCustomerId = (int) ($referral['referrer_customer_id'] ?? 0);
+        $awardedPoints = (int) ($referral['awarded_points'] ?? 0);
+
+        if ($referralId <= 0) {
+            continue;
+        }
+
+        $pdo->prepare("UPDATE tbl_referral SET status = 'Converted', converted_at = NOW() WHERE id = ? AND status = 'Pending'")->execute([$referralId]);
+
+        if ($awardedPoints > 0 && $referrerCustomerId > 0) {
+            $pdo->prepare("INSERT INTO tbl_referral_points (customer_id, referral_id, points, reason, created_at) VALUES (?, ?, ?, 'Successful referral', NOW()) ON DUPLICATE KEY UPDATE points = VALUES(points), reason = VALUES(reason), created_at = NOW()")
+                ->execute([$referrerCustomerId, $referralId, $awardedPoints]);
+        }
+    }
+
+    return true;
+}
+
+function ensurePromoCodeTable() {
+    global $pdo;
+    static $ready = null;
+    if ($ready !== null) {
+        return $ready;
+    }
+
+    try {
+        $pdo->exec("CREATE TABLE IF NOT EXISTS tbl_promo_code (
+            id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            code VARCHAR(50) NOT NULL,
+            discount_type ENUM('percent','amount') NOT NULL DEFAULT 'percent',
+            discount_value DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+            minimum_order_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+            is_active TINYINT(1) NOT NULL DEFAULT 1,
+            usage_limit INT UNSIGNED NOT NULL DEFAULT 0,
+            used_count INT UNSIGNED NOT NULL DEFAULT 0,
+            valid_from DATETIME NULL,
+            valid_to DATETIME NULL,
+            description VARCHAR(255) NULL,
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NULL,
+            PRIMARY KEY (id),
+            UNIQUE KEY uq_promo_code (code)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $ready = true;
+    } catch (Throwable $e) {
+        $ready = false;
+    }
+
+    return $ready;
+}
+
+function getPromoCodeDetails($code) {
+    global $pdo;
+    if (!ensurePromoCodeTable()) {
+        return null;
+    }
+
+    $code = strtoupper(trim((string) $code));
+    if ($code === '') {
+        return null;
+    }
+
+    $stmt = $pdo->prepare('SELECT * FROM tbl_promo_code WHERE code = ? LIMIT 1');
+    $stmt->execute([$code]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$row || (int) ($row['is_active'] ?? 0) !== 1) {
+        return null;
+    }
+
+    $now = new DateTimeImmutable('now');
+    if (!empty($row['valid_from']) && new DateTimeImmutable($row['valid_from']) > $now) {
+        return null;
+    }
+    if (!empty($row['valid_to']) && new DateTimeImmutable($row['valid_to']) < $now) {
+        return null;
+    }
+
+    $usageLimit = (int) ($row['usage_limit'] ?? 0);
+    if ($usageLimit > 0 && (int) ($row['used_count'] ?? 0) >= $usageLimit) {
+        return null;
+    }
+
+    return $row;
+}
+
+function promoDiscountAmount($subtotal, $settings) {
+    $subtotal = max(0, (float) $subtotal);
+    $minimum = max(0, (float) ($settings['minimum_order_amount'] ?? 0));
+    if ($subtotal < $minimum) {
+        return 0.0;
+    }
+    $value = max(0, (float) ($settings['discount_value'] ?? 0));
+    $amount = (($settings['discount_type'] ?? 'percent') === 'amount') ? $value : ($subtotal * $value / 100);
+    return round(min($subtotal, $amount), 2);
+}
+
 function referralDiscountAmount($subtotal, $settings) {
     $subtotal = max(0, (float) $subtotal);
     $minimum = max(0, (float) ($settings['minimum_order_amount'] ?? 0));

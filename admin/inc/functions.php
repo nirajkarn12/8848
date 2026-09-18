@@ -408,3 +408,88 @@ function getReferralPoints($customerId) {
 	$stmt->execute([(int) $customerId]);
 	return (int) $stmt->fetchColumn();
 }
+
+function ensurePromoCodeTable() {
+	global $pdo;
+	static $ready = null;
+	if ($ready !== null) {
+		return $ready;
+	}
+
+	try {
+		$pdo->exec("CREATE TABLE IF NOT EXISTS tbl_promo_code (
+			id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+			code VARCHAR(50) NOT NULL,
+			discount_type ENUM('percent','amount') NOT NULL DEFAULT 'percent',
+			discount_value DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+			minimum_order_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+			is_active TINYINT(1) NOT NULL DEFAULT 1,
+			usage_limit INT UNSIGNED NOT NULL DEFAULT 0,
+			used_count INT UNSIGNED NOT NULL DEFAULT 0,
+			valid_from DATETIME NULL,
+			valid_to DATETIME NULL,
+			description VARCHAR(255) NULL,
+			created_at DATETIME NOT NULL,
+			updated_at DATETIME NULL,
+			PRIMARY KEY (id),
+			UNIQUE KEY uq_promo_code (code)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+		$ready = true;
+	} catch (Throwable $e) {
+		$ready = false;
+	}
+
+	return $ready;
+}
+
+function getPromoCodeDetails($code) {
+	global $pdo;
+	if (!ensurePromoCodeTable()) {
+		return null;
+	}
+
+	$code = strtoupper(trim((string) $code));
+	if ($code === '') {
+		return null;
+	}
+
+	$stmt = $pdo->prepare('SELECT * FROM tbl_promo_code WHERE code = ? LIMIT 1');
+	$stmt->execute([$code]);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
+	if (!$row || (int) ($row['is_active'] ?? 0) !== 1) {
+		return null;
+	}
+
+	$now = new DateTimeImmutable('now');
+	if (!empty($row['valid_from']) && new DateTimeImmutable($row['valid_from']) > $now) {
+		return null;
+	}
+	if (!empty($row['valid_to']) && new DateTimeImmutable($row['valid_to']) < $now) {
+		return null;
+	}
+
+	$usageLimit = (int) ($row['usage_limit'] ?? 0);
+	if ($usageLimit > 0 && (int) ($row['used_count'] ?? 0) >= $usageLimit) {
+		return null;
+	}
+
+	return $row;
+}
+
+function promoDiscountAmount($subtotal, $settings) {
+	$subtotal = max(0, (float) $subtotal);
+	$minimum = max(0, (float) ($settings['minimum_order_amount'] ?? 0));
+	if ($subtotal < $minimum) {
+		return 0.0;
+	}
+	$value = max(0, (float) ($settings['discount_value'] ?? 0));
+	$amount = (($settings['discount_type'] ?? 'percent') === 'amount') ? $value : ($subtotal * $value / 100);
+	return round(min($subtotal, $amount), 2);
+}
+
+function getPromoCodeList() {
+	global $pdo;
+	ensurePromoCodeTable();
+	$statement = $pdo->query('SELECT * FROM tbl_promo_code ORDER BY created_at DESC, id DESC');
+	return $statement ? $statement->fetchAll(PDO::FETCH_ASSOC) : [];
+}

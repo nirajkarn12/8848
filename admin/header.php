@@ -202,6 +202,13 @@ if(!isset($_SESSION['user'])) {
         </a>
     </li>
 
+    <!-- PROMO CODES -->
+    <li class="<?php if($cur_page == 'promo-code.php' || $cur_page == 'promo-code-add.php' || $cur_page == 'promo-code-edit.php' || $cur_page == 'promo-code-delete.php') { echo 'active'; } ?>">
+        <a href="promo-code.php">
+            <i class="fa fa-tags"></i>
+            <span>Promo Codes</span>
+        </a>
+    </li>
 
     <!-- SERVICES -->
     <li class="treeview <?php

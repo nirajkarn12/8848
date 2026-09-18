@@ -42,6 +42,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'remove') {
 if (isset($_GET['action']) && $_GET['action'] === 'add') {
     $id = (int)($_GET['id'] ?? 0);
     $qty = max(1, (int)($_GET['qty'] ?? 1));
+    $redirect = trim((string)($_GET['redirect'] ?? 'cart.php'));
     if ($id) {
         $stmt = $pdo->prepare('SELECT p_id, p_name, p_featured_photo FROM tbl_product WHERE p_id = ? LIMIT 1');
         $stmt->execute([$id]);
@@ -55,7 +56,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'add') {
             setFlash('success', loadLang('added_to_booking'));
         }
     }
-    header('Location: cart.php');
+    $redirectUrl = $redirect !== '' ? $redirect : 'cart.php';
+    header('Location: ' . $redirectUrl);
     exit;
 }
 

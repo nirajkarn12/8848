@@ -108,6 +108,7 @@ if ($jobStatus === 'Completed') {
         if ((int)$check->fetchColumn() === 0) {
             $statement = $pdo->prepare("UPDATE tbl_payment SET assignment_status = 'Completed', booking_status = 'Completed' WHERE payment_id = ?");
             $statement->execute(array($job['payment_id']));
+            completeReferralForPayment($job['payment_id']);
         }
     } catch (PDOException $e) {
         // Optional columns may not exist yet.

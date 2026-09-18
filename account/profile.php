@@ -110,10 +110,24 @@ $recentOrdersStmt = $pdo->prepare('SELECT * FROM tbl_payment WHERE customer_id =
 $recentOrdersStmt->execute([$customerId]);
 $recentOrders = $recentOrdersStmt->fetchAll();
 ensureReferralTables();
-$referralsStmt = $pdo->prepare('SELECT referral_code, referee_name, referee_email, status, created_at FROM tbl_referral WHERE referrer_customer_id = ? ORDER BY id DESC LIMIT 8');
+$referralsStmt = $pdo->prepare('SELECT referral_code, referee_name, referee_email, status, created_at, awarded_points FROM tbl_referral WHERE referrer_customer_id = ? ORDER BY id DESC LIMIT 8');
 $referralsStmt->execute([$customerId]);
 $referrals = $referralsStmt->fetchAll();
+$pointsActivityStmt = $pdo->prepare('SELECT referral_id, points, reason, created_at FROM tbl_referral_points WHERE customer_id = ? ORDER BY id DESC LIMIT 20');
+$pointsActivityStmt->execute([$customerId]);
+$pointsActivity = $pointsActivityStmt->fetchAll();
 $earnedReferralPoints = getReferralPoints($customerId);
+$referralSettings = getReferralSettings();
+$pointsPerDollar = max(1, (int) ($referralSettings['points_per_dollar'] ?? 100));
+$pointsDiscountValue = round(max(0, (float) $earnedReferralPoints) / $pointsPerDollar, 2);
+$hotDealsStmt = $pdo->query(
+    'SELECT p_id, p_name, p_short_description, p_featured_photo, p_current_price, p_is_featured
+     FROM tbl_product
+     WHERE p_is_active = 1
+     ORDER BY p_is_featured DESC, p_id DESC
+     LIMIT 4'
+);
+$hotDealsProducts = $hotDealsStmt->fetchAll();
 include __DIR__ . '/../inc/header.php';
 $breadcrumbs = [
     ['label' => t('home'), 'url' => BASE_URL],
@@ -271,10 +285,19 @@ echo renderBreadcrumbs($breadcrumbs);
         </div>
         <a href="<?php echo BASE_URL; ?>referral-offer.php" class="btn btn-outline-primary btn-sm"><i class="fa fa-plus me-1"></i>New referral</a>
       </div>
-      <div class="alert alert-primary border-0 rounded-4 d-flex justify-content-between align-items-center"><span><strong><?php echo t('bonus_points'); ?></strong><br><small><?php echo t('bonus_points_after_conversion'); ?></small></span><strong class="fs-4"><?php echo number_format($earnedReferralPoints); ?></strong></div>
-      <div class="table-responsive">
+      <div class="alert alert-primary border-0 rounded-4 d-flex justify-content-between align-items-center gap-3">
+        <span>
+          <strong><?php echo t('bonus_points'); ?></strong><br>
+          <small><?php echo t('bonus_points_after_conversion'); ?></small>
+        </span>
+        <div class="text-end">
+          <div class="fs-4 fw-bold"><?php echo number_format($earnedReferralPoints); ?></div>
+          <small class="text-muted">Approx. NZ$ <?php echo number_format($pointsDiscountValue, 2); ?> discount value</small>
+        </div>
+      </div>
+      <div class="table-responsive mb-4">
         <table class="table align-middle mb-0">
-          <thead><tr><th>Referred person</th><th>Code</th><th>Status</th><th>Points</th><th>Date</th></tr></thead>
+          <thead><tr><th>Referred person</th><th>Code</th><th>Status</th><th>Points</th><th>Discount value</th><th>Date</th></tr></thead>
           <tbody>
           <?php foreach ($referrals as $referral): ?>
             <tr>
@@ -282,12 +305,95 @@ echo renderBreadcrumbs($breadcrumbs);
               <td><code><?php echo e($referral['referral_code']); ?></code></td>
               <td><span class="badge text-bg-<?php echo $referral['status'] === 'Converted' ? 'success' : ($referral['status'] === 'Cancelled' ? 'secondary' : 'warning'); ?>"><?php echo e($referral['status']); ?></span></td>
               <td><?php echo number_format((int) ($referral['awarded_points'] ?? 0)); ?></td>
+              <td><?php echo number_format(((int) ($referral['awarded_points'] ?? 0)) / $pointsPerDollar, 2); ?> NZ$</td>
               <td><?php echo e(date('M j, Y', strtotime($referral['created_at']))); ?></td>
             </tr>
           <?php endforeach; ?>
-          <?php if (!$referrals): ?><tr><td colspan="5" class="text-muted">No referrals yet.</td></tr><?php endif; ?>
+          <?php if (!$referrals): ?><tr><td colspan="6" class="text-muted">No referrals yet.</td></tr><?php endif; ?>
           </tbody>
         </table>
+      </div>
+
+      <div class="border rounded-4 p-3 bg-light-subtle">
+        <h5 class="fw-semibold mb-3">Points activity</h5>
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Reason</th>
+                <th class="text-end">Points</th>
+                <th class="text-end">Discount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($pointsActivity as $activity): ?>
+                <?php $activityPoints = (int) $activity['points']; $activityDiscount = round(abs($activityPoints) / $pointsPerDollar, 2); ?>
+                <tr>
+                  <td><?php echo e(date('M j, Y', strtotime($activity['created_at']))); ?></td>
+                  <td><?php echo e($activity['reason']); ?></td>
+                  <td class="text-end <?php echo $activityPoints >= 0 ? 'text-success' : 'text-danger'; ?> fw-semibold">
+                    <?php echo ($activityPoints >= 0 ? '+' : '') . number_format($activityPoints); ?>
+                  </td>
+                  <td class="text-end <?php echo $activityPoints >= 0 ? 'text-success' : 'text-danger'; ?> fw-semibold">
+                    <?php echo $activityPoints >= 0 ? '+NZ$ ' . number_format($activityDiscount, 2) : '-NZ$ ' . number_format($activityDiscount, 2); ?>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+              <?php if (!$pointsActivity): ?><tr><td colspan="4" class="text-muted">No points activity recorded yet.</td></tr><?php endif; ?>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card card-hover p-4 mt-4" id="hot-deals">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h4 class="fw-bold mb-1">My Rewards</h4>
+          <p class="text-muted mb-0">Redeem your referral points on selected cleaning services for your next booking.</p>
+        </div>
+        <span class="badge bg-primary rounded-pill px-3 py-2"><?php echo number_format($earnedReferralPoints); ?> pts available</span>
+      </div>
+
+      <div class="accordion" id="hotDealsAccordion">
+        <?php foreach ($hotDealsProducts as $index => $product): ?>
+          <?php
+            $productPrice = (float) ($product['p_current_price'] ?? 0);
+            $dealRate = 10;
+            $dealPrice = max(0, $productPrice - ($productPrice * ($dealRate / 100)));
+            $pointsRequired = (int) ceil($productPrice * $pointsPerDollar);
+          ?>
+          <div class="accordion-item border-0 mb-2 rounded-4 overflow-hidden shadow-sm">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed py-3 px-3" type="button" data-bs-toggle="collapse" data-bs-target="#hotDeal-<?php echo $index; ?>" aria-expanded="false" aria-controls="hotDeal-<?php echo $index; ?>">
+                <div class="d-flex align-items-center justify-content-between w-100 gap-3">
+                  <div class="d-flex align-items-center gap-3">
+                    <img src="<?php echo getProductImage($product['p_featured_photo']); ?>" alt="<?php echo e($product['p_name']); ?>" style="width:52px;height:52px;object-fit:cover;border-radius:0.75rem;">
+                    <div class="text-start">
+                      <div class="fw-semibold small"><?php echo e($product['p_name']); ?></div>
+                      <div class="text-muted small">NZ$ <?php echo number_format($dealPrice, 2); ?> · <?php echo number_format($pointsRequired); ?> pts</div>
+                    </div>
+                  </div>
+                  <span class="badge soft-pill">Save <?php echo $dealRate; ?>%</span>
+                </div>
+              </button>
+            </h2>
+            <div id="hotDeal-<?php echo $index; ?>" class="accordion-collapse collapse" data-bs-parent="#hotDealsAccordion">
+              <div class="accordion-body px-3 py-3">
+                <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                  <div>
+                    <div class="small text-muted mb-1">Points value</div>
+                    <div class="fw-semibold"><?php echo number_format($pointsRequired); ?> pts = NZ$ <?php echo number_format($pointsRequired / $pointsPerDollar, 2); ?> off</div>
+                    <div class="text-decoration-line-through small text-muted mt-2">NZ$ <?php echo number_format($productPrice, 2); ?></div>
+                    <div class="fw-bold fs-5">NZ$ <?php echo number_format($dealPrice, 2); ?></div>
+                  </div>
+                  <a href="<?php echo BASE_URL; ?>cart.php?action=add&id=<?php echo (int)$product['p_id']; ?>&redirect=checkout.php" class="btn btn-dark btn-sm px-3">Book now</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        <?php endforeach; ?>
       </div>
     </div>
   </div>

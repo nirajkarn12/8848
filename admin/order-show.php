@@ -94,6 +94,14 @@ function columnExists($pdo, $table, $column) {
                                         $discountType = $payment['discount_type'] ?? '';
                                         $discountValue = (float)($payment['discount_value'] ?? 0);
                                         $discountAmount = (float)($payment['discount_amount'] ?? 0);
+                                        $promoCodeDisplay = '';
+                                        $referralCodeDisplay = '';
+                                        if (preg_match('/Referral code:\s*([^\s]+)/i', (string)($payment['notes'] ?? ''), $referralMatch)) {
+                                            $referralCodeDisplay = $referralMatch[1];
+                                        }
+                                        if (preg_match('/Promo code:\s*([^\s]+)/i', (string)($payment['notes'] ?? ''), $promoMatch)) {
+                                            $promoCodeDisplay = $promoMatch[1];
+                                        }
                                         if($discountType == 'percent') {
                                             echo $discountValue . '%';
                                         } elseif($discountType == 'amount') {
@@ -101,7 +109,13 @@ function columnExists($pdo, $table, $column) {
                                         } else {
                                             echo 'None';
                                         }
-                                        echo ' (Amount: $' . number_format($discountAmount, 2) . ')';
+                                        echo ' (Amount: NZ$ ' . number_format($discountAmount, 2) . ')';
+                                        if ($referralCodeDisplay !== '') {
+                                            echo '<br><small>Referral: ' . htmlspecialchars($referralCodeDisplay, ENT_QUOTES, 'UTF-8') . '</small>';
+                                        }
+                                        if ($promoCodeDisplay !== '') {
+                                            echo '<br><small>Promo: ' . htmlspecialchars($promoCodeDisplay, ENT_QUOTES, 'UTF-8') . '</small>';
+                                        }
                                         ?>
                                     </td>
                                 </tr>
