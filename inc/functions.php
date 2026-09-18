@@ -1046,9 +1046,11 @@ function ensureCustomerProfileColumns() {
 function customerProfileImageUrl($filename = '') {
     $filename = basename(trim((string) $filename));
     if ($filename !== '' && is_file(__DIR__ . '/../assets/uploads/' . $filename)) {
-        return UPLOAD_URL . rawurlencode($filename);
+        $filePath = __DIR__ . '/../assets/uploads/' . $filename;
+        $version = (string) ((int) @filemtime($filePath) ?: time());
+        return UPLOAD_URL . rawurlencode($filename) . '?v=' . rawurlencode($version);
     }
-    return ASSET_URL . 'images/og-default.png';
+    return ASSET_URL . 'images/placeholder.png?v=' . rawurlencode((string) time());
 }
 
 function ensureReferralTables() {

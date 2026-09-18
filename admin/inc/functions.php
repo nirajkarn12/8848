@@ -113,6 +113,85 @@ function adminSaveNamedImageUpload($filesKey, $baseName, $includeIco = false) {
  * Build an admin upload image URL with a filemtime cache-buster.
  * Fixes stale previews when uploads overwrite the same filename.
  */
+function ensureCustomerProfileColumns() {
+	global $pdo;
+	static $ready = null;
+	if ($ready !== null) {
+		return $ready;
+	}
+
+	try {
+		$photoColumn = $pdo->query("SHOW COLUMNS FROM `tbl_customer` LIKE 'cust_photo'");
+		if ($photoColumn && $photoColumn->rowCount() === 0) {
+			$pdo->exec("ALTER TABLE `tbl_customer` ADD COLUMN `cust_photo` varchar(255) NOT NULL DEFAULT '' AFTER `cust_email`");
+		}
+		$ready = true;
+	} catch (Throwable $e) {
+		$ready = false;
+	}
+
+	return $ready;
+}
+
+function adminCustomerProfileImageUrl($filename = '') {
+	$filename = basename(trim((string) $filename));
+	if ($filename !== '' && is_file(dirname(__DIR__) . '/../assets/uploads/' . $filename)) {
+		$filePath = dirname(__DIR__) . '/../assets/uploads/' . $filename;
+		$version = (string) ((int) @filemtime($filePath) ?: time());
+		return '../assets/uploads/' . rawurlencode($filename) . '?v=' . rawurlencode($version);
+	}
+	return '../assets/images/placeholder.png?v=' . rawurlencode((string) time());
+}
+
+function adminSaveCustomerPhotoUpload($upload, $customerId, $existingFilename = '') {
+	if (!is_array($upload)) {
+		return array('ok' => false, 'filename' => '', 'error' => 'Please select an image file.<br>');
+	}
+
+	$name = (string) ($upload['name'] ?? '');
+	$tmp = (string) ($upload['tmp_name'] ?? '');
+	$error = (int) ($upload['error'] ?? UPLOAD_ERR_NO_FILE);
+	$size = (int) ($upload['size'] ?? 0);
+
+	if ($name === '' || $error === UPLOAD_ERR_NO_FILE) {
+		return array('ok' => false, 'filename' => '', 'error' => 'Please select an image file.<br>');
+	}
+	if ($error !== UPLOAD_ERR_OK || $tmp === '' || !is_uploaded_file($tmp)) {
+		return array('ok' => false, 'filename' => '', 'error' => 'Image upload failed. Please try again.<br>');
+	}
+	if ($size > 4 * 1024 * 1024) {
+		return array('ok' => false, 'filename' => '', 'error' => 'Profile images must be 4 MB or smaller.<br>');
+	}
+
+	$imageInfo = @getimagesize($tmp);
+	$allowedTypes = array(IMAGETYPE_JPEG => 'jpg', IMAGETYPE_PNG => 'png', IMAGETYPE_WEBP => 'webp');
+	$imageType = isset($imageInfo[2]) ? (int) $imageInfo[2] : 0;
+	if (!$imageInfo || !isset($allowedTypes[$imageType])) {
+		return array('ok' => false, 'filename' => '', 'error' => 'Only JPG, PNG, and WEBP images are allowed.<br>');
+	}
+
+	$dir = dirname(__DIR__) . '/../assets/uploads/';
+	$dir = realpath($dir) ?: (dirname(__DIR__) . '/../assets/uploads');
+	$dir = rtrim(str_replace('\\', '/', $dir), '/') . '/';
+	if (!is_dir($dir)) {
+		@mkdir($dir, 0755, true);
+	}
+
+	$filename = 'customer-' . (int) $customerId . '-' . bin2hex(random_bytes(8)) . '.' . $allowedTypes[$imageType];
+	$dest = $dir . $filename;
+	if (!move_uploaded_file($tmp, $dest)) {
+		return array('ok' => false, 'filename' => '', 'error' => 'The image could not be saved.<br>');
+	}
+	@chmod($dest, 0644);
+
+	$existingFilename = basename((string) $existingFilename);
+	if ($existingFilename !== '' && is_file($dir . $existingFilename)) {
+		@unlink($dir . $existingFilename);
+	}
+
+	return array('ok' => true, 'filename' => $filename, 'error' => '');
+}
+
 function adminUploadUrl($filename, $subdir = '') {
 	$filename = ltrim(str_replace('\\', '/', (string) $filename), '/');
 	if ($filename === '' || preg_match('#^(https?:)?//#i', $filename)) {

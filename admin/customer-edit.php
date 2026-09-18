@@ -1,6 +1,8 @@
 <?php require_once('header.php'); ?>
 
 <?php
+ensureCustomerProfileColumns();
+
 if(!isset($_REQUEST['id'])) {
     header('location: logout.php');
     exit;
@@ -24,6 +26,7 @@ foreach($result as $row) {
     $cust_city = $row['cust_city'];
     $cust_state = $row['cust_state'];
     $cust_country = $row['cust_country'];
+    $cust_photo = $row['cust_photo'] ?? '';
 }
 
 if(isset($_POST['form1'])) {
@@ -65,6 +68,18 @@ if(isset($_POST['form1'])) {
             strip_tags($_POST['cust_country']),
             $_REQUEST['id']
         ));
+
+        if (!empty($_FILES['cust_photo']['name'])) {
+            $currentPhoto = trim((string) ($row['cust_photo'] ?? ''));
+            $photoResult = adminSaveCustomerPhotoUpload($_FILES['cust_photo'], (int) $_REQUEST['id'], $currentPhoto);
+            if ($photoResult['ok']) {
+                $pdo->prepare("UPDATE tbl_customer SET cust_photo = ? WHERE cust_id = ?")->execute(array($photoResult['filename'], $_REQUEST['id']));
+                $row['cust_photo'] = $photoResult['filename'];
+                $cust_photo = $photoResult['filename'];
+            } else {
+                $error_message .= $photoResult['error'];
+            }
+        }
 
         if (!empty($_POST['cust_password'])) {
             $hashed = password_hash($_POST['cust_password'], PASSWORD_DEFAULT);
@@ -109,7 +124,7 @@ if(isset($_POST['form1'])) {
             </div>
             <?php endif; ?>
 
-            <form class="form-horizontal" action="" method="post">
+            <form class="form-horizontal" action="" method="post" enctype="multipart/form-data">
                 <div class="box box-info">
                     <div class="box-body">
 
@@ -175,6 +190,24 @@ if(isset($_POST['form1'])) {
                         </div>
 
                         <div class="form-group">
+                            <label for="cust_photo" class="col-sm-2 control-label">Profile Picture</label>
+                            <div class="col-sm-4">
+                                <?php $customerCurrentPhoto = trim((string) ($cust_photo ?? ($row['cust_photo'] ?? ''))); ?>
+                                <?php if ($customerCurrentPhoto !== ''): ?>
+                                    <div class="mb-2">
+                                        <img id="customer-photo-preview" src="<?php echo htmlspecialchars(adminCustomerProfileImageUrl($customerCurrentPhoto)); ?>" alt="Customer profile" style="width:80px;height:80px;object-fit:cover;border-radius:50%;border:1px solid #ddd;">
+                                    </div>
+                                <?php else: ?>
+                                    <div class="mb-2">
+                                        <img id="customer-photo-preview" src="<?php echo htmlspecialchars(adminCustomerProfileImageUrl('')); ?>" alt="Customer profile" style="width:80px;height:80px;object-fit:cover;border-radius:50%;border:1px solid #ddd;">
+                                    </div>
+                                <?php endif; ?>
+                                <input type="file" class="form-control" name="cust_photo" id="cust_photo" accept="image/jpeg,image/png,image/webp">
+                                <span class="help-block">Optional. JPG, PNG, or WEBP up to 4 MB. Upload a new image to replace the current one.</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
                             <label class="col-sm-2 control-label"></label>
                             <div class="col-sm-6">
                                 <button type="submit" class="btn btn-success pull-left" name="form1">Submit</button>
@@ -188,5 +221,29 @@ if(isset($_POST['form1'])) {
         </div>
     </div>
 </section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const input = document.getElementById('cust_photo');
+    const preview = document.getElementById('customer-photo-preview');
+    if (!input || !preview) {
+        return;
+    }
+
+    input.addEventListener('change', function () {
+        const file = this.files && this.files[0];
+        if (!file) {
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (event) {
+            preview.src = event.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    });
+});
+</script>
 
 <?php require_once('footer.php'); ?>

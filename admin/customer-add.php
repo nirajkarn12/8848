@@ -1,6 +1,8 @@
 <?php require_once('header.php'); ?>
 
 <?php
+ensureCustomerProfileColumns();
+
 if(isset($_POST['form1'])) {
     $valid = 1;
 
@@ -49,6 +51,16 @@ if(isset($_POST['form1'])) {
             1
         ));
 
+        $customerId = (int) $pdo->lastInsertId();
+        if (!empty($_FILES['cust_photo']['name'])) {
+            $photoResult = adminSaveCustomerPhotoUpload($_FILES['cust_photo'], $customerId, '');
+            if ($photoResult['ok']) {
+                $pdo->prepare("UPDATE tbl_customer SET cust_photo = ? WHERE cust_id = ?")->execute(array($photoResult['filename'], $customerId));
+            } else {
+                $error_message .= $photoResult['error'];
+            }
+        }
+
         $success_message = 'Customer is added successfully. They can now log in with this email and password.';
     }
 }
@@ -79,7 +91,7 @@ if(isset($_POST['form1'])) {
             </div>
             <?php endif; ?>
 
-            <form class="form-horizontal" action="" method="post">
+            <form class="form-horizontal" action="" method="post" enctype="multipart/form-data">
                 <div class="box box-info">
                     <div class="box-body">
 
@@ -145,6 +157,17 @@ if(isset($_POST['form1'])) {
                         </div>
 
                         <div class="form-group">
+                            <label for="cust_photo" class="col-sm-2 control-label">Profile Picture</label>
+                            <div class="col-sm-4">
+                                <div class="mb-2">
+                                    <img id="customer-add-photo-preview" src="<?php echo htmlspecialchars(adminCustomerProfileImageUrl('')); ?>" alt="Customer preview" style="width:80px;height:80px;object-fit:cover;border-radius:50%;border:1px solid #ddd;">
+                                </div>
+                                <input type="file" class="form-control" name="cust_photo" id="cust_photo" accept="image/jpeg,image/png,image/webp">
+                                <span class="help-block">Optional. JPG, PNG, or WEBP up to 4 MB.</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
                             <label class="col-sm-2 control-label"></label>
                             <div class="col-sm-6">
                                 <button type="submit" class="btn btn-success pull-left" name="form1">Submit</button>
@@ -158,5 +181,28 @@ if(isset($_POST['form1'])) {
         </div>
     </div>
 </section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const input = document.getElementById('cust_photo');
+    const preview = document.getElementById('customer-add-photo-preview');
+    if (!input || !preview) {
+        return;
+    }
+
+    input.addEventListener('change', function () {
+        const file = this.files && this.files[0];
+        if (!file) {
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (event) {
+            preview.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+});
+</script>
 
 <?php require_once('footer.php'); ?>

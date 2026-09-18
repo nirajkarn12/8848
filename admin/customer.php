@@ -1,4 +1,5 @@
 <?php require_once('header.php'); ?>
+<?php ensureCustomerProfileColumns(); ?>
 
 <section class="content-header">
 	<div class="content-header-left">
@@ -18,6 +19,7 @@
 						<thead>
 							<tr>
 								<th width="10">#</th>
+								<th width="70">Photo</th>
 								<th width="150">Name</th>
 								<th width="100">Email Address</th>
 								<th width="50">Phone</th>
@@ -40,8 +42,9 @@
 								$i++;
 								?>
 								<tr class="<?php if($row['cust_status']==1) {echo 'bg-w';}else {echo 'bg-b';} ?>">
-									<td><?php echo $i; ?></td>
-									<td><?php echo $row['cust_name']; ?></td>
+									<td><?php echo $i; ?></td>										<td>
+											<img src="<?php echo htmlspecialchars(adminCustomerProfileImageUrl($row['cust_photo'] ?? '')); ?>" alt="Customer profile picture" style="width:48px;height:48px;object-fit:cover;border-radius:50%;border:1px solid #ddd;">
+										</td>									<td><?php echo $row['cust_name']; ?></td>
 									<td><?php echo $row['cust_email']; ?></td>
 									<td><?php echo htmlspecialchars($row['cust_phone'] ?? ''); ?></td>
 									<td>

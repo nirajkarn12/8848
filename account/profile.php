@@ -417,13 +417,36 @@ echo renderBreadcrumbs($breadcrumbs);
         <hr>
         <form method="post" enctype="multipart/form-data" class="row g-2 align-items-end">
           <input type="hidden" name="csrf_token" value="<?php echo e(csrfToken()); ?>">
-          <div class="col-md-8"><label class="form-label">Upload a new photo</label><input class="form-control" type="file" name="profile_photo" accept="image/jpeg,image/png,image/webp" required></div>
+          <div class="col-12">
+            <div class="d-flex align-items-center gap-3 mb-2">
+              <img id="profile-photo-preview" src="<?php echo e(customerProfileImageUrl($customer['cust_photo'] ?? '')); ?>" alt="Current profile photo" class="rounded-circle border" style="width:72px;height:72px;object-fit:cover;">
+              <div class="small text-muted">Current profile photo</div>
+            </div>
+          </div>
+          <div class="col-md-8"><label class="form-label">Upload a new photo</label><input class="form-control" type="file" id="profile_photo_input" name="profile_photo" accept="image/jpeg,image/png,image/webp" required></div>
           <div class="col-md-4"><button class="btn btn-outline-dark w-100" name="upload_profile_photo" value="1">Upload photo</button></div>
         </form>
       </div>
     </div>
   </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const preview = document.getElementById('profile-photo-preview');
+  const input = document.getElementById('profile_photo_input');
+  if (!preview || !input) return;
+
+  input.addEventListener('change', function () {
+    const file = this.files && this.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function (event) {
+      preview.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+});
+</script>
 <div class="modal fade" id="passwordModal" tabindex="-1" aria-labelledby="passwordModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 rounded-4 shadow">
