@@ -39,6 +39,10 @@ $settings = $pdo->query(
     'SELECT * FROM tbl_settings LIMIT 1'
 )->fetch();
 
+$serviceRegions = $pdo->query(
+    'SELECT country_id, country_name, postal_code FROM tbl_country ORDER BY country_name ASC'
+)->fetchAll(PDO::FETCH_ASSOC);
+
 
 /*
 |--------------------------------------------------------------------------
@@ -165,7 +169,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $serviceId = (int)(
         $_POST['service_id'] ?? 0
     );
-
+    $serviceRegion = trim((string)($_POST['service_region'] ?? ''));
+    $servicePostalCode = trim((string)($_POST['service_postal_code'] ?? ''));
 
     /*
      * Service map coordinates
@@ -278,6 +283,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ?? $defaultAddress
                 ),
 
+                'service_region' => $serviceRegion,
+                'service_postal_code' => $servicePostalCode,
+
                 /*
                  * Customer-selected map location.
                  */
@@ -381,6 +389,13 @@ if (
 ) {
 
     $pref['service_address'] = $defaultAddress;
+}
+
+if (!isset($pref['service_region'])) {
+    $pref['service_region'] = '';
+}
+if (!isset($pref['service_postal_code'])) {
+    $pref['service_postal_code'] = '';
 }
 
 
@@ -558,6 +573,48 @@ echo renderFlash();
 
 
                 <!-- =================================================
+                     SERVICE REGION
+                ================================================== -->
+
+                <div class="col-md-6">
+
+                    <label class="form-label">
+                        Region
+                    </label>
+
+                    <select class="form-select" name="service_region" id="service_region">
+                        <option value="">Select region</option>
+                        <?php foreach ($serviceRegions as $region) { ?>
+                            <option value="<?php echo e($region['country_name']); ?>" data-postal="<?php echo e($region['postal_code'] ?? ''); ?>" <?php echo (trim((string)($pref['service_region'] ?? '')) === trim((string)$region['country_name'])) ? 'selected' : ''; ?>>
+                                <?php echo e($region['country_name']); ?>
+                            </option>
+                        <?php } ?>
+                    </select>
+
+                </div>
+
+                <!-- =================================================
+                     POSTAL CODE
+                ================================================== -->
+
+                <div class="col-md-6">
+
+                    <label class="form-label">
+                        Postal code
+                    </label>
+
+                    <input
+                        class="form-control"
+                        type="text"
+                        name="service_postal_code"
+                        id="service_postal_code"
+                        value="<?php echo e($pref['service_postal_code'] ?? ''); ?>"
+                        placeholder="e.g. 1010"
+                    >
+
+                </div>
+
+                <!-- =================================================
                      SERVICE ADDRESS
                 ================================================== -->
 
@@ -580,6 +637,23 @@ echo renderFlash();
 
                 </div>
 
+                <script>
+                    (function () {
+                        var regionSelect = document.getElementById('service_region');
+                        var postalInput = document.getElementById('service_postal_code');
+                        if (!regionSelect || !postalInput) return;
+                        function applyPostalCode() {
+                            var selected = regionSelect.options[regionSelect.selectedIndex];
+                            if (!selected) return;
+                            var postal = selected.getAttribute('data-postal') || '';
+                            if (postal && (!postalInput.value || postalInput.value === '')) {
+                                postalInput.value = postal;
+                            }
+                        }
+                        regionSelect.addEventListener('change', applyPostalCode);
+                        applyPostalCode();
+                    })();
+                </script>
 
                 <!-- =================================================
                      MAP

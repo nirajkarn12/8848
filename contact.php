@@ -21,12 +21,25 @@ if ($metaDescription === '' || $metaDescription === getHomeSeo()['description'])
     $metaDescription = seoCleanText(implode(' ', $bits), 160);
 }
 
+$pageRow = $pdo->query('SELECT contact_title, contact_banner FROM tbl_page LIMIT 1')->fetch(PDO::FETCH_ASSOC) ?: [];
+$contactBanner = trim((string) ($pageRow['contact_banner'] ?? ''));
+$contactBannerUrl = '';
+if ($contactBanner !== '' && is_file(__DIR__ . '/assets/uploads/' . $contactBanner)) {
+    $contactBannerUrl = getProductImage($contactBanner);
+}
+
 include __DIR__ . '/inc/header.php';
 $breadcrumbs = [
     ['label' => t('home'), 'url' => BASE_URL],
     ['label' => t('contact'), 'url' => '']
 ];
 echo renderBreadcrumbs($breadcrumbs);
+if ($contactBannerUrl !== '') {
+    echo '<section class="page-banner" style="background-image:url(\'' . e($contactBannerUrl) . '\');">';
+    echo '<div class="overlay"></div>';
+    echo '<div class="container py-5 position-relative"><h1 class="mb-0 text-white text-center">' . e($pageRow['contact_title'] ?? $pageTitle) . '</h1></div>';
+    echo '</section>';
+}
 echo renderFlash();
 ?>
 <div class="row g-4">

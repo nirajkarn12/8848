@@ -11,6 +11,18 @@ function adminPageBannerPreview($filename) {
     return '<img src="../assets/uploads/' . htmlspecialchars($filename, ENT_QUOTES, 'UTF-8') . '?v=' . $v . '" class="existing-photo" alt="Banner" style="height:120px;width:auto;max-width:100%;object-fit:cover;border:1px solid #ddd;border-radius:4px;">';
 }
 
+function adminDeletePageBanner($filename) {
+    $filename = trim((string) $filename);
+    if ($filename === '') {
+        return true;
+    }
+    $path = '../assets/uploads/' . $filename;
+    if (is_file($path)) {
+        @unlink($path);
+    }
+    return true;
+}
+
 function adminSavePageBanner($filesKey, $oldFilename, $prefix) {
     $path = $filesKey['name'] ?? '';
     $pathTmp = $filesKey['tmp_name'] ?? '';
@@ -72,7 +84,17 @@ if(isset($_POST['form_about'])) {
     $statement->execute();
     $currentAboutBanner = (string) $statement->fetchColumn();
 
-    $bannerResult = adminSavePageBanner($_FILES['about_banner'] ?? array(), $currentAboutBanner, 'about-banner');
+    $removeAboutBanner = !empty($_POST['remove_about_banner']);
+    if ($removeAboutBanner) {
+        adminDeletePageBanner($currentAboutBanner);
+        $bannerResult = array('ok' => true, 'filename' => '', 'changed' => true, 'error' => '');
+        if (!empty($_FILES['about_banner']['name'])) {
+            $bannerResult = adminSavePageBanner($_FILES['about_banner'] ?? array(), $currentAboutBanner, 'about-banner');
+        }
+    } else {
+        $bannerResult = adminSavePageBanner($_FILES['about_banner'] ?? array(), $currentAboutBanner, 'about-banner');
+    }
+
     if (!$bannerResult['ok']) {
         $valid = 0;
         $error_message .= $bannerResult['error'];
@@ -115,6 +137,7 @@ if(isset($_POST['form_faq'])) {
         }
     }
 
+    $removeFaqBanner = !empty($_POST['remove_faq_banner']);
     if($valid == 1) {
 
         if($path != '') {
@@ -124,7 +147,9 @@ if(isset($_POST['form_faq'])) {
             $result = $statement->fetchAll(PDO::FETCH_ASSOC);                           
             foreach ($result as $row) {
                 $faq_banner = $row['faq_banner'];
-                unlink('../assets/uploads/'.$faq_banner);
+                if($faq_banner != '') {
+                    unlink('../assets/uploads/'.$faq_banner);
+                }
             }
 
             // updating the data
@@ -134,6 +159,13 @@ if(isset($_POST['form_faq'])) {
             // updating the database
             $statement = $pdo->prepare("UPDATE tbl_page SET faq_title=?,faq_banner=?,faq_meta_title=?,faq_meta_keyword=?,faq_meta_description=? WHERE id=1");
             $statement->execute(array($_POST['faq_title'],$final_name,$_POST['faq_meta_title'],$_POST['faq_meta_keyword'],$_POST['faq_meta_description']));
+        } elseif($removeFaqBanner) {
+            $statement = $pdo->prepare("SELECT faq_banner FROM tbl_page WHERE id=1");
+            $statement->execute();
+            $oldFaqBanner = (string) $statement->fetchColumn();
+            adminDeletePageBanner($oldFaqBanner);
+            $statement = $pdo->prepare("UPDATE tbl_page SET faq_title=?,faq_banner='',faq_meta_title=?,faq_meta_keyword=?,faq_meta_description=? WHERE id=1");
+            $statement->execute(array($_POST['faq_title'],$_POST['faq_meta_title'],$_POST['faq_meta_keyword'],$_POST['faq_meta_description']));
         } else {
             // updating the database
             $statement = $pdo->prepare("UPDATE tbl_page SET faq_title=?,faq_meta_title=?,faq_meta_keyword=?,faq_meta_description=? WHERE id=1");
@@ -162,7 +194,17 @@ if(isset($_POST['form_contact'])) {
     $statement->execute();
     $currentContactBanner = (string) $statement->fetchColumn();
 
-    $bannerResult = adminSavePageBanner($_FILES['contact_banner'] ?? array(), $currentContactBanner, 'contact-banner');
+    $removeContactBanner = !empty($_POST['remove_contact_banner']);
+    if ($removeContactBanner) {
+        adminDeletePageBanner($currentContactBanner);
+        $bannerResult = array('ok' => true, 'filename' => '', 'changed' => true, 'error' => '');
+        if (!empty($_FILES['contact_banner']['name'])) {
+            $bannerResult = adminSavePageBanner($_FILES['contact_banner'] ?? array(), $currentContactBanner, 'contact-banner');
+        }
+    } else {
+        $bannerResult = adminSavePageBanner($_FILES['contact_banner'] ?? array(), $currentContactBanner, 'contact-banner');
+    }
+
     if (!$bannerResult['ok']) {
         $valid = 0;
         $error_message .= $bannerResult['error'];
@@ -247,12 +289,14 @@ foreach ($result as $row) {
                 <div class="nav-tabs-custom">
                     <?php
                     $activeTab = 'tab_1';
-                    if (!empty($success_message) && stripos($success_message, 'Contact') !== false) {
+                    if (!empty($_POST['active_tab']) && in_array($_POST['active_tab'], array('tab_1', 'tab_2', 'tab_4'), true)) {
+                        $activeTab = $_POST['active_tab'];
+                    } elseif (isset($_GET['tab']) && in_array($_GET['tab'], array('tab_1', 'tab_2', 'tab_4'), true)) {
+                        $activeTab = $_GET['tab'];
+                    } elseif (!empty($success_message) && stripos($success_message, 'Contact') !== false) {
                         $activeTab = 'tab_4';
                     } elseif (!empty($success_message) && stripos($success_message, 'FAQ') !== false) {
                         $activeTab = 'tab_2';
-                    } elseif (isset($_GET['tab']) && in_array($_GET['tab'], array('tab_1', 'tab_2', 'tab_4'), true)) {
-                        $activeTab = $_GET['tab'];
                     }
                     ?>
                     <ul class="nav nav-tabs">
@@ -265,7 +309,9 @@ foreach ($result as $row) {
 
                     <div class="tab-content">
                         <div class="tab-pane <?php echo $activeTab === 'tab_1' ? 'active' : ''; ?>" id="tab_1">
-                            <form class="form-horizontal" action="" method="post" enctype="multipart/form-data">
+                            <form id="about-page-form" class="form-horizontal" action="" method="post" enctype="multipart/form-data">
+                            <input type="hidden" name="active_tab" value="tab_1">
+                            <input type="hidden" name="form_about" value="1">
                             <div class="box box-info">
                                 <div class="box-body">
                                     <div class="form-group">
@@ -283,7 +329,14 @@ foreach ($result as $row) {
                                     <div class="form-group">
                                         <label for="" class="col-sm-3 control-label">Existing Banner Photo</label>
                                         <div class="col-sm-6" style="padding-top:6px;">
-                                            <?php echo adminPageBannerPreview($about_banner); ?>
+                                            <?php if ($about_banner != ''): ?>
+                                                <div class="banner-image-actions" style="display:flex; align-items:flex-start; gap:10px;">
+                                                    <?php echo adminPageBannerPreview($about_banner); ?>
+                                                    <a href="#" class="btn btn-danger btn-xs delete-page-banner" data-form="about-page-form" data-kind="about" title="Delete image">×</a>
+                                                </div>
+                                            <?php else: ?>
+                                                <?php echo adminPageBannerPreview($about_banner); ?>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                     <div class="form-group">
@@ -291,6 +344,7 @@ foreach ($result as $row) {
                                         <div class="col-sm-6" style="padding-top:6px;">
                                             <input type="file" name="about_banner" accept=".jpg,.jpeg,.png,.gif,.webp">
                                             <p class="help-block">This image is used on About section. jpg/png/gif/webp</p>
+                                            <input type="hidden" name="remove_about_banner" value="0">
                                         </div>
                                     </div>
                                     <div class="form-group">
@@ -325,7 +379,9 @@ foreach ($result as $row) {
         <!-- FAQ Page Content -->
 
                         <div class="tab-pane <?php echo $activeTab === 'tab_2' ? 'active' : ''; ?>" id="tab_2">
-                            <form class="form-horizontal" action="" method="post" enctype="multipart/form-data">
+                            <form id="faq-page-form" class="form-horizontal" action="" method="post" enctype="multipart/form-data">
+                            <input type="hidden" name="active_tab" value="tab_2">
+                            <input type="hidden" name="form_faq" value="1">
                             <div class="box box-info">
                                 <div class="box-body">
                                     <div class="form-group">
@@ -337,13 +393,21 @@ foreach ($result as $row) {
                                     <div class="form-group">
                                         <label for="" class="col-sm-3 control-label">Existing Banner Photo</label>
                                         <div class="col-sm-6" style="padding-top:6px;">
-                                            <img src="../assets/uploads/<?php echo $faq_banner; ?>" class="existing-photo" style="height:80px;">
+                                            <?php if ($faq_banner != ''): ?>
+                                                <div class="banner-image-actions" style="display:flex; align-items:flex-start; gap:10px;">
+                                                    <img src="../assets/uploads/<?php echo $faq_banner; ?>" class="existing-photo" style="height:80px;">
+                                                    <a href="#" class="btn btn-danger btn-xs delete-page-banner" data-form="faq-page-form" data-kind="faq" title="Delete image">×</a>
+                                                </div>
+                                            <?php else: ?>
+                                                <span class="label label-warning">No image uploaded yet</span>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                     <div class="form-group">
                                         <label for="" class="col-sm-3 control-label">New Banner Photo</label>
                                         <div class="col-sm-6" style="padding-top:6px;">
                                             <input type="file" name="faq_banner">
+                                            <input type="hidden" name="remove_faq_banner" value="0">
                                         </div>
                                     </div>
                                     <div class="form-group">
@@ -378,7 +442,9 @@ foreach ($result as $row) {
                         <!-- End of FAQ Page Content -->
 
                         <div class="tab-pane <?php echo $activeTab === 'tab_4' ? 'active' : ''; ?>" id="tab_4">
-                            <form class="form-horizontal" action="" method="post" enctype="multipart/form-data">
+                            <form id="contact-page-form" class="form-horizontal" action="" method="post" enctype="multipart/form-data">
+                            <input type="hidden" name="active_tab" value="tab_4">
+                            <input type="hidden" name="form_contact" value="1">
                             <div class="box box-info">
                                 <div class="box-body">
                                     <div class="form-group">
@@ -390,7 +456,14 @@ foreach ($result as $row) {
                                     <div class="form-group">
                                         <label for="" class="col-sm-3 control-label">Existing Banner Photo</label>
                                         <div class="col-sm-6" style="padding-top:6px;">
-                                            <?php echo adminPageBannerPreview($contact_banner); ?>
+                                            <?php if ($contact_banner != ''): ?>
+                                                <div class="banner-image-actions" style="display:flex; align-items:flex-start; gap:10px;">
+                                                    <?php echo adminPageBannerPreview($contact_banner); ?>
+                                                    <a href="#" class="btn btn-danger btn-xs delete-page-banner" data-form="contact-page-form" data-kind="contact" title="Delete image">×</a>
+                                                </div>
+                                            <?php else: ?>
+                                                <?php echo adminPageBannerPreview($contact_banner); ?>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                     <div class="form-group">
@@ -398,6 +471,7 @@ foreach ($result as $row) {
                                         <div class="col-sm-6" style="padding-top:6px;">
                                             <input type="file" name="contact_banner" accept=".jpg,.jpeg,.png,.gif,.webp">
                                             <p class="help-block">Shown on homepage Contact section (form + image). jpg/png/gif/webp</p>
+                                            <input type="hidden" name="remove_contact_banner" value="0">
                                         </div>
                                     </div>
                                     <div class="form-group">
@@ -438,5 +512,23 @@ foreach ($result as $row) {
     </div>
 
 </section>
+
+<div class="modal fade" id="confirm-banner-delete" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Delete Image</h4>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure want to delete this image?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger btn-ok">Yes Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <?php require_once('footer.php'); ?>

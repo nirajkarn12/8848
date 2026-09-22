@@ -21,8 +21,11 @@ $errors = array();
 try {
     $messages[] = migrationAddColumn($pdo, 'tbl_payment', 'service_lat', 'DECIMAL(10,7) NULL');
     $messages[] = migrationAddColumn($pdo, 'tbl_payment', 'service_lng', 'DECIMAL(10,7) NULL');
+    $messages[] = migrationAddColumn($pdo, 'tbl_payment', 'service_region', 'VARCHAR(100) NULL');
+    $messages[] = migrationAddColumn($pdo, 'tbl_payment', 'service_postal_code', 'VARCHAR(50) NULL');
     $messages[] = migrationAddColumn($pdo, 'tbl_booking_assignment', 'service_lat', 'DECIMAL(10,7) NULL');
     $messages[] = migrationAddColumn($pdo, 'tbl_booking_assignment', 'service_lng', 'DECIMAL(10,7) NULL');
+    $messages[] = migrationAddColumn($pdo, 'tbl_country', 'postal_code', 'VARCHAR(50) NULL');
 } catch (PDOException $e) {
     $errors[] = $e->getMessage();
 }

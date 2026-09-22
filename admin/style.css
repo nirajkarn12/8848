@@ -17,6 +17,343 @@ body {
   font-family: "Roboto", sans-serif;
 }
 
+.login-page {
+  min-height: 100vh;
+  background-image: linear-gradient(rgba(6, 20, 48, 0.58), rgba(10, 23, 51, 0.72)), url("../assets/images/cleaning-side.jpg");
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 20px;
+}
+
+.login-shell {
+  width: min(1040px, 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-modern {
+  width: 100%;
+  max-width: 1040px;
+  min-height: 560px;
+  display: flex;
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: 26px;
+  overflow: hidden;
+  box-shadow: 0 26px 58px rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  margin: 0 auto;
+}
+
+.login-visual {
+  flex: 1.06;
+  min-width: 0;
+  max-width: 52%;
+  background: linear-gradient(135deg, #0a73c8 0%, #044a8a 100%);
+  color: #fff;
+  padding: 42px 42px 32px;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-visual::before,
+.login-visual::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.login-visual::before {
+  width: 430px;
+  height: 430px;
+  right: -120px;
+  bottom: -170px;
+}
+
+.login-visual::after {
+  width: 220px;
+  height: 220px;
+  left: -70px;
+  bottom: -100px;
+}
+
+.login-brand,
+.login-features,
+.login-visual > * {
+  position: relative;
+  z-index: 1;
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 62px;
+  position: relative;
+  z-index: 1;
+}
+
+.brand-mark {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.login-brand small {
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  opacity: 0.9;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.login-brand strong {
+  display: block;
+  font-size: 28px;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  font-weight: 700;
+}
+
+.login-visual h1 {
+  margin: 0 0 18px;
+  font-size: 52px;
+  font-weight: 700;
+  line-height: 1.1;
+  position: relative;
+  z-index: 1;
+}
+
+.login-visual p {
+  margin: 0;
+  max-width: 420px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 18px;
+  line-height: 1.7;
+  position: relative;
+  z-index: 1;
+}
+
+.login-features {
+  margin-top: 34px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  position: relative;
+  z-index: 1;
+}
+
+.login-features span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+
+.login-box-body.login-panel {
+  flex: 0.95;
+  min-width: 0;
+  max-width: 48%;
+  background: #fff;
+  padding: 34px 38px 26px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.brand-mini {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.brand-mini small {
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.8;
+  font-size: 11px;
+  color: #475467;
+}
+
+.brand-mini strong {
+  display: block;
+  font-size: 24px;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  color: #1d2a39;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 14px;
+  margin-bottom: 8px;
+  text-align: left;
+}
+
+.panel-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #eef4ff 0%, #dfe9ff 100%);
+  color: #173a7a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.panel-header h3 {
+  margin: 0;
+  color: #1d2a39;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.login-box-msg {
+  margin: 0 0 22px;
+  color: #667085;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  text-align: left;
+}
+
+.login-input {
+  height: 52px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f9fbff;
+  color: #1f2937;
+  box-shadow: none;
+  padding-left: 18px;
+  padding-right: 42px;
+  font-size: 15px;
+  transition: all 0.25s ease;
+}
+
+.login-input:focus {
+  border-color: rgba(25, 51, 123, 0.55);
+  box-shadow: 0 0 0 4px rgba(25, 51, 123, 0.08);
+  background: #fff;
+}
+
+.form-group.has-feedback {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.form-control-feedback {
+  position: absolute;
+  right: 18px;
+  top: 18px;
+  color: #8b96a5;
+  font-size: 15px;
+}
+
+.login-actions {
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.remember-me {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #475467;
+  font-size: 12px;
+  margin: 0;
+}
+
+.remember-me input {
+  margin: 0;
+}
+
+.login-button {
+  height: 46px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #1f5dd6 0%, #173a7a 100%);
+  border: none;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  box-shadow: 0 10px 20px rgba(23, 58, 122, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.login-button:hover,
+.login-button:focus {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 26px rgba(23, 58, 122, 0.25);
+}
+
+.login-box-body .error {
+  display: block;
+  padding: 12px 14px;
+  margin: 0 0 18px;
+  border-radius: 10px;
+  background: #fff3f3;
+  color: #c62828;
+  border: 1px solid #f7c8c8;
+  font-size: 13px;
+}
+
+@media (max-width: 767px) {
+  .login-shell {
+    width: 100%;
+  }
+
+  .login-modern {
+    flex-direction: column;
+    min-height: auto;
+    max-width: 420px;
+  }
+
+  .login-visual,
+  .login-box-body.login-panel {
+    max-width: none;
+    width: 100%;
+  }
+
+  .login-visual {
+    padding: 30px 24px 24px;
+  }
+
+  .login-box-body.login-panel {
+    padding: 28px 22px 24px;
+  }
+
+  .login-visual h1 {
+    font-size: 30px;
+  }
+
+  .login-box-msg {
+    margin-bottom: 18px;
+  }
+}
+
 .info-box-text {
   white-space: normal !important;
 }

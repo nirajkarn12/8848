@@ -77,7 +77,35 @@
 
 	<script>
 	  $(function () {
+	    var $modal = $('#confirm-banner-delete');
+	    var $targetForm = null;
 
+	    $('.delete-page-banner').on('click', function (e) {
+	        e.preventDefault();
+	        var $btn = $(this);
+	        var $form = $btn.closest('form');
+	        var kind = $btn.data('kind');
+	        $targetForm = $form.length ? $form : $('#' + $btn.data('form'));
+	        var removeInputName = 'remove_' + kind + '_banner';
+	        var $removeInput = $targetForm.find('input[name="' + removeInputName + '"]');
+	        if ($removeInput.length) {
+	            $removeInput.val('1');
+        }
+	        var tabMap = {
+	            about: 'tab_1',
+	            faq: 'tab_2',
+	            contact: 'tab_4'
+	        };
+	        $targetForm.find('input[name="active_tab"]').val(tabMap[kind] || 'tab_1');
+	        $modal.modal('show');
+	    });
+
+	    $('#confirm-banner-delete .btn-ok').on('click', function () {
+	        if ($targetForm && $targetForm.length) {
+	            $targetForm.trigger('submit');
+	        }
+	        $modal.modal('hide');
+	    });
 	    //Initialize Select2 Elements
 	    $(".select2").select2();
 

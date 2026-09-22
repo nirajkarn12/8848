@@ -40,6 +40,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $district = trim($_POST['district'] ?? '');
     $municipality = trim($_POST['municipality'] ?? '');
     $address = trim($_POST['address'] ?? '');
+    $serviceRegion = trim($_POST['service_region'] ?? '');
+    $servicePostalCode = trim($_POST['service_postal_code'] ?? '');
     $serviceAddress = trim($_POST['service_address'] ?? $address);
     $serviceLat = normalizeMapCoordinate($_POST['service_lat'] ?? null, -90, 90);
     $serviceLng = normalizeMapCoordinate($_POST['service_lng'] ?? null, -180, 180);
@@ -257,6 +259,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (paymentHasColumn($pdo, 'service_address')) {
             $updates[] = 'service_address = ?';
             $params[] = $serviceAddress;
+        }
+        if (paymentHasColumn($pdo, 'service_region')) {
+            $updates[] = 'service_region = ?';
+            $params[] = $serviceRegion !== '' ? $serviceRegion : null;
+        }
+        if (paymentHasColumn($pdo, 'service_postal_code')) {
+            $updates[] = 'service_postal_code = ?';
+            $params[] = $servicePostalCode !== '' ? $servicePostalCode : null;
         }
         if (paymentHasColumn($pdo, 'preferred_date')) {
             $updates[] = 'preferred_date = ?';

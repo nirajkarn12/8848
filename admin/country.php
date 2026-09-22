@@ -24,6 +24,7 @@
 			    <tr>
 			        <th>#</th>
 			        <th>Location Name</th>
+			        <th>Postal Code</th>
 			        <th>Action</th>
 			    </tr>
 			</thead>
@@ -39,6 +40,7 @@
 					<tr>
 	                    <td><?php echo $i; ?></td>
 	                    <td><?php echo $row['country_name']; ?></td>
+	                    <td><?php echo htmlspecialchars($row['postal_code'] ?? ''); ?></td>
 	                    <td>
 	                        <a href="country-edit.php?id=<?php echo $row['country_id']; ?>" class="btn btn-primary btn-xs">Edit</a>
 	                        <a href="#" class="btn btn-danger btn-xs" data-href="country-delete.php?id=<?php echo $row['country_id']; ?>" data-toggle="modal" data-target="#confirm-delete">Delete</a>

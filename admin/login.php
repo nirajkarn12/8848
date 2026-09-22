@@ -7,6 +7,23 @@ include("inc/CSRF_Protect.php");
 $csrf = new CSRF_Protect();
 $error_message='';
 
+$loginBackground = '../assets/images/cleaning-side.jpg';
+$loginSiteName = '8848 Admin';
+try {
+    $settingsRow = $pdo->query("SELECT banner_login, site_name FROM tbl_settings WHERE id=1 LIMIT 1")->fetch(PDO::FETCH_ASSOC) ?: array();
+    $loginBanner = trim((string) ($settingsRow['banner_login'] ?? ''));
+    if ($loginBanner !== '' && is_file('../assets/uploads/' . $loginBanner)) {
+        $loginBackground = '../assets/uploads/' . $loginBanner;
+    }
+    $siteNameFromDb = trim((string) ($settingsRow['site_name'] ?? ''));
+    if ($siteNameFromDb !== '') {
+        $loginSiteName = $siteNameFromDb;
+    }
+} catch (Throwable $e) {
+    $loginBackground = '../assets/images/cleaning-side.jpg';
+    $loginSiteName = '8848 Admin';
+}
+
 if(isset($_POST['form1'])) {
         
     if(empty($_POST['email']) || empty($_POST['password'])) {
@@ -82,36 +99,60 @@ if(isset($_POST['form1'])) {
 	<link rel="stylesheet" href="style.css">
 </head>
 
-<body class="hold-transition login-page sidebar-mini">
+<body class="hold-transition login-page sidebar-mini" style="background-image: linear-gradient(rgba(6, 20, 48, 0.58), rgba(10, 23, 51, 0.72)), url('<?php echo e($loginBackground); ?>');">
 
-<div class="login-box">
-	<div class="login-logo">
-		<b>Admin Panel</b>
-	</div>
-  	<div class="login-box-body">
-    	<p class="login-box-msg">Log in to start your session</p>
-    
-	    <?php 
-	    if( (isset($error_message)) && ($error_message!='') ):
-	        echo '<div class="error">'.$error_message.'</div>';
-	    endif;
-	    ?>
-
-		<form action="" method="post">
-			<?php $csrf->echoInputField(); ?>
-			<div class="form-group has-feedback">
-				<input class="form-control" placeholder="Email address" name="email" type="email" autocomplete="off" autofocus>
-			</div>
-			<div class="form-group has-feedback">
-				<input class="form-control" placeholder="Password" name="password" type="password" autocomplete="off" value="">
-			</div>
-			<div class="row">
-				<div class="col-xs-8"></div>
-				<div class="col-xs-4">
-					<input type="submit" class="btn btn-success btn-block btn-flat login-button" name="form1" value="Log In">
+<div class="login-shell">
+	<div class="login-box login-modern">
+		<div class="login-visual">
+			<div class="login-brand">
+				<span class="brand-mark"><i class="fa fa-shield"></i></span>
+				<div>
+					<small>Business Control Center</small>
+					<strong><?php echo e($loginSiteName); ?></strong>
 				</div>
 			</div>
-		</form>
+			<h1>Welcome back</h1>
+			<p>Manage your store, customers, orders, and reports from one secure dashboard.</p>
+			<div class="login-features">
+				<span><i class="fa fa-check-circle"></i> Secure access</span>
+				<span><i class="fa fa-check-circle"></i> Smart reporting</span>
+				<span><i class="fa fa-check-circle"></i> Inventory control</span>
+			</div>
+		</div>
+
+		<div class="login-box-body login-panel">
+			<div class="panel-header">
+				<span class="panel-icon"><i class="fa fa-user"></i></span>
+				<h3>Sign In</h3>
+			</div>
+			<p class="login-box-msg">Log in to start your session</p>
+		    
+		    <?php 
+		    if( (isset($error_message)) && ($error_message!='') ):
+		        echo '<div class="error">'.$error_message.'</div>';
+		    endif;
+		    ?>
+
+			<form action="" method="post">
+				<?php $csrf->echoInputField(); ?>
+				<div class="form-group has-feedback">
+					<input class="form-control login-input" placeholder="Email address" name="email" type="email" autocomplete="off" autofocus required>
+					<span class="fa fa-envelope form-control-feedback"></span>
+				</div>
+				<div class="form-group has-feedback">
+					<input class="form-control login-input" placeholder="Password" name="password" type="password" autocomplete="off" value="" required>
+					<span class="fa fa-lock form-control-feedback"></span>
+				</div>
+				<div class="row login-actions">
+					<div class="col-xs-7 text-left">
+						<label class="remember-me"><input type="checkbox"> Keep me signed in</label>
+					</div>
+					<div class="col-xs-5">
+						<input type="submit" class="btn btn-success btn-block btn-flat login-button" name="form1" value="Log In">
+					</div>
+				</div>
+			</form>
+		</div>
 	</div>
 </div>
 

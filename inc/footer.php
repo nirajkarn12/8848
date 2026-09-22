@@ -26,6 +26,7 @@ if ($whatsAppLink !== '') {
                     <li><a href="<?php echo BASE_URL; ?>reviews.php"><?php echo t('reviews'); ?></a></li>
                     <li><a href="<?php echo BASE_URL; ?>about.php"><?php echo t('about'); ?></a></li>
                     <li><a href="<?php echo BASE_URL; ?>blog.php"><?php echo t('blog'); ?></a></li>
+                    <li><a href="<?php echo BASE_URL; ?>faq.php"><?php echo t('faqs'); ?></a></li>
                     <li><a href="<?php echo BASE_URL; ?>contact.php"><?php echo t('contact'); ?></a></li>
                 </ul>
             </div>

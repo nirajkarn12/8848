@@ -84,6 +84,29 @@ try {
 } catch (Throwable $e) {
     $homeGallery = [];
 }
+
+$serviceCountries = [];
+try {
+    $serviceCountries = $pdo->query("SELECT country_name FROM tbl_country WHERE country_name <> '' ORDER BY country_name ASC")->fetchAll(PDO::FETCH_COLUMN);
+} catch (Throwable $e) {
+    $serviceCountries = [];
+}
+if (!$serviceCountries) {
+    $serviceCountries = ['Auckland', 'Wellington', 'Hamilton', 'Tauranga'];
+}
+$serviceCountries = array_values(array_filter(array_map('trim', $serviceCountries), fn($value) => $value !== ''));
+$displayLocations = array_slice($serviceCountries, 0, 4);
+if (count($displayLocations) < 4) {
+    $defaultLocations = ['Auckland', 'Wellington', 'Hamilton', 'Tauranga'];
+    foreach ($defaultLocations as $defaultLocation) {
+        if (!in_array($defaultLocation, $displayLocations, true)) {
+            $displayLocations[] = $defaultLocation;
+        }
+        if (count($displayLocations) >= 4) {
+            break;
+        }
+    }
+}
 ?>
 <div class="hero-notice-stack">
 <section class="hero-banner">
@@ -171,9 +194,23 @@ try {
 <div class="container page-wrap py-5">
 
 <?php
-$aboutPage = $pdo->query('SELECT about_title, about_content, about_banner FROM tbl_page LIMIT 1')->fetch(PDO::FETCH_ASSOC) ?: [];
-$aboutCompact = true;
-include __DIR__ . '/inc/partials/about-section.php';
+$whereWeWorkCities = [];
+try {
+    $whereWeWorkCities = $pdo->query(
+        "SELECT country_name, postal_code FROM tbl_country WHERE country_name <> '' ORDER BY country_name ASC LIMIT 5"
+    )->fetchAll(PDO::FETCH_ASSOC);
+} catch (Throwable $e) {
+    $whereWeWorkCities = [];
+}
+
+if (!$whereWeWorkCities) {
+    $whereWeWorkCities = [
+        ['country_name' => 'Auckland', 'postal_code' => '1010'],
+        ['country_name' => 'Canterbury', 'postal_code' => '8011'],
+        ['country_name' => 'Christchurch', 'postal_code' => '8011'],
+        ['country_name' => 'Tauranga', 'postal_code' => '3110'],
+    ];
+}
 ?>
 
 <?php if ($featured) { ?>
@@ -274,6 +311,23 @@ $statAccounts = 120;
         <div class="look-stat-label"><?php echo t('stat_reviews_label'); ?></div>
       </article>
     </div>
+  </div>
+</section>
+
+<section class="site-ribbon site-ribbon-a reveal">
+  <div class="site-ribbon-inner where-we-work-ribbon-inner">
+    <div class="site-ribbon-copy where-we-work-copy">
+      <div class="site-ribbon-kicker">WHERE WE WORK</div>
+      <h2 class="site-ribbon-title where-we-work-title">Across New Zealand.</h2>
+      <p class="site-ribbon-text where-we-work-text">
+        We operate across key cities throughout the country, with live availability shown by location. Don’t see your suburb? Enter your postcode at booking and we’ll let you know straight away.
+      </p>
+    </div>
+
+    <a href="book-service.php" class="where-we-work-ribbon-row where-we-work-ribbon-row--button">
+      <span>Find your suburb</span>
+      <i class="fa fa-arrow-right"></i>
+    </a>
   </div>
 </section>
 
@@ -607,7 +661,7 @@ if (!empty($aboutPage['about_banner'])) {
   <div class="section-head">
     <div>
       <div class="section-kicker"><?php echo t('faqs'); ?></div>
-      <h2 class="section-title"><?php echo t('faqs'); ?></h2>
+      <h2 class="section-title"><?php echo t('faqs_title'); ?></h2>
     </div>
   </div>
   <div class="accordion faq-accordion" id="faqAccordion">
@@ -641,7 +695,7 @@ if (!empty($aboutPage['about_banner'])) {
       <h2 class="section-title"><?php echo t('reviews_title'); ?></h2>
       <p class="section-subtitle"><?php echo t('reviews_subtitle'); ?></p>
     </div>
-    <a href="reviews.php" class="btn btn-outline-dark"><?php echo t('reviews'); ?></a>
+    <a href="reviews.php" class="btn btn-outline-dark"><?php echo t('view_all_reviews'); ?></a>
   </div>
   <div class="row g-4">
     <?php foreach ($homeReviews as $item) {

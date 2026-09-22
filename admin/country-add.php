@@ -1,16 +1,27 @@
 <?php require_once('header.php'); ?>
 
 <?php
+if (!function_exists('columnExists')) {
+    function columnExists($pdo, $table, $column) {
+        $statement = $pdo->prepare("SHOW COLUMNS FROM `" . $table . "` LIKE ?");
+        $statement->execute(array($column));
+        return $statement->rowCount() > 0;
+    }
+}
+
+ensureServiceLocationColumns($pdo);
+
 if(isset($_POST['form1'])) {
 	$valid = 1;
+    $countryName = trim($_POST['country_name'] ?? '');
+    $postalCode = trim($_POST['postal_code'] ?? '');
 
-    if(empty($_POST['country_name'])) {
+    if($countryName === '') {
         $valid = 0;
         $error_message .= "Country Name can not be empty<br>";
     } else {
-    	// Duplicate Category checking
     	$statement = $pdo->prepare("SELECT * FROM tbl_country WHERE country_name=?");
-    	$statement->execute(array($_POST['country_name']));
+    	$statement->execute(array($countryName));
     	$total = $statement->rowCount();
     	if($total)
     	{
@@ -20,10 +31,13 @@ if(isset($_POST['form1'])) {
     }
 
     if($valid == 1) {
-
-		// Saving data into the main table tbl_country
-		$statement = $pdo->prepare("INSERT INTO tbl_country (country_name) VALUES (?)");
-		$statement->execute(array($_POST['country_name']));
+		if (columnExists($pdo, 'tbl_country', 'postal_code')) {
+			$statement = $pdo->prepare("INSERT INTO tbl_country (country_name, postal_code) VALUES (?, ?)");
+			$statement->execute(array($countryName, $postalCode));
+		} else {
+			$statement = $pdo->prepare("INSERT INTO tbl_country (country_name) VALUES (?)");
+			$statement->execute(array($countryName));
+		}
 	
     	$success_message = 'location is added successfully.';
     }
@@ -69,6 +83,12 @@ if(isset($_POST['form1'])) {
 							<label for="" class="col-sm-2 control-label">Location Name <span>*</span></label>
 							<div class="col-sm-4">
 								<input type="text" class="form-control" name="country_name">
+							</div>
+						</div>
+						<div class="form-group">
+							<label for="" class="col-sm-2 control-label">Postal Code</label>
+							<div class="col-sm-4">
+								<input type="text" class="form-control" name="postal_code" placeholder="e.g. 1010">
 							</div>
 						</div>
 						<div class="form-group">

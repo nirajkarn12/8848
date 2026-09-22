@@ -511,6 +511,57 @@ h1, h2, h3, h4, .section-title, .navbar-brand span, .agency-brand, .footer-brand
 
 .page-wrap { position: relative; }
 .section-block { margin-bottom: 3.5rem; }
+.where-we-work-ribbon-inner {
+    align-items: flex-start;
+    gap: 2.5rem;
+}
+.where-we-work-copy {
+    max-width: 42rem;
+    flex: 1 1 30rem;
+}
+.where-we-work-title {
+    color: #fff;
+    margin: 0;
+    font-size: clamp(3.1rem, 4.3vw, 5.3rem);
+    line-height: .92;
+    letter-spacing: -0.07em;
+    font-weight: 900;
+}
+.where-we-work-text {
+    margin-top: 1.2rem;
+    max-width: 42rem;
+    color: rgba(255,255,255,.9);
+}
+.where-we-work-ribbon-row {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .8rem;
+    padding: .95rem 1.3rem;
+    border-radius: 14px;
+    background: #fff;
+    border: 1px solid rgba(255,255,255,.28);
+    color: #0c2c52;
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: .02em;
+    box-shadow: 0 10px 20px rgba(0,0,0,.08);
+    white-space: nowrap;
+}
+.where-we-work-ribbon-row i {
+    font-size: .9rem;
+    color: #0c2c52;
+}
+@media (max-width: 767px) {
+    .where-we-work-ribbon-inner {
+        flex-direction: column;
+    }
+    .where-we-work-ribbon-row {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
 .section-head {
     display: flex; justify-content: space-between; align-items: flex-end;
     gap: 1rem; margin-bottom: 1.6rem; flex-wrap: wrap;

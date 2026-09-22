@@ -1,16 +1,26 @@
 <?php require_once('header.php'); ?>
 
 <?php
+if (!function_exists('columnExists')) {
+    function columnExists($pdo, $table, $column) {
+        $statement = $pdo->prepare("SHOW COLUMNS FROM `" . $table . "` LIKE ?");
+        $statement->execute(array($column));
+        return $statement->rowCount() > 0;
+    }
+}
+
+ensureServiceLocationColumns($pdo);
+
 if(isset($_POST['form1'])) {
 	$valid = 1;
+    $countryName = trim($_POST['country_name'] ?? '');
+    $postalCode = trim($_POST['postal_code'] ?? '');
 
-    if(empty($_POST['country_name'])) {
+    if($countryName === '') {
         $valid = 0;
         $error_message .= "location Name can not be empty<br>";
     } else {
-		// Duplicate Country checking
-    	// current Country name that is in the database
-    	$statement = $pdo->prepare("SELECT * FROM tbl_country WHERE country_id=?");
+		$statement = $pdo->prepare("SELECT * FROM tbl_country WHERE country_id=?");
 		$statement->execute(array($_REQUEST['id']));
 		$result = $statement->fetchAll(PDO::FETCH_ASSOC);
 		foreach($result as $row) {
@@ -18,18 +28,22 @@ if(isset($_POST['form1'])) {
 		}
 
 		$statement = $pdo->prepare("SELECT * FROM tbl_country WHERE country_name=? and country_name!=?");
-    	$statement->execute(array($_POST['country_name'],$current_country_name));
-    	$total = $statement->rowCount();							
+    	$statement->execute(array($countryName,$current_country_name));
+    	$total = $statement->rowCount();									
     	if($total) {
     		$valid = 0;
         	$error_message .= 'location name already exists<br>';
     	}
     }
 
-    if($valid == 1) {    	
-		// updating into the database
-		$statement = $pdo->prepare("UPDATE tbl_country SET country_name=? WHERE country_id=?");
-		$statement->execute(array($_POST['country_name'],$_REQUEST['id']));
+    if($valid == 1) {
+		if (columnExists($pdo, 'tbl_country', 'postal_code')) {
+			$statement = $pdo->prepare("UPDATE tbl_country SET country_name=?, postal_code=? WHERE country_id=?");
+			$statement->execute(array($countryName, $postalCode, $_REQUEST['id']));
+		} else {
+			$statement = $pdo->prepare("UPDATE tbl_country SET country_name=? WHERE country_id=?");
+			$statement->execute(array($countryName, $_REQUEST['id']));
+		}
 
     	$success_message = 'location is updated successfully.';
     }
@@ -66,6 +80,7 @@ if(!isset($_REQUEST['id'])) {
 <?php							
 foreach ($result as $row) {
 	$country_name = $row['country_name'];
+	$postal_code = $row['postal_code'] ?? '';
 }
 ?>
 
@@ -99,6 +114,12 @@ foreach ($result as $row) {
                     <label for="" class="col-sm-2 control-label">Location Name <span>*</span></label>
                     <div class="col-sm-4">
                         <input type="text" class="form-control" name="country_name" value="<?php echo $country_name; ?>">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="" class="col-sm-2 control-label">Postal Code</label>
+                    <div class="col-sm-4">
+                        <input type="text" class="form-control" name="postal_code" value="<?php echo htmlspecialchars($postal_code); ?>" placeholder="e.g. 1010">
                     </div>
                 </div>
                 <div class="form-group">

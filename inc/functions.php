@@ -1666,7 +1666,7 @@ function ensureServiceLocationColumns(PDO $pdo) {
     }
     $done = true;
     $targets = [
-        'tbl_payment' => ['service_lat', 'service_lng'],
+        'tbl_payment' => ['service_lat', 'service_lng', 'service_region', 'service_postal_code'],
         'tbl_booking_assignment' => ['service_lat', 'service_lng'],
     ];
     foreach ($targets as $table => $columns) {
@@ -1674,12 +1674,23 @@ function ensureServiceLocationColumns(PDO $pdo) {
             try {
                 $stmt = $pdo->query("SHOW COLUMNS FROM `{$table}` LIKE " . $pdo->quote($column));
                 if ($stmt && $stmt->rowCount() === 0) {
-                    $pdo->exec("ALTER TABLE `{$table}` ADD COLUMN `{$column}` DECIMAL(10,7) NULL");
+                    $type = in_array($column, ['service_lat', 'service_lng'], true)
+                        ? 'DECIMAL(10,7) NULL'
+                        : 'VARCHAR(100) NULL';
+                    $pdo->exec("ALTER TABLE `{$table}` ADD COLUMN `{$column}` " . $type);
                 }
             } catch (Throwable $e) {
                 // Ignore if table is unavailable in older installs.
             }
         }
+    }
+    try {
+        $countryStmt = $pdo->query("SHOW COLUMNS FROM `tbl_country` LIKE " . $pdo->quote('postal_code'));
+        if ($countryStmt && $countryStmt->rowCount() === 0) {
+            $pdo->exec("ALTER TABLE `tbl_country` ADD COLUMN `postal_code` VARCHAR(50) NULL AFTER `country_name`");
+        }
+    } catch (Throwable $e) {
+        // Ignore if table is unavailable in older installs.
     }
 }
 
